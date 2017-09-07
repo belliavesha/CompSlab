@@ -8,9 +8,9 @@ from numpy import exp, log
 import matplotlib.pyplot as plt
 import itertools as it
 
-interp1dKind='cubic' # interpKind for interp1d
-interp2dKind='linear' # interpKind for interp2d 
 colors='rygcbm' # Rainbow
+interp1dKind='cubic' # interpKind for interp1d
+interp2dKind='cubic' # interpKind for interp2d 
 
 # h = 6.626e-34
 # c = 3.0e+8
@@ -49,7 +49,7 @@ tIl=np.vectorize(lambda t,m : uIl(t,          m) if abs(m)<meps \
 tIr=np.vectorize(lambda t,m : uIr(t,          m) if abs(m)<meps \
        else quad( lambda t1 : uIr(t+m*log(t1),m), exp(((0 if m>0 else tau0)-t)/m) ,1 ) [0])  
 
-muN = 30# Number of mu points
+muN = 40# Number of mu points
 mur = np.linspace(0,1,num=muN) # mu range for plotting (only outward direction)    
 mu =np.linspace(-1,1,num=muN*2+1) #  cosines range of emergent ray angles 
 meps=mu[muN+1]/3   # for (mu < meps => m==0 ) condition
@@ -78,20 +78,20 @@ for it in range(len(tau0range)):
     B.append(interp1d(tau,map(tB,tau), kind=interp1dKind)) # do.
     C.append(interp1d(tau,map(tC,tau), kind=interp1dKind)) # do.
     
-    Il.append(interp2d(tau2d,mu2d,tIl(tau2d,mu2d), kind=interp2dKind)) # ditto
-    Ir.append(interp2d(tau2d,mu2d,tIr(tau2d,mu2d), kind=interp2dKind)) # do.
+    Il.append(interp2d(tau2d,mu2d,tIl(tau2d,mu2d),kind=interp2dKind)) # ditto
+    Ir.append(interp2d(tau2d,mu2d,tIr(tau2d,mu2d),kind=interp2dKind)) # do.
     
     N=Il[-1](tau0,1)+Ir[-1](tau0,1) 
     I=Il[-1](tau0,mur)+Ir[-1](tau0,mur)
     lI=Il[-1](tau0,mur)/N
     rI=Ir[-1](tau0,mur)/N
-    Q=Il[-1](tau0,mur)-Ir[-1](tau0,mur)
+    Q=(Il[-1](tau0,mur)-Ir[-1](tau0,mur))/I
 
     for l in range(muN):
         f.write(\
             str(mu[l]).ljust(20) + \
-            str(I[l][0]/N[0]).ljust(20) + \
-            str(Q[l][0]/I[l][0]).ljust(20)+"\n" )
+            str(I[l][0]).ljust(20) + \
+            str(Q[l][0]).ljust(20)+"\n")
    
     plt.figure(1)
 
@@ -105,16 +105,17 @@ for it in range(len(tau0range)):
     if it==0: 
         plt.ylabel(r'$p\,[ \% ]$')
     plt.xlabel(r'$\mu$')
-    plt.plot(mur, 1e2*Q/I, colors[scatteringNumber])
+    plt.plot(mur, 1e2*Q, colors[scatteringNumber])
     f.close()
 
 caption="""The scattering numbers are indicated by colors:
 1st --- red; 2nd --- yellow; 3rd --- green; 4th --- cyan; 5th --- blue."""  #6th --- purple
 #plt.figtext(.1, .1,caption)   
 print caption
+
+plt.show()
     
 print 'end'    
     
-plt.show()
 
 
