@@ -29,7 +29,7 @@ colors='rygcbm' # Rainbow
 #     #print E,logE 
 #     return intensity*4.11274466039867e-48#in joules
 nu=1
-	
+  
 I0=lambda nu : 1 # planck(nu,Temperature)
 tI=lambda tau,mu:  (exp(-tau/mu)*I0(nu)) if mu>0 else 0 # zeroth scattering 
                                                 
@@ -49,7 +49,7 @@ tIl=np.vectorize(lambda t,m : uIl(t,          m) if abs(m)<meps \
 tIr=np.vectorize(lambda t,m : uIr(t,          m) if abs(m)<meps \
        else quad( lambda t1 : uIr(t+m*log(t1),m), exp(((0 if m>0 else tau0)-t)/m) ,1 ) [0])  
 
-muN = 50# Number of mu points
+muN = 30# Number of mu points
 mur = np.linspace(0,1,num=muN) # mu range for plotting (only outward direction)    
 mu =np.linspace(-1,1,num=muN*2+1) #  cosines range of emergent ray angles 
 meps=mu[muN+1]/3   # for (mu < meps => m==0 ) condition
@@ -59,7 +59,7 @@ tau0range=[.5,1.0,3.]  # different tau0 parameters
  # number of iterations (scatterings)
 for it in range(len(tau0range)):
   tau0 = tau0range[it] # optical depth of the atmosphere
-  tauN =10 # Number of tau points
+  tauN =8 # Number of tau points
   tau=np.linspace(0,tau0,num=tauN)  # optical depths range
   tau2d, mu2d = np.meshgrid(tau,mu)
   Il=[tI] #intensities polarized in meridional plane 
@@ -71,6 +71,9 @@ for it in range(len(tau0range)):
 
   for scatteringNumber in range(numberOfScatterings):
     print it, scatteringNumber
+    f = open("tau"+str(tau0)+"ns"+str(scatteringNumber)+".dat","w")
+    f.write("#muN= "+str(muN)+" ; mu:       Intensity:   polarization degree:\n")
+    
     A.append(interp1d(tau,map(tA,tau), kind=interp1dKind)) # redefinition ofa integrations by interolations
     B.append(interp1d(tau,map(tB,tau), kind=interp1dKind)) # do.
     C.append(interp1d(tau,map(tC,tau), kind=interp1dKind)) # do.
@@ -78,61 +81,40 @@ for it in range(len(tau0range)):
     Il.append(interp2d(tau2d,mu2d,tIl(tau2d,mu2d), kind=interp2dKind)) # ditto
     Ir.append(interp2d(tau2d,mu2d,tIr(tau2d,mu2d), kind=interp2dKind)) # do.
     
-    # Il.append(tIl)
-
     N=Il[-1](tau0,1)+Ir[-1](tau0,1) 
     I=Il[-1](tau0,mur)+Ir[-1](tau0,mur)
     lI=Il[-1](tau0,mur)/N
     rI=Ir[-1](tau0,mur)/N
     Q=Il[-1](tau0,mur)-Ir[-1](tau0,mur)
 
-   #  print I
-   #  print Q
-   # print I/N
+    for l in range(muN):
+        f.write(\
+            str(mu[l]).ljust(20) + \
+            str(I[l][0]/N[0]).ljust(20) + \
+            str(Q[l][0]/I[l][0]).ljust(20)+"\n" )
    
     plt.figure(1)
+
     plt.subplot(2,3,it+1)
     plt.title(r'$\tau_0=$'+str(tau0))
     if it==0: 
         plt.ylabel(r'${I(\tau_0,\mu)}/{I(\tau_0,1)}$')
     plt.plot(mur, I/N, colors[scatteringNumber])
-    # plt.subplot(3,3,it*3 +2)
-    # plt.plot(mur, I/N, colors[i])
-    # plt.subplot(3,3,it+it*2  +3)
-    # plt.plot(mur, I/N, colors[i])
+
     plt.subplot(2,3,it+4)
     if it==0: 
         plt.ylabel(r'$p\,[ \% ]$')
     plt.xlabel(r'$\mu$')
     plt.plot(mur, 1e2*Q/I, colors[scatteringNumber])
-    caption="""The scattering numbers are indicated by colors:
-     1st --- red; 2nd --- yellow; 3rd --- green; 4th --- cyan; 5th --- blue."""  #6th --- purple
-#    plt.figtext(.1, -.1,caption)
+    f.close()
 
+caption="""The scattering numbers are indicated by colors:
+1st --- red; 2nd --- yellow; 3rd --- green; 4th --- cyan; 5th --- blue."""  #6th --- purple
+#plt.figtext(.1, .1,caption)   
+print caption
     
-    
-print  Il[-1](tau,1)
-print  Ir[-1](tau,1)
-    
+print 'end'    
     
 plt.show()
-
-#print uIl(0.5,1,1,1)
-#print uIr(0.5,1,1,1)
-#print exp(-(tau-1)/1)*( B[-1](1,1)+C[-1](1,1) )/1
-#print Il[-1](1,1,1)
-#print Ir[-1](1,1,1)
-
-
-
-lgE=np.linspace(-3,3,num=10)
-tau=np.linspace(0,tau0,num=10)
-mu =np.linspace(-1,1,num=10)
-    
-
-
-
-
-
 
 
