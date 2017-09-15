@@ -1,16 +1,26 @@
+# timer:
 from time import time
-s=time()
+time0=time()
 def pr(s,gn): 
       print gn,' :: ',time()-s
       return time(),gn+1
-s,gn=pr(s,0)
+s,gn=pr(time0,0)
 
+#import:
 from numpy import pi, exp, log, sqrt,sin,cos
-from matplotlib.pyplot import *
+#from matplotlib.pyplot import *
 from scipy.special import kn
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
 #import numpy as np
+#import matplotlib.pyplot as plt
+
+#precomputations :
+GaussLaguerre = laggauss(20) # laguerre-gauss sample points and weights
+GaussLegendre = leggauss(40) # legendre-gauss sample points and weights
+      # notice that if the numer of points is even then there is a zero angle or a cosine which equals to 1
+      # That will lead to Zero Division Error in this function (sometimes)
+
 
 s,gn=pr(s,gn)
 def sigma_cs(x): # Mean compton scattering cross-section for electron rest frame i belive
@@ -24,7 +34,6 @@ def sigma_cs(x): # Mean compton scattering cross-section for electron rest frame
       else: return 3*(2-(1/x+1-x/2)*log(1+2*x))/4/x/x + 3*(1+x)/4/(1+2*x)**2
 
 
-s,gn=pr(s,gn)
 def Compton_redistribution_m(x1,x2,mu,gamma): 
       """Compton redistribution matrix for monoenergetic electron gas
       x1 and x2 - photon energies in units of electron rest mass ( h \nu / m_e c^2 ) 
@@ -41,9 +50,8 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       a1 = sqrt( (gamma-x1)**2 + r )
       a2 = sqrt( (gamma+x2)**2 + r )
       v = a1*a2
-      u =  a2-a1  #(x1+x2)*(2.*gamma+x2-x1)/(a1+a2)
-      #print a2-a1,(x1+x2)*(2.*gamma+x2-x1)/(a1+a2)
-     
+      u = a2-a1  #(x1+x2)*(2.*gamma+x2-x1)/(a1+a2) # the formulas probably give always the same numbers 
+      
       q = x1*x2*(1.-mu)
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
@@ -65,11 +73,13 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
             #if gamma- gammaStar < 2 : print ';;;',gamma- gammaStar
 
             #print r,v,u,q,Q,gammaStar,Ra,Rb,Rc,R
+
       
             return (R,RI,RQ,RU)
 
 
-s,gn=pr(s,gn)
+
+
 def Maxwell_r(Theta,gamma):
       """The normalized relativistic Maxwellian distribution
       the density of particles in the dimensionless momentum volume (4 \pi z^2 dz) is nomalized to unity
@@ -78,9 +88,9 @@ def Maxwell_r(Theta,gamma):
       The fuction returns the momentum dencity value ( f(\gamma) )
       """
       # kn is a modified Bessel function
-      return exp(-gamma/Theta)/4./pi/Theta/kn(2,1./Theta)
+      r = 1./4./pi/Theta*exp(-gamma/Theta)/kn(2,1./Theta)
+      return r
 
-s,gn=pr(s,gn)
 def Compton_redistribution(x1,x2,mu,Theta): 
       """thermal Compton redistribution matrix (integrated with electron distribution function)
       x1 and x2 - photon energies in units of electron rest mass ( h \nu / m_e c^2 ) 
@@ -90,20 +100,31 @@ def Compton_redistribution(x1,x2,mu,Theta):
       and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully 
       R44 or RV is also not equal to zero but we never need it  
       """
+
       q = x1*x2*(1.-mu)
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
       C=3./8.*Maxwell_r(Theta,gammaStar)
-
-      NL = 20 # number of laguerre-gauss sample points
-      point, weight = laggauss(NL) 
+      
+     
+      point, weight = GaussLaguerre 
+      NL = range(len(point)) # number of laguerre-gauss sample points
+      
       summands = map(lambda i : map(lambda x: C*x*weight[i],\
-            Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)),range(NL))
-      R = [sum([summands[j][i] for j in range (NL)]) for i in range(4)] # summing to obtain the integrals
+           Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)),NL)
+      R = [sum([summands[j][i] for j in NL]) for i in range(4)] # summing to obtain the integrals
+      
+      # # the next 5 lines do the same thing as previous three but faster for some reason
+      # # ( actually, only 2% faster, not very helpful) 
+      # R=[0.,0.,0.,0.]
+      # for i in NL:
+      #       T=Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)
+      #       for j in range(4):
+      #             R[j]+=C*weight[i]*T[j]
+
       return tuple(R)
       
 
-s,gn=pr(s,gn)
 def Compton_redistribution_aa(x1,mu1,x2,mu2,Theta):
       """azimuth-avereged Compton redistribution matrix 
       for computing of electron scattering source function 
@@ -113,12 +134,13 @@ def Compton_redistribution_aa(x1,mu1,x2,mu2,Theta):
       We need only 2x2 matrix in the upper left corner of the general matrix,
       becouse U and V components on the Stokes vector are zero in this case.
       """
+      
       mur1 = sqrt( 1. - mu1*mu1 ) # sinuses of the angles 
       mur2 = sqrt( 1. - mu2*mu2 ) # what the R stands for? I dunno.
-      NL = 40 # number of legendre-gauss sample points
-      # notice that if the numer is even then there is a zero angle or a cosine which equals to 1
-      # That will lead to Zero Division Error in this function (sometimes)
-      point, weight = leggauss(NL) 
+      
+      point, weight = GaussLegendre
+      NL = range(len(point)) # number of laguerre-gauss sample points
+      
       az_c=cos(pi*point)  # list of azimuth cosines
       az_s=sin(pi*point)  # list of azimuth sinuses
       sc_c=mu1*mu2-mur1*mur2*az_c # list of scattering angles cosines
@@ -130,35 +152,28 @@ def Compton_redistribution_aa(x1,mu1,x2,mu2,Theta):
       # print max(map(lambda a,b:abs(a-b)/(a+b), cos2chi12,cos2chi1)) # comparing two formulas. It turns out they're the same
       
       R=[[0.,0.],[0.,0.]]
-      for i in range(NL):
+      for i in NL:
             (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i],Theta)
             R[0][0]+=C*pi*weight[i]
             R[0][1]+=I*pi*cos2chi2[i]*weight[i]
             R[1][0]+=I*pi*cos2chi1[i]*weight[i]
             R[1][1]+=(Q*pi*cos2chi1[i]*cos2chi2[i]+U*pi*sin2chi1[i]*sin2chi2[i])*weight[i]
       
+      
       return R
 
 
 
-s,gn=pr(s,gn)
-#Compton_redistribution(.5,.5,.5,.5)
-for NL in range(1,10):
-#       point, weight = laggauss(NL)
-      x1,x2,mu=2.,3.,.3
-#       int = map(lambda i : map(lambda x: x*weight[i],Compton_redistribution_m(x1,x2,mu,point[i])),range(NL))
-#       print sum([int[j][0] for j in range (NL)])
-      #pts=range (20)
-      #print map(lambda x: Compton_redistribution_m(x1,x2,mu,x),pts)
-      print Compton_redistribution(x1,x2,mu,1./NL)
 
 s,gn=pr(s,gn)
+x1,x2=2.,3.
 for NL in range(1,10):
       mu1,mu2=.1,.2
       print Compton_redistribution_aa(x1,mu1,x2,mu2,.1/NL)
 
 s,gn=pr(s,gn)
 
+print 'Total time : ', s-time0
 # ps, garbage=  laggauss(20) 
 # plot(range(20),log(ps))
 
@@ -173,4 +188,3 @@ s,gn=pr(s,gn)
 # yscale('log')
 # xscale('log')
 # show()
-
