@@ -6,7 +6,7 @@ def pr(s,gn):
 s,gn=pr(s,0)
 
 from numpy import pi, exp, log, sqrt,sin,cos
-#from matplotlib.pyplot import *
+from matplotlib.pyplot import *
 from scipy.special import kn
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
@@ -33,7 +33,7 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       This fuctions returns (R,RI,RQ,RU)
       which are scalar redistribution functions for isotropic monoenergetic gas
       and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully
-      R44 is also not equal to zero but we never need it 
+      R44 or RV is also not equal to zero but we never need it 
       """
 
       #the next variables' namesare adopted from J. Poutanen & O. Vilhu 1993
@@ -85,9 +85,10 @@ def Compton_redistribution(x1,x2,mu,Theta):
       """thermal Compton redistribution matrix (integrated with electron distribution function)
       x1 and x2 - photon energies in units of electron rest mass ( h \nu / m_e c^2 ) 
       mu - cosine of a scattering angle 
-      This fuctions returns (R,RI,RQ,RU,RV)
+      This fuctions returns (R,RI,RQ,RU)
       which are scalar redistribution functions for Maxwellian relativistic gas
-      and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33,R44 respectfully 
+      and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully 
+      R44 or RV is also not equal to zero but we never need it  
       """
       q = x1*x2*(1.-mu)
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
@@ -96,7 +97,8 @@ def Compton_redistribution(x1,x2,mu,Theta):
 
       NL = 20 # number of laguerre-gauss sample points
       point, weight = laggauss(NL) 
-      summands = map(lambda i : map(lambda x: C*x*weight[i],Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)),range(NL))
+      summands = map(lambda i : map(lambda x: C*x*weight[i],\
+            Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)),range(NL))
       R = [sum([summands[j][i] for j in range (NL)]) for i in range(4)] # summing to obtain the integrals
       return tuple(R)
       
@@ -108,6 +110,8 @@ def Compton_redistribution_aa(x1,mu1,x2,mu2,Theta):
       x1 and x2 are photon energies in units of electron rest mass ( h \nu / m_e c^2 ) 
       mu1 and mu2 are cosines of angles between photon propagation directions and fixed direction
       This function returns R11 R12 R21 R22 matrix elements
+      We need only 2x2 matrix in the upper left corner of the general matrix,
+      becouse U and V components on the Stokes vector are zero in this case.
       """
       mur1 = sqrt( 1. - mu1*mu1 ) # sinuses of the angles 
       mur2 = sqrt( 1. - mu2*mu2 ) # what the R stands for? I dunno.
@@ -115,18 +119,16 @@ def Compton_redistribution_aa(x1,mu1,x2,mu2,Theta):
       # notice that if the numer is even then there is a zero angle or a cosine which equals to 1
       # That will lead to Zero Division Error in this function (sometimes)
       point, weight = leggauss(NL) 
-      az_c = map(lambda x : cos(x*pi),point) # list of azimuth cosines
-      az_s = map(lambda x : sin(x*pi),point) # list of azimuth sinuses
-      sc_c = map(lambda c : mu1*mu2-mur1*mur2*c,az_c) # list of scattering angles cosines
+      az_c=cos(pi*point)  # list of azimuth cosines
+      az_s=sin(pi*point)  # list of azimuth sinuses
+      sc_c=mu1*mu2-mur1*mur2*az_c # list of scattering angles cosines
       cos2chi1 = map(lambda c : 2.*(mu2-mu1*c)**2/mur1/mur1/(1.-c*c) - 1. , sc_c)
       cos2chi2 = map(lambda c : 2.*(mu1-mu2*c)**2/mur2/mur2/(1.-c*c) - 1. , sc_c)
       sin2chi1 = map(lambda c, s : -(mu1-mu2*c)*mur2/mur1/(1.-c*c) , sc_c , az_s)
       sin2chi2 = map(lambda c, s :  (mu1-mu2*c)*mur1/mur2/(1.-c*c) , sc_c , az_s)
-      # print cos2chi2
-      # print cos2chi1
-      # print sin2chi2
-      # print sin2chi1
-
+      # cos2chi12 = map(lambda c,s : ((mu2-mu1*c)**2-mur1*mur1*mur2*mur2*s*s)/mur1/mur1/(1.-c*c) , sc_c,az_s)
+      # print max(map(lambda a,b:abs(a-b)/(a+b), cos2chi12,cos2chi1)) # comparing two formulas. It turns out they're the same
+      
       R=[[0.,0.],[0.,0.]]
       for i in range(NL):
             (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i],Theta)
@@ -157,7 +159,8 @@ for NL in range(1,10):
 
 s,gn=pr(s,gn)
 
-
+# ps, garbage=  laggauss(20) 
+# plot(range(20),log(ps))
 
 # def pr(x):
 #       print x,sn(x)
