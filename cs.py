@@ -92,11 +92,11 @@ def Compton_redistribution(x1,x2,mu,Theta):
       q = x1*x2*(1.-mu)
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
-      C=Maxwell_r(Theta,gammaStar)
+      C=3./8.*Maxwell_r(Theta,gammaStar)
 
       NL = 20 # number of laguerre-gauss sample points
       point, weight = laggauss(NL) 
-      summands = map(lambda i : map(lambda x: C*x*weight[i],Compton_redistribution_m(.4,.5,.6,point[i]+gammaStar)),range(NL))
+      summands = map(lambda i : map(lambda x: C*x*weight[i],Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)),range(NL))
       R = [sum([summands[j][i] for j in range (NL)]) for i in range(4)] # summing to obtain the integrals
       return tuple(R)
       
