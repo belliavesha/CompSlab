@@ -169,7 +169,7 @@ def Compton_redistribution_aa(x1,mu1,x2,mu2):
       sc_c=mu1*mu2-mur1*mur2*az_c # list of scattering angles cosines
       cos2chi1 = map(lambda c : 2.*(mu2-mu1*c)**2/mur1/mur1/(1.-c*c) - 1. , sc_c) # list[ cos( 2 \chi_1 ) ]
       cos2chi2 = map(lambda c : 2.*(mu1-mu2*c)**2/mur2/mur2/(1.-c*c) - 1. , sc_c) # list[ cos( 2 \chi_2 ) ]
-      sin2chiP = map(lambda c, s : -4.*((mu1-mu2*c)*s/(1.-c*c))**2 , sc_c , az_s) # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
+      sin2chiP = map(lambda c, s : -4.*(mu1-mu2*c)*(mu2-mu1*c)*(s/(1.-c*c))**2 , sc_c , az_s) # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
       # sin2chi1 = map(lambda c, s : -(mu1-mu2*c)*mur2*s/mur1/(1.-c*c) , sc_c , az_s) # list[ sin( 2 \chi_1 ) ]
       # sin2chi2 = map(lambda c, s :  (mu1-mu2*c)*mur1*s/mur2/(1.-c*c) , sc_c , az_s) # list[ sin( 2 \chi_2 ) ]
       # cos2chi12 = map(lambda c,s : ((mu2-mu1*c)**2-mur1*mur1*mur2*mur2*s*s)/mur1/mur1/(1.-c*c) , sc_c,az_s)
@@ -204,9 +204,8 @@ RedistributionMatrix = empty( (NEnergy,NDirection,NEnergy,NDirection) )
 
 
 
-s,gn=pr(s,gn)
+s,gn=pr(s,gn,'table')
 
-print 'Total time : ', s-time0
 
 # ars=map(lambda a: 1e2*2.**(-a),(range(20)))
 # print map(sn,ars)
@@ -219,22 +218,26 @@ print 'Total time : ', s-time0
 
 
 
-# # friquency symmetry: CHECK [v]
+# # frequency symmetry: CHECK [v]
 # one = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.5)
 # two = Compton_redistribution_aa(1e-1,-.5,1e-2 ,.5) 
 # print exp(.09/Theta)*two[0][0]/one[0][0]-1 # 1e-15
 # print exp(.09/Theta)*two[1][0]/one[1][0]-1 # 1e-12
 # print exp(.09/Theta)*two[0][1]/one[0][1]-1 # 1e-12
 # print exp(.09/Theta)*two[1][1]/one[1][1]-1 # 1e-14
+# s,gn=pr(s,gn,'freq-check')
 
 # angular symmetry: CHECK [x]
 one = Compton_redistribution_aa(1e-2,-.4,1e-1 ,.5)
 two = Compton_redistribution_aa(1e-2,.5,1e-1 ,-.4)
 three = Compton_redistribution_aa(1e-2,.4,1e-1 ,-.5)
 four = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.4) 
-print two[0][0]/one[0][0]-1,three[0][0]/one[0][0]-1,four[0][0]/one[0][0]-1 # 0 0 0
-print two[1][0]/one[0][1]-1,three[1][0]/one[1][0]-1,four[0][1]/one[1][0]-1 # 0 0 0
-print two[0][1]/one[1][0]-1,three[0][1]/one[0][1]-1,four[1][0]/one[0][1]-1 # 0 0 0
-print two[1][1]/one[1][1]-1,three[1][1]/one[1][1]-1,four[1][1]/one[1][1]-1 # - 0 -
+print two[0][0]/one[0][0]-1,three[0][0]/one[0][0]-1,four[0][0]/two[0][0]-1 # 0 0 0
+print two[1][0]/one[0][1]-1,three[1][0]/one[1][0]-1,four[0][1]/two[0][1]-1 # 0 0 0
+print two[0][1]/one[1][0]-1,three[0][1]/one[0][1]-1,four[1][0]/two[1][0]-1 # 0 0 0
+print two[1][1]/one[1][1]-1,three[1][1]/one[1][1]-1,four[1][1]/two[1][1]-1 # 0 0 0
+s,gn=pr(s,gn,'ang-check')
 
 
+
+print 'Total time : ', s-time0
