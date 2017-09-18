@@ -1,47 +1,48 @@
 # timer:
 from time import time
 time0=time()
-def pr(s,gn): 
-      print gn,' :: ',time()-s
+def pr(s,gn,message = ''): 
+      print gn,' :'+message+': ',time()-s
       return time(),gn+1
 s,gn=pr(time0,0)
 
 #import:
-from numpy import pi, exp, log, sqrt,sin,cos
-#from matplotlib.pyplot import *
-from scipy.special import kn
-#from scipy import empty 
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
-from numpy import linspace, empty
-import numpy as np
+from numpy import linspace, empty, ones
+from numpy import pi, exp, log, sqrt, sin, cos
+from scipy.special import kn
+#from matplotlib.pyplot import *
+#import numpy as np
 #import matplotlib.pyplot as plt
+s,gn=pr(s,gn, 'importing')
 
 #precomputations :
-NGamma=30 # number of \gamma points
-NAzimuth=40 # numbers of \phi points
-NEnergy = 10 # number of energy points
-NDirection = 4 # number of propagation angle cosines
- # notice that if the numer of points is odd then there is a zero angle or a cosine which equals to 1
- # That may lead to Zero Division Error in this functions 
-x_l, x_u = -5. , 1. # lower and upper bound of the energy span 
-logEnergySpan = linspace(x_l*log(10),x_u*log(10),num=NEnergy)
-IntEnergy = (exp(logEnergySpan), exp(-logEnergySpan),) # sample points and wights for computing the source function 
+NGamma=20 # number of Lorenx factor points (\gamma)
+NAzimuth=40 # numbers of azimuth angles (\phi) 
+NEnergy = 10 # number of energy points (x)
+NDirection = 4 # number of propagation angle cosines (\mu)
+NDepth = 10 # number of optical depth levels (\tau)
+      # notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
+      # That may lead to Zero Division Error in these functions, be careful and cautious 
+tau_T= 1. # Thomson optical depth of thermalization 
+x_l, x_u = -5. , 1. # lower and upper bound of the log_10 energy span 
+logEnergySpan, logEnergyStep = linspace(x_l*log(10),x_u*log(10),num=NEnergy,retstep=True)
+
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
 IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
-IntDirection = leggauss(NDirection) # sample points and weights for computing intencity integral
-      
+IntDirection = leggauss(NDirection) # sample points and weights for computing the source function of one given incoming photon energy
+IntEnergy = (exp(logEnergySpan), exp(-logEnergySpan)*logEnergyStep,) # sample points and wights for computing the full source function 
+IntDepth = linspace(0,tau_T,num=NDepth), tau_T/(NDepth-1)*ones(NDepth) # sample points and weights for computing the intensities
+
 
 def setTemperature(T):
       K = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
       return (T, K) # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
 
-(Theta, K2Y) = setTemperature(.1)
+Theta, K2Y = setTemperature(.1)
+s,gn=pr(s,gn,'precomps')
 
-
-
-
-s,gn=pr(s,gn)
 def sigma_cs(x): # Mean compton scattering cross-section for electron rest frame i belive
       if x<.1:
             a,n,s=3./8 , 0. , 0.
@@ -64,7 +65,7 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       R44 or RV is also not equal to zero but we never need it 
       """
 
-      #the next variables' namesare adopted from J. Poutanen & O. Vilhu 1993
+      #the next variables' names are adopted from J. Poutanen & O. Vilhu 1993
       r = (1.+mu)/(1.-mu)
       a1 = sqrt( (gamma-x1)**2 + r )
       a2 = sqrt( (gamma+x2)**2 + r )
@@ -72,12 +73,11 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       u = a2-a1  #(x1+x2)*(2.*gamma+x2-x1)/(a1+a2) # the formulas probably give always the same numbers 
       
       q = x1*x2*(1.-mu)
-      Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu ) # sqrt( (x1-x2)**2 +2.*q ) # the formula gives the same
+      Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu ) # sqrt( (x1-x2)**2 +2.*q ) # the formula probably gives the same also
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
-#      print r,v,u,q,Q,gammaStar
 
       if gamma < gammaStar : 
-            print 'w'
+            print 'w' # I belive that in the case fucntion just won't be called
             return  (0.,0.,0.,0.)
       else: 
 
@@ -91,8 +91,6 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
             RU = Rd + 2.*Rc
             RQ = RU + Ra
             
-            #if gamma- gammaStar < 2 : previousnt ';;;',gamma- gammaStar
-
             #print r,v,u,q,Q,gammaStar,Ra,Rb,Rc,R
             #print x1,x2,mu,gamma,R,RI,RQ,RU
             
@@ -114,7 +112,7 @@ def Maxwell_r(gamma):
 
 def Compton_redistribution(x1,x2,mu): 
       """thermal Compton redistribution matrix (integrated with electron distribution function)
-      And the distribution is maxwellian
+      And the distribution is maxwellian (if it's not the function must be modified)
       x1 and x2 - photon energies in units of electron rest mass ( h \nu / m_e c^2 ) 
       mu - cosine of a scattering angle 
       This fuctions returns (R,RI,RQ,RU)
@@ -140,7 +138,7 @@ def Compton_redistribution(x1,x2,mu):
       # # ( actually, only 2% faster, not very helpful) 
       # R=[0.,0.,0.,0.]
       # for i in NL:
-      #       T=Compton_redistribution_m(x1,x2,mu,point[i]+gammaStar)
+      #       T=Compton_redistribution_m(x1,x2,mu,Theta*point[i]+gammaStar)
       #       for j in range(4):
       #             R[j]+=C*weight[i]*T[j]
 
@@ -190,20 +188,9 @@ def Compton_redistribution_aa(x1,mu1,x2,mu2):
       return R
 
 
-# s,gn=pr(s,gn)
-
-# x1,x2=2.,3.
-# for NL in range(1,10):
-#       mu1,mu2=.1,.2
-#       print Compton_redistribution_aa(x1,mu1,x2,mu2,.1/NL)
+s,gn=pr(s,gn,'funcs')
 
 
-
-
-s,gn=pr(s,gn)
-
-Theta, K2Y = setTemperature(.1)
-print Compton_redistribution_aa(1e-2,-.5,1e-1 ,.5)
 RedistributionMatrix = empty( (NEnergy,NDirection,NEnergy,NDirection) )
 # for e in range(NEnergy):
 #  for d in range(NDirection):
@@ -229,3 +216,25 @@ print 'Total time : ', s-time0
 # yscale('log')
 # xscale('log')
 # show()
+
+
+
+# # friquency symmetry: CHECK [v]
+# one = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.5)
+# two = Compton_redistribution_aa(1e-1,-.5,1e-2 ,.5) 
+# print exp(.09/Theta)*two[0][0]/one[0][0]-1 # 1e-15
+# print exp(.09/Theta)*two[1][0]/one[1][0]-1 # 1e-12
+# print exp(.09/Theta)*two[0][1]/one[0][1]-1 # 1e-12
+# print exp(.09/Theta)*two[1][1]/one[1][1]-1 # 1e-14
+
+# angular symmetry: CHECK [x]
+one = Compton_redistribution_aa(1e-2,-.4,1e-1 ,.5)
+two = Compton_redistribution_aa(1e-2,.5,1e-1 ,-.4)
+three = Compton_redistribution_aa(1e-2,.4,1e-1 ,-.5)
+four = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.4) 
+print two[0][0]/one[0][0]-1,three[0][0]/one[0][0]-1,four[0][0]/one[0][0]-1 # 0 0 0
+print two[1][0]/one[0][1]-1,three[1][0]/one[1][0]-1,four[0][1]/one[1][0]-1 # 0 0 0
+print two[0][1]/one[1][0]-1,three[0][1]/one[0][1]-1,four[1][0]/one[0][1]-1 # 0 0 0
+print two[1][1]/one[1][1]-1,three[1][1]/one[1][1]-1,four[1][1]/one[1][1]-1 # - 0 -
+
+
