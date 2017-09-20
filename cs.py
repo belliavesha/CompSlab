@@ -137,12 +137,7 @@ def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the fu
       and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully 
       R44 or RV is also not equal to zero but we never need it  
       """
-      print mu
-      
       q = x1*x2*(1.-mu)
-      print q
-      print sqrt( 1. + 2./q )
-
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
       C=3./8.*Theta*Maxwell_r(gammaStar)
@@ -218,30 +213,14 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
 
 s,gn=pr(s,gn,'funcs')
 
+# from check import *
+# print CheckAngularSymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5)
+# s,gn=pr(s,gn,'ang-check')
+# print CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5,Theta)
+# s,gn=pr(s,gn,'ang-check')
+# exit()
 
-def CheckAngularSymmetry(x1,x2,mu1,mu2):
-      print '344444444444444444444444444444444444444444444444444444444'
-      eps=1e-10
-      one = Compton_redistribution_aa(x1,x2,mu1,mu2)
-      two = Compton_redistribution_aa(x1,x2,mu2,mu1)
-      three = Compton_redistribution_aa(x1,x2,-mu1,-mu2)
-      four = Compton_redistribution_aa(x1,x2,-mu2,-mu1) 
-      v=True
-      a,b,c = two[0][0]/one[0][0]-1,three[0][0]/one[0][0]-1,four[0][0]/two[0][0]-1 # 0 0 0
-      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
-      a,b,c = two[1][0]/one[0][1]-1,three[1][0]/one[1][0]-1,four[0][1]/two[0][1]-1 # 0 0 0
-      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
-      a,b,c = two[0][1]/one[1][0]-1,three[0][1]/one[0][1]-1,four[1][0]/two[1][0]-1 # 0 0 0
-      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
-      a,b,c = two[1][1]/one[1][1]-1,three[1][1]/one[1][1]-1,four[1][1]/two[1][1]-1 # 0 0 0
-      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
-      return v
-
-print CheckAngularSymmetry(0.01,0.1,-0.4,0.5)
-s,gn=pr(s,gn,'ang-check')
-exit()
-
-for ComputingRedistributionMatrices in [1]:         
+for ComputingRedistributionMatrices in [1]: 
       RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
       x,x_weight=IntEnergy
       mu,mu_weight=IntDirection
@@ -276,7 +255,7 @@ for ComputingRedistributionMatrices in [1]:
 
 s,gn=pr(s,gn,'RMtable')
 
-for InitializeStocksVectorsArrays in [1]:
+for InitializeStocksVectorsArrays in [1]: 
       Source=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
       Stokes=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
       Stokes_out=empty((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
@@ -334,34 +313,5 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
       s,gn=pr(s,gn,'I'+str(1+k)) # do ScatterNum scattering iterations
 print mu[NDirection/2:]
                                                 
-
-#print RedistributionMatrix
-
-
-
-
-# ars=map(lambda a: 1e2*2.**(-a),(range(20)))
-# print map(sn,ars)
-
-# plot(ars,map(lambda a: (sn(1e4*2.**(-a))),ars))
-
-# yscale('log')
-# xscale('log')
-# show()
-
-
-
-# # frequency symmetry: CHECK [v]
-
-one = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.5)
-two = Compton_redistribution_aa(1e-1,-.5,1e-2 ,.5) 
-print exp(.09/Theta)*two[0][0]/one[0][0]-1 # 1e-15
-print exp(.09/Theta)*two[1][0]/one[1][0]-1 # 1e-12
-print exp(.09/Theta)*two[0][1]/one[0][1]-1 # 1e-12
-print exp(.09/Theta)*two[1][1]/one[1][1]-1 # 1e-14
-# s,gn=pr(s,gn,'freq-check')
-
-# # angular symmetry: CHECK [x]
-
-
 print 'Total time : ', s-time0
+
