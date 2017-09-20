@@ -18,12 +18,12 @@ from scipy.special import kn
 s,gn=pr(s,gn, 'importing')
 
 #precomputations :
-ScatterNum = 20 # total number of scatterings
-NGamma=20 # number of Lorenx factor points (\gamma)
-NAzimuth=40 # (*) numbers of azimuth angles (\phi) 
-NEnergy = 10 # number of energy points (x)
-NDirection = 4 # (*) number of propagation angle cosines (\mu)
-NDepth = 10 # number of optical depth levels (\tau)
+ScatterNum = 2 # total number of scatterings
+NGamma=20 # number of Lorenz factor points (\gamma)
+NAzimuth=40 # (*) numbers of azimuth angles (\phi)
+NDirection = 10 # (*) number of propagation angle cosines (\mu) 
+NEnergy = 11 # number of energy points (x)
+NDepth = 23 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
 tau_T= 1. # Thomson optical depth of thermalization 
@@ -57,10 +57,14 @@ def Planck(x):
       eps=1e-5
       C=1. # some dimension constant. I just didn't think what it should be like yet
       R=C*x*x # Rayleigh Jeans law
-      I=R*x/(exp(x/T)-1.) if x/T > eps else R*T
+      I=R*x/(exp(x/T)-1.) if x/T < eps else R*T
       return I
 
-def sigma_cs(x): # Mean compton scattering cross-section for electron rest frame i belive
+def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-section  based on electron momentum distribution
+      """ This function compute the Compton scattering cross-section in electron rest frame 
+      x is the energy of the scattering photon in units of electron rest energy
+      this function approaches the mean compton cross-section when electron gas temperature is small
+      """ 
       if x<.1:
             a,n,s=3./8 , 0. , 0.
             while(abs(a)*(n+2)**2>1e-11): # Tailor series sum of the formula below
@@ -123,7 +127,7 @@ def Maxwell_r(gamma):
       r = .25/pi/Theta*exp(-gamma/Theta)/K2Y
       return r
 
-def Compton_redistribution(x1,x2,mu): 
+def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the function must be modified.
       """thermal Compton redistribution matrix (integrated with electron distribution function)
       And the distribution is maxwellian (if it's not the function must be modified)
       x1 and x2 - photon energies in units of electron rest energy ( h \nu / m_e c^2 ) 
@@ -133,27 +137,31 @@ def Compton_redistribution(x1,x2,mu):
       and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully 
       R44 or RV is also not equal to zero but we never need it  
       """
-
+      print mu
+      
       q = x1*x2*(1.-mu)
+      print q
+      print sqrt( 1. + 2./q )
+
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
       C=3./8.*Theta*Maxwell_r(gammaStar)
             
      
-      point, weight = IntGamma 
+      gamma, gamma_weight = IntGamma 
       NL = range(NGamma) # list of indeces
       
-      summands = map(lambda i : map(lambda x: C*x*weight[i],\
-           Compton_redistribution_m(x1,x2,mu,Theta*point[i]+gammaStar)),NL)
+      summands = map(lambda i : map(lambda x: C*x*gamma_weight[i],\
+           Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)),NL)
       R = [sum([summands[j][i] for j in NL]) for i in range(4)] # summing to obtain the integrals
       
       # # the next 5 lines do the same thing as previous three but faster for some reason
       # # ( actually, only 2% faster, not very helpful) 
       # R=[0.,0.,0.,0.]
       # for i in NL:
-      #       T=Compton_redistribution_m(x1,x2,mu,Theta*point[i]+gammaStar)
+      #       T=Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)
       #       for j in range(4):
-      #             R[j]+=C*weight[i]*T[j]
+      #             R[j]+=C*gamma_weight[i]*T[j]
 
       return tuple(R)
       
@@ -173,7 +181,7 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       mur1 = sqrt( 1. - mu1*mu1 ) # sinuses of the angles 
       mur2 = sqrt( 1. - mu2*mu2 ) # what the R stands for? I dunno.
       
-      point, weight = IntAzimuth
+      point, point_weight = IntAzimuth
       NL = range(NAzimuth) # indeces list
       
       az_c=cos(pi*point)  # list of azimuth cosines
@@ -199,107 +207,132 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       R=zeros( (2,2,) )
       for i in NL:
             (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i])
-            R[0][0]+=C*pi*weight[i]
-            R[0][1]+=I*pi*cos2chi2[i]*weight[i]
-            R[1][0]+=I*pi*cos2chi1[i]*weight[i]
-            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]-U*sin2chiP[i])*weight[i]        
+            R[0][0]+=C*pi*point_weight[i]
+            R[0][1]+=I*pi*cos2chi2[i]*point_weight[i]
+            R[1][0]+=I*pi*cos2chi1[i]*point_weight[i]
+            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]-U*sin2chiP[i])*point_weight[i]        
       
       
      # print x1,x2,mu1,mu2,R
       return R
 
-
 s,gn=pr(s,gn,'funcs')
 
-x,x_w=IntEnergy
-mu,mu_w=IntDirection
-tau,tau_w=IntDepth
-      
-RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
-for e in range(NEnergy):
-  for e1 in range(e,NEnergy):
-    for d in range(NDirection/2): 
-      for d1 in range(d,NDirection/2):
-            x2,x1,m2,m1=x[e],x[e1],mu[d],mu[d1]
-            r=Compton_redistribution_aa(x2,x1,m2,m1)
 
-            t=d1>d
-            f=e1>e
-           
-            md=NDirection-d-1 
-            md1=NDirection-d1-1
+def CheckAngularSymmetry(x1,x2,mu1,mu2):
+      print '344444444444444444444444444444444444444444444444444444444'
+      eps=1e-10
+      one = Compton_redistribution_aa(x1,x2,mu1,mu2)
+      two = Compton_redistribution_aa(x1,x2,mu2,mu1)
+      three = Compton_redistribution_aa(x1,x2,-mu1,-mu2)
+      four = Compton_redistribution_aa(x1,x2,-mu2,-mu1) 
+      v=True
+      a,b,c = two[0][0]/one[0][0]-1,three[0][0]/one[0][0]-1,four[0][0]/two[0][0]-1 # 0 0 0
+      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
+      a,b,c = two[1][0]/one[0][1]-1,three[1][0]/one[1][0]-1,four[0][1]/two[0][1]-1 # 0 0 0
+      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
+      a,b,c = two[0][1]/one[1][0]-1,three[0][1]/one[0][1]-1,four[1][0]/two[1][0]-1 # 0 0 0
+      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
+      a,b,c = two[1][1]/one[1][1]-1,three[1][1]/one[1][1]-1,four[1][1]/two[1][1]-1 # 0 0 0
+      if abs(a)>eps or abs(b)>eps or abs(c)>eps : v=False
+      return v
 
-            RedistributionMatrix[e][e1][d][d1]=r
-            RedistributionMatrix[e][e1][md][md1]=r
-            if t: #angular symmetry
-                  rt=r
-                  rt[0][1],rt[1][0]=rt[1][0],rt[0][1]
-                  RedistributionMatrix[e][e1][d1][d]=rt
-                  RedistributionMatrix[e][e1][md1][md]=rt
-            if f: #frequency symmetry
-                  rf=r*exp((x2-x1)/Theta)
-                  RedistributionMatrix[e1][e][d][d1]=rf
-                  RedistributionMatrix[e1][e][md][md1]=rf
-            if t and f: # both
-                  rtf=rt*exp((x2-x1)/Theta)
-                  RedistributionMatrix[e1][e][d1][d]=rtf
-                  RedistributionMatrix[e1][e][md1][md]=rtf
+print CheckAngularSymmetry(0.01,0.1,-0.4,0.5)
+s,gn=pr(s,gn,'ang-check')
+exit()
 
+for ComputingRedistributionMatrices in [1]:         
+      RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
+      x,x_weight=IntEnergy
+      mu,mu_weight=IntDirection
+      for e in range(NEnergy):
+            for e1 in range(e,NEnergy):
+                  for d in range(NDirection/2): 
+                        for d1 in range(d,NDirection/2):
+                              r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
 
-s,gn=pr(s,gn,'table')
-Source=empty((ScatterNum,NDepth,NEnergy,NDirection,2))                 
-Stokes=empty((ScatterNum,NDepth,NEnergy,NDirection,2))
-Stokes_in=empty((NDepth,NEnergy,NDirection,2))
-Stokes_out=empty((NEnergy,NDirection,2))
+                              t=d1>d
+                              f=e1>e
+                 
+                              md=NDirection-d-1 
+                              md1=NDirection-d1-1
 
-for e in range(NEnergy):
-      for d in range(NDirection):
-            for t in range(NDepth):
-                  Stokes_in[t][e][d][0]=Planck(x[e])*exp(-tau[t]/mu[d]) if mu[d]>0 else 0 
-                  Stokes_in[t][e][d][1]=0
-            else:
-                  Stokes_out[e][d][0]=Planck(x)*exp(-tau_T/mu[d]) if mu[d]>0 else 0 #!!!!!!!!!!!!!!!!!!!!!1111111 
+                              RedistributionMatrix[e][e1][d][d1]=r
+                              RedistributionMatrix[e][e1][md][md1]=r
+                              if t: #angular symmetry
+                                    rt=r
+                                    rt[0][1],rt[1][0]=rt[1][0],rt[0][1]
+                                    RedistributionMatrix[e][e1][d1][d]=rt
+                                    RedistributionMatrix[e][e1][md1][md]=rt
+                              if f: #frequency symmetry
+                                    m=exp((x[e]-x[e1])/Theta)
+                                    rf=r*m
+                                    RedistributionMatrix[e1][e][d][d1]=rf
+                                    RedistributionMatrix[e1][e][md][md1]=rf
+                              if t and f: # both
+                                    rtf=rt*m
+                                    RedistributionMatrix[e1][e][d1][d]=rtf
+                                    RedistributionMatrix[e1][e][md1][md]=rtf
 
+s,gn=pr(s,gn,'RMtable')
 
+for InitializeStocksVectorsArrays in [1]:
+      Source=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
+      Stokes=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
+      Stokes_out=empty((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
+      Stokes_in=empty((NDepth,NEnergy,NDirection,2)) # Stokes vector of the initial raiation (0th scattering) 
+      Intensity=empty((NEnergy,NDirection,2)) # total intensity of all scattering orders from the slab suface 
 
+      tau,tau_weight=IntDepth
+
+      for e in range(NEnergy):
+            for d in range(NDirection):
+                  for t in range(NDepth):
+                        Stokes_in[t][e][d][0]=Planck(x[e])*exp(-tau[t]/mu[d]) if mu[d]>0 else 0 
+                        Stokes_in[t][e][d][1]=0
+                  else:
+                        Stokes_out[0][e][d][0]=Planck(x[e])*exp(-tau_T/mu[d]) if mu[d]>0 else 0
+                        Stokes_out[0][e][d][1]=0
+      Intensity=Stokes_out[0]
 
 s,gn=pr(s,gn,'I0')
 
-for k in range(ScatterNum):
-      for t in range(NDepth):
+for k in range(ScatterNum): # do ScatterNum scattering iterations
+      for t in range(NDepth): # S_k= R T_{k-1}
             for e in range(NEnergy):
                   for d in range(NDirection):
                         S=zeros(2)
                         for e1 in range(NEnergy):
                               for d1 in range(NDirection):
-                                    w = x_w[e1]*mu_w[d1]
+                                    w = x_weight[e1]*mu_weight[d1]
                                     r = RedistributionMatrix[e][e1][d][d1]
                                     I = Stokes[k-1][t][e1][d1] if k>0 \
                                           else Stokes_in[t][e1][d1]
+                                    # print w, r, I
                                     S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] )
                                     S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] )
                         Source[k][t][e][d]=S*x[e]**2
-      for e in range(NEnergy):
-            for d in range(NDirection):
+                        # print 'S: ', S*x[e]**2
+      
+      for e in range(NEnergy): # I_k= integral S_k
+            sigma=sigma_cs(x[e])
+            for d in range(NDirection): 
+                  m=mu[d]
                   for t in range(NDepth):
-                        tau=IntDepth[0]
-                        sigma=sigma_cs(x[e])
-                        m=mu[d]
                         range_t = range(t) if m>0 else range (t+1,NDirection)
                         I=zeros(2)
-
                         for t1 in range_t:
+                              w=tau_weight[t1]
                               S=Source[k][t1][e][d]
-                              w=IntDepth[1][t1]
-                              I+=tau_w[t1]*S*exp(sigma*(tau[t1]-tau[t])/m)/m
+                              I+=w*S*exp(sigma*(tau[t1]-tau[t])/m)/m
+                              # print I,w
                         Stokes[k][t][e][d]=I
-                  else:
-                        Stokes_out[e][d]+=Stokes[k][t][e][d]
-
-      
-
-      s,gn=pr(s,gn,'I'+str(k))
-
+                        # print 'I: ',I
+                  else: 
+                        Stokes_out[k+1][e][d]=Stokes[k][t][e][d]
+      Intensity+=Stokes_out[k+1]       
+      s,gn=pr(s,gn,'I'+str(1+k)) # do ScatterNum scattering iterations
+print mu[NDirection/2:]
                                                 
 
 #print RedistributionMatrix
@@ -319,24 +352,16 @@ for k in range(ScatterNum):
 
 
 # # frequency symmetry: CHECK [v]
-# one = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.5)
-# two = Compton_redistribution_aa(1e-1,-.5,1e-2 ,.5) 
-# print exp(.09/Theta)*two[0][0]/one[0][0]-1 # 1e-15
-# print exp(.09/Theta)*two[1][0]/one[1][0]-1 # 1e-12
-# print exp(.09/Theta)*two[0][1]/one[0][1]-1 # 1e-12
-# print exp(.09/Theta)*two[1][1]/one[1][1]-1 # 1e-14
+
+one = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.5)
+two = Compton_redistribution_aa(1e-1,-.5,1e-2 ,.5) 
+print exp(.09/Theta)*two[0][0]/one[0][0]-1 # 1e-15
+print exp(.09/Theta)*two[1][0]/one[1][0]-1 # 1e-12
+print exp(.09/Theta)*two[0][1]/one[0][1]-1 # 1e-12
+print exp(.09/Theta)*two[1][1]/one[1][1]-1 # 1e-14
 # s,gn=pr(s,gn,'freq-check')
 
 # # angular symmetry: CHECK [x]
-# one = Compton_redistribution_aa(1e-2,-.4,1e-1 ,.5)
-# two = Compton_redistribution_aa(1e-2,.5,1e-1 ,-.4)
-# three = Compton_redistribution_aa(1e-2,.4,1e-1 ,-.5)
-# four = Compton_redistribution_aa(1e-2,-.5,1e-1 ,.4) 
-# print two[0][0]/one[0][0]-1,three[0][0]/one[0][0]-1,four[0][0]/two[0][0]-1 # 0 0 0
-# print two[1][0]/one[0][1]-1,three[1][0]/one[1][0]-1,four[0][1]/two[0][1]-1 # 0 0 0
-# print two[0][1]/one[1][0]-1,three[0][1]/one[0][1]-1,four[1][0]/two[1][0]-1 # 0 0 0
-# print two[1][1]/one[1][1]-1,three[1][1]/one[1][1]-1,four[1][1]/two[1][1]-1 # 0 0 0
-# s,gn=pr(s,gn,'ang-check')
 
 
 print 'Total time : ', s-time0
