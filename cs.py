@@ -17,6 +17,9 @@ from scipy.special import kn
 #import matplotlib.pyplot as plt
 s,gn=pr(s,gn, 'importing')
 
+#physical constants:
+evere=.5109989e6 # electron volts / elecron rest energy 
+
 #precomputations :
 ScatterNum = 2 # total number of scatterings
 NGamma=20 # number of Lorenz factor points (\gamma)
@@ -27,7 +30,7 @@ NDepth = 23 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
 tau_T= 1. # Thomson optical depth of thermalization 
-x_l, x_u = -3. , 1. # lower and upper bound of the log_10 energy span 
+x_l, x_u = -3. , 1. # lower and upper bounds of the log_10 energy span 
 logEnergySpan, logEnergyStep = linspace(x_l*log(10),x_u*log(10),num=NEnergy,retstep=True)
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -36,21 +39,20 @@ IntDirection = leggauss(NDirection) #  sample points and weights for computing t
 IntEnergy = (exp(logEnergySpan), exp(-logEnergySpan)*logEnergyStep,) # sample points and wights for computing the full source function 
 IntDepth = linspace(0,tau_T,num=NDepth), tau_T/(NDepth-1)*ones(NDepth) # sample points and weights for computing the intensities
 
-evere=.5109989e6 # electron volts / elecron rest energy 
 
 def setTe(T):
-      "use this function to set electron gas Maxwellian temperature"
+      " Use this function to set electron gas Maxwellian temperature"
       K = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
       return (T, K) # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
 
-Theta, K2Y = setTe(5e4/evere) # it's about 0.1
+Theta, K2Y = setTe(0.1) # it's about 0.1
 T = 1e3/evere # photon black body temperature
 s,gn=pr(s,gn,'precomps')
 
 
 def Planck(x):
-      """Planck function for Intensity of black body radiation 
-      x is the energy of a photon in units of electron rest energy ( h \nu / m_e c^2 ) 
+      """   Planck function for Intensity of black body radiation 
+      The only argument x is the energy of a photon in units of electron rest energy ( h \\nu / m_e c^2 ) 
       The photon temperature is given by T also in units of electron rest mass
       Planck returns the intensity of  BB radiation
       """
@@ -75,10 +77,12 @@ def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-
       else: return 3*(2-(1/x+1-x/2)*log(1+2*x))/4/x/x + 3*(1+x)/4/(1+2*x)**2
 
 def Compton_redistribution_m(x1,x2,mu,gamma): 
-      """Compton redistribution matrix for monoenergetic electron gas
-      x1 and x2 - photon energies in units of electron rest energy ( h \nu / m_e c^2 ) 
+      """   Compton redistribution matrix for monoenergetic electron gas
+      The arguements are:
+      x1 and x2 - photon energies in units of electron rest energy ( h \\nu / m_e c^2 ) 
       mu - cosine of a scattering angle 
       gamma - energy of each electron in the gas in units of the electron rest mass
+      
       This fuctions returns (R,RI,RQ,RU)
       which are scalar redistribution functions for isotropic monoenergetic gas
       and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully
@@ -128,10 +132,12 @@ def Maxwell_r(gamma):
       return r
 
 def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the function must be modified.
-      """thermal Compton redistribution matrix (integrated with electron distribution function)
+      """    Thermal Compton redistribution matrix (integrated with electron distribution function)
       And the distribution is maxwellian (if it's not the function must be modified)
-      x1 and x2 - photon energies in units of electron rest energy ( h \nu / m_e c^2 ) 
+      The arguments are:
+      x1 and x2 - photon energies in units of electron rest energy ( h \\nu / m_e c^2 ) 
       mu - cosine of a scattering angle 
+      
       This fuctions returns (R,RI,RQ,RU)
       which are scalar redistribution functions for Maxwellian relativistic gas
       and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully 
@@ -161,10 +167,12 @@ def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the fu
       return tuple(R)
       
 def Compton_redistribution_aa(x1,x2,mu1,mu2):
-      """azimuth-avereged Compton redistribution matrix 
+      """   Azimuth-avereged Compton redistribution matrix 
       for computing of electron scattering source function 
-      x1 and x2 are photon energies in units of electron rest energy ( h \nu / m_e c^2 ) 
+      The arguements are:
+      x1 and x2 are photon energies in units of electron rest energy ( h \\nu / m_e c^2 ) 
       mu1 and mu2 are cosines of angles between photon propagation directions and fixed direction
+      
       This function returns R11 R12 R21 R22 matrix elements
       We need only 2x2 matrix in the upper left corner of the general matrix,
       becouse U and V components on the Stokes vector are zero in this case.
@@ -173,31 +181,19 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       # the difference is a factor depending of x1 and x2, but the relations between different elements are alright
 
 
-      mur1 = sqrt( 1. - mu1*mu1 ) # sinuses of the angles 
-      mur2 = sqrt( 1. - mu2*mu2 ) # what the R stands for? I dunno.
+      eta1 = 1. - mu1*mu1  # squared sinuses of the angles 
+      eta2 = 1. - mu2*mu2  
       
       point, point_weight = IntAzimuth
       NL = range(NAzimuth) # indeces list
       
       az_c=cos(pi*point)  # list of azimuth cosines
-      az_s=sin(pi*point)  # list of azimuth sinuses
-      sc_c=mu1*mu2-mur1*mur2*az_c # list of scattering angles cosines
-      sc_ss = 1. - sc_c**2 # list of squared sinuses
-      cos2chi1 = -1. + 2.*(mu2-mu1*sc_c)**2/mur1/mur1/sc_ss  # list[ cos( 2 \chi_1 ) ]
-      cos2chi2 = -1. + 2.*(mu1-mu2*sc_c)**2/mur2/mur2/sc_ss  # list[ cos( 2 \chi_2 ) ]
-      sin2chiP = -4.*(mu1-mu2*sc_c)*(mu2-mu1*sc_c)*(az_s/sc_ss)**2  # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
-      
-      # # This is actually not faster and not slower but contains more characters 
-      # cos2chi1 = map(lambda c : 2.*(mu2-mu1*c)**2/mur1/mur1/(1.-c*c) - 1. , sc_c) # list[ cos( 2 \chi_1 ) ]
-      # cos2chi2 = map(lambda c : 2.*(mu1-mu2*c)**2/mur2/mur2/(1.-c*c) - 1. , sc_c) # list[ cos( 2 \chi_2 ) ]
-      # sin2chiP = map(lambda c, s : -4.*(mu1-mu2*c)*(mu2-mu1*c)*(s/(1.-c*c))**2 , sc_c , az_s) # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
-      
-      # sin2chi1 = map(lambda c, s : -(mu1-mu2*c)*mur2*s/mur1/(1.-c*c) , sc_c , az_s) # list[ sin( 2 \chi_1 ) ]
-      # sin2chi2 = map(lambda c, s :  (mu1-mu2*c)*mur1*s/mur2/(1.-c*c) , sc_c , az_s) # list[ sin( 2 \chi_2 ) ]
-      # cos2chi12 = map(lambda c,s : ((mu2-mu1*c)**2-mur1*mur1*mur2*mur2*s*s)/mur1/mur1/(1.-c*c) , sc_c,az_s)
-      # print max(map(lambda a,b:abs(a-b)/(a+b), cos2chi12,cos2chi1)) # comparing two formulas. It turns out they're the same
-      
-
+      az_s=sin(pi*point)**2  # list of azimuth square sinuses
+      sc_c=mu1*mu2-sqrt(eta1*eta2)*az_c # list of scattering angles' cosines
+      sc_s=1. - sc_c**2 # list of scattering angles' squared sinuses
+      cos2chi1 = -1. + 2.*(mu2-mu1*sc_c)**2/eta1/sc_s  # list[ cos( 2 \chi_1 ) ]
+      cos2chi2 = -1. + 2.*(mu1-mu2*sc_c)**2/eta2/sc_s  # list[ cos( 2 \chi_2 ) ]
+      sin2chiP = -4.*(mu1-mu2*sc_c)*(mu2-mu1*sc_c)*az_s/sc_s**2  # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
 
       R=zeros( (2,2,) )
       for i in NL:
@@ -205,7 +201,7 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
             R[0][0]+=C*pi*point_weight[i]
             R[0][1]+=I*pi*cos2chi2[i]*point_weight[i]
             R[1][0]+=I*pi*cos2chi1[i]*point_weight[i]
-            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]-U*sin2chiP[i])*point_weight[i]        
+            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*point_weight[i]  # sign?       
       
       
      # print x1,x2,mu1,mu2,R
@@ -213,14 +209,20 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
 
 s,gn=pr(s,gn,'funcs')
 
-# from check import *
-# print CheckAngularSymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5)
-# s,gn=pr(s,gn,'ang-check')
-# print CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5,Theta)
-# s,gn=pr(s,gn,'ang-check')
-# exit()
+if False:
+      from compare import Factor
+      Factor(Compton_redistribution_aa)
+      exit()
 
-for ComputingRedistributionMatrices in [1]: 
+if False: # checking symmetries
+      from check import *
+      print CheckAngularSymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5)
+      s,gn=pr(s,gn,'ang-check')
+      print CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.1,0.5,-0.5,Theta)
+      s,gn=pr(s,gn,'ang-check')
+      exit()
+
+if True : # Computing redistribution matrices for all energies and angles 
       RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
       x,x_weight=IntEnergy
       mu,mu_weight=IntDirection
@@ -252,10 +254,9 @@ for ComputingRedistributionMatrices in [1]:
                                     rtf=rt*m
                                     RedistributionMatrix[e1][e][d1][d]=rtf
                                     RedistributionMatrix[e1][e][md1][md]=rtf
+      s,gn=pr(s,gn,'RMtable')
 
-s,gn=pr(s,gn,'RMtable')
-
-for InitializeStocksVectorsArrays in [1]: 
+if True : # Initializing Stokes vectors arrays  
       Source=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
       Stokes=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
       Stokes_out=empty((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
@@ -273,8 +274,7 @@ for InitializeStocksVectorsArrays in [1]:
                         Stokes_out[0][e][d][0]=Planck(x[e])*exp(-tau_T/mu[d]) if mu[d]>0 else 0
                         Stokes_out[0][e][d][1]=0
       Intensity=Stokes_out[0]
-
-s,gn=pr(s,gn,'I0')
+      s,gn=pr(s,gn,'I0')
 
 for k in range(ScatterNum): # do ScatterNum scattering iterations
       for t in range(NDepth): # S_k= R T_{k-1}
@@ -311,7 +311,9 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                         Stokes_out[k+1][e][d]=Stokes[k][t][e][d]
       Intensity+=Stokes_out[k+1]       
       s,gn=pr(s,gn,'I'+str(1+k)) # do ScatterNum scattering iterations
-print mu[NDirection/2:]
-                                                
+
+      print mu[NDirection/2:]
+     # # frequency symmetry: CHECK [v]
+                                           
 print 'Total time : ', s-time0
 
