@@ -24,9 +24,9 @@ def CheckFrequencySymmetry(r,x1,x2,mu1,mu2,Theta):
       one = r(x1,x2,mu1,mu2)
       two = r(x2,x1,mu1,mu2)
       v=True
-      v=v and  abs(exp((x2-x1)/Theta)*two[0][0]/one[0][0]-1)<eps # 1e-15
-      v=v and  abs(exp((x2-x1)/Theta)*two[1][0]/one[1][0]-1)<eps # 1e-12
-      v=v and  abs(exp((x2-x1)/Theta)*two[0][1]/one[0][1]-1)<eps # 1e-12
-      v=v and  abs(exp((x2-x1)/Theta)*two[1][1]/one[1][1]-1)<eps # 1e-14
+      v=v and abs( x1**3 / x2**3 * exp((x2-x1)/Theta)*two[0][0]/one[0][0]-1)<eps # 1e-15
+      v=v and abs( x1**3 / x2**3 * exp((x2-x1)/Theta)*two[1][0]/one[1][0]-1)<eps # 1e-12
+      v=v and abs( x1**3 / x2**3 * exp((x2-x1)/Theta)*two[0][1]/one[0][1]-1)<eps # 1e-12
+      v=v and abs( x1**3 / x2**3 * exp((x2-x1)/Theta)*two[1][1]/one[1][1]-1)<eps # 1e-14
       return v
 

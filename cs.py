@@ -9,10 +9,10 @@ s,gn=pr(time0,0)
 #import:
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
-from numpy import linspace, empty, ones, zeros
+from numpy import linspace, logspace, empty, zeros
 from numpy import pi, exp, log, sqrt, sin, cos
 from scipy.special import kn
-#from matplotlib.pyplot import *
+from matplotlib.pyplot import *
 #import numpy as np
 #import matplotlib.pyplot as plt
 s,gn=pr(s,gn, 'importing')
@@ -21,24 +21,22 @@ s,gn=pr(s,gn, 'importing')
 evere=.5109989e6 # electron volts / elecron rest energy 
 
 #precomputations :
-ScatterNum = 2 # total number of scatterings
-NGamma=20 # number of Lorenz factor points (\gamma)
-NAzimuth=40 # (*) numbers of azimuth angles (\phi)
-NDirection = 10 # (*) number of propagation angle cosines (\mu) 
-NEnergy = 11 # number of energy points (x)
-NDepth = 23 # number of optical depth levels (\tau)
+ScatterNum = 10 # total number of scatterings
+NGamma=10 # number of Lorenz factor points (\gamma)
+NAzimuth=10 # (*) numbers of azimuth angles (\phi)
+NDirection = 12 # (*) number of propagation angle cosines (\mu) 
+NEnergy = 21 # number of energy points (x)
+NDepth = 20 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
-tau_T= 1. # Thomson optical depth of thermalization 
-x_l, x_u = -3. , 1. # lower and upper bounds of the log_10 energy span 
-logEnergySpan, logEnergyStep = linspace(x_l*log(10),x_u*log(10),num=NEnergy,retstep=True)
+tau_T= .5 # Thomson optical depth of thermalization 
+x_l, x_u = -6. , 0. # lower and upper bounds of the log_10 energy span
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
 IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
 IntDirection = leggauss(NDirection) #  sample points and weights for computing the source function of one given incoming photon energy
-IntEnergy = (exp(logEnergySpan), exp(-logEnergySpan)*logEnergyStep,) # sample points and wights for computing the full source function 
-IntDepth = linspace(0,tau_T,num=NDepth), tau_T/(NDepth-1)*ones(NDepth) # sample points and weights for computing the intensities
-
+IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for computing the full source function 
+IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weights for computing the intensities
 
 def setTe(T):
       " Use this function to set electron gas Maxwellian temperature"
@@ -46,7 +44,7 @@ def setTe(T):
       return (T, K) # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
 
 Theta, K2Y = setTe(0.1) # it's about 0.1
-T = 1e3/evere # photon black body temperature
+T = 1e1/evere # photon black body temperature
 s,gn=pr(s,gn,'precomps')
 
 
@@ -57,9 +55,9 @@ def Planck(x):
       Planck returns the intensity of  BB radiation
       """
       eps=1e-5
-      C=1. # some dimension constant. I just didn't think what it should be like yet
+      C=1.*evere # some dimension constant. I just didn't think what it should be like yet
       R=C*x*x # Rayleigh Jeans law
-      I=R*x/(exp(x/T)-1.) if x/T < eps else R*T
+      I=R*x/(exp(x/T)-1.) if x/T > eps else R*T
       return I
 
 def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-section  based on electron momentum distribution
@@ -191,9 +189,9 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       az_s=sin(pi*point)**2  # list of azimuth square sinuses
       sc_c=mu1*mu2-sqrt(eta1*eta2)*az_c # list of scattering angles' cosines
       sc_s=1. - sc_c**2 # list of scattering angles' squared sinuses
-      cos2chi1 = -1. + 2.*(mu2-mu1*sc_c)**2/eta1/sc_s  # list[ cos( 2 \chi_1 ) ]
-      cos2chi2 = -1. + 2.*(mu1-mu2*sc_c)**2/eta2/sc_s  # list[ cos( 2 \chi_2 ) ]
-      sin2chiP = -4.*(mu1-mu2*sc_c)*(mu2-mu1*sc_c)*az_s/sc_s**2  # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
+      cos2chi1 = 2.*(mu1*sc_c-mu2)*(mu1*sc_c-mu2)/eta1/sc_s-1.  # list[ cos( 2 \chi_1 ) ]
+      cos2chi2 = 2.*(mu1-mu2*sc_c)*(mu1-mu2*sc_c)/eta2/sc_s-1.  # list[ cos( 2 \chi_2 ) ]
+      sin2chiP = 4.*(mu1-mu2*sc_c)*(mu1*sc_c-mu2)*az_s/sc_s**2  # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
 
       R=zeros( (2,2,) )
       for i in NL:
@@ -201,31 +199,36 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
             R[0][0]+=C*pi*point_weight[i]
             R[0][1]+=I*pi*cos2chi2[i]*point_weight[i]
             R[1][0]+=I*pi*cos2chi1[i]*point_weight[i]
-            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*point_weight[i]  # sign?       
+            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*point_weight[i]         
       
       
      # print x1,x2,mu1,mu2,R
-      return R
+      return R*x1*x1/x2
 
 s,gn=pr(s,gn,'funcs')
 
-if False:
+if True: #draw Planck
+      x=IntEnergy[0]
+      plot(x,map(lambda e: log(e*Planck(e)),x),'g')
+      
+if False: # compare the numbers to ones obtained from old fortran code
       from compare import Factor
       Factor(Compton_redistribution_aa)
-      exit()
-
+      
 if False: # checking symmetries
       from check import *
       print CheckAngularSymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5)
       s,gn=pr(s,gn,'ang-check')
       print CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.1,0.5,-0.5,Theta)
-      s,gn=pr(s,gn,'ang-check')
-      exit()
+      s,gn=pr(s,gn,'freq-check')
+
+if True: # Computing Compton scattering cross section for all energies
+      x,x_weight=IntEnergy
+      sigma=map(sigma_cs,x)   
 
 if True : # Computing redistribution matrices for all energies and angles 
-      RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
-      x,x_weight=IntEnergy
       mu,mu_weight=IntDirection
+      RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
       for e in range(NEnergy):
             for e1 in range(e,NEnergy):
                   for d in range(NDirection/2): 
@@ -256,22 +259,20 @@ if True : # Computing redistribution matrices for all energies and angles
                                     RedistributionMatrix[e1][e][md1][md]=rtf
       s,gn=pr(s,gn,'RMtable')
 
-if True : # Initializing Stokes vectors arrays  
+if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
+      tau,tau_weight=IntDepth
       Source=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
       Stokes=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
       Stokes_out=empty((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
       Stokes_in=empty((NDepth,NEnergy,NDirection,2)) # Stokes vector of the initial raiation (0th scattering) 
       Intensity=empty((NEnergy,NDirection,2)) # total intensity of all scattering orders from the slab suface 
-
-      tau,tau_weight=IntDepth
-
       for e in range(NEnergy):
             for d in range(NDirection):
                   for t in range(NDepth):
-                        Stokes_in[t][e][d][0]=Planck(x[e])*exp(-tau[t]/mu[d]) if mu[d]>0 else 0 
+                        Stokes_in[t][e][d][0]=Planck(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
                         Stokes_in[t][e][d][1]=0
                   else:
-                        Stokes_out[0][e][d][0]=Planck(x[e])*exp(-tau_T/mu[d]) if mu[d]>0 else 0
+                        Stokes_out[0][e][d][0]=Planck(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
                         Stokes_out[0][e][d][1]=0
       Intensity=Stokes_out[0]
       s,gn=pr(s,gn,'I0')
@@ -283,37 +284,52 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                         S=zeros(2)
                         for e1 in range(NEnergy):
                               for d1 in range(NDirection):
-                                    w = x_weight[e1]*mu_weight[d1]
+                                    w = mu_weight[d1]*x_weight # total weight
                                     r = RedistributionMatrix[e][e1][d][d1]
                                     I = Stokes[k-1][t][e1][d1] if k>0 \
                                           else Stokes_in[t][e1][d1]
                                     # print w, r, I
                                     S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] )
                                     S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] )
-                        Source[k][t][e][d]=S*x[e]**2
+                        Source[k][t][e][d]=S
                         # print 'S: ', S*x[e]**2
       
-      for e in range(NEnergy): # I_k= integral S_k
-            sigma=sigma_cs(x[e])
-            for d in range(NDirection): 
-                  m=mu[d]
-                  for t in range(NDepth):
-                        range_t = range(t) if m>0 else range (t+1,NDirection)
+      
+      for t in range(NDepth):
+            for e in range(NEnergy): # I_k= integral S_k
+                  for d in range(NDirection): 
+                        # m=mu[d]
                         I=zeros(2)
-                        for t1 in range_t:
-                              w=tau_weight[t1]
+                        for t1 in range(t) if mu[d]>0 else range (t+1,NDirection):
                               S=Source[k][t1][e][d]
-                              I+=w*S*exp(sigma*(tau[t1]-tau[t])/m)/m
+                              I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                               # print I,w
-                        Stokes[k][t][e][d]=I
+                        Stokes[k][t][e][d]=I/mu[d]
                         # print 'I: ',I
-                  else: 
-                        Stokes_out[k+1][e][d]=Stokes[k][t][e][d]
-      Intensity+=Stokes_out[k+1]       
+      else:
+            Stokes_out[k+1]=Stokes[k][t]
+            Intensity+=Stokes[k][t]       
       s,gn=pr(s,gn,'I'+str(1+k)) # do ScatterNum scattering iterations
 
-      print mu[NDirection/2:]
-     # # frequency symmetry: CHECK [v]
-                                           
+out = open('res','w')
+d=NDirection*3/5
+out.write(str(mu[d])+str(list(x))+'\n')
+#range(NDirection/2,NDirection):
+print d
+for k in range(ScatterNum+1):
+      xFx=[log(Stokes_out[k][e][d][0]*x[e]) for e in range(NEnergy)]
+      plot(x,xFx,'r')
+      out.write(str(k)+' : '+str(mu[d])+str(xFx)+'\n')
+
+xFx=[log(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
+plot(x,xFx)
+
+# diff = (lambda a,b : (log(Intensity[a][d][0])-log(Intensity[b][d][0]))/(log(x[a])-log(x[b])))
+# print diff(10,12),diff(12,14) ,diff(14,16),diff(16,18)  
+# yscale('log')
+xscale('log')
+out.write('t : '+str(mu[d])+str(xFx)+'\n')
+show()                                           
+
 print 'Total time : ', s-time0
 
