@@ -7,10 +7,10 @@ def pr(s,gn,message = ''):
 s,gn=pr(time0,0)
 
 #import:
-from numpy.polynomial.laguerre import laggauss
-from numpy.polynomial.legendre import leggauss
 from numpy import linspace, logspace, empty, zeros
 from numpy import pi, exp, log, sqrt, sin, cos
+from numpy.polynomial.laguerre import laggauss
+from numpy.polynomial.legendre import leggauss
 from scipy.special import kn
 from matplotlib.pyplot import *
 #import numpy as np
@@ -18,7 +18,8 @@ from matplotlib.pyplot import *
 s,gn=pr(s,gn, 'importing')
 
 #physical constants:
-evere=.5109989e6 # electron volts / elecron rest energy 
+evere=.5109989e6 # electron volts in elecron rest energy 
+incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
 ScatterNum = 10 # total number of scatterings
@@ -55,9 +56,10 @@ def Planck(x):
       Planck returns the intensity of  BB radiation
       """
       eps=1e-5
-      C=1.*evere # some dimension constant. I just didn't think what it should be like yet
+      C= 2. * incgs # some dimension constant.
       R=C*x*x # Rayleigh Jeans law
       I=R*x/(exp(x/T)-1.) if x/T > eps else R*T
+      
       return I
 
 def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-section  based on electron momentum distribution
@@ -304,7 +306,7 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                               # print I,w
-                        Stokes[k][t][e][d]=I/mu[d]
+                        Stokes[k][t][e][d]=I/abs(mu[d])
                         # print 'I: ',I
       else:
             Stokes_out[k+1]=Stokes[k][t]
