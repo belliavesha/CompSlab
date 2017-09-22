@@ -1,0 +1,88 @@
+\documentclass[iop, usenatbib]{emulateapj}
+
+%\documentclass{article}
+\usepackage{amssymb}
+\usepackage{epsfig}
+\usepackage{color}
+\usepackage{bm}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{lipsum}
+%\usepackage[showframe]{geometry}% http://ctan.org/pkg/geometry
+%\usepackage{multicol}% http://ctan.org/pkg/multicols
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+
+%\slugcomment{ }
+%\shorttitle{Polarization from neutron stars}
+%\shortauthors{Me}
+
+%\voffset=-1cm
+
+\begin{document}
+\title{Polarized radiation from electron slab atmosphere}
+
+
+
+\author{ V. Loktev }
+
+%\institute{ Me Me Big Boy}
+
+\date{Received XXX / Accepted XXX}
+
+
+
+\begin{abstract}
+\lipsum[1]
+\end{abstract}
+
+
+\keywords{methods: numerical --- transfer:radiative  --- stars: neutron --- me me: big boy}
+
+%\titlerunning{Meme BB}
+
+\maketitle
+
+\section{Setup}
+The simple neutron star atmosphere model is considered in which the atmosphere is a plane parallel electron consisting slab lying on an optically thick source of thermalized  black body radiation.
+The atmosphere slab has vertical hight $H$ which is equivalent to optical depth of thermalization layer $\tau_T=\sigma_Tn_eH$    
+The electron gas in the atmosphere is considered to be isotropic and isothermal with constant dimensionless electron temperature $\Theta$ for any depth under surface from the bottom of the slab $\tau=0$ up to the surface $\tau=\tau_T$.
+In case of neutron star the temperature $\Theta$ is corresponding to electron energies about $50 keV$ which is equivalent to $\Theta\approx 0.1$ in units of electron rest energy $m_ec^2$. 
+Since the electron velocities are relativistic, they are characterized by Lorenz factor $\gamma$
+The momentum distribution of the electrons is considered to be relativistic Maxwellian distribution characterized by reversed dimensionless temperature $Y = 1/ \Theta$ and given by 
+\be
+f(\gamma)= \frac{Y e^{-\gamma Y}}{4\pi K_2(Y)}
+\ee
+where $K_2$ is the second modified Bessel function.  
+Radiation intensity and polarization degree can be described by Stokes vector $\bm{I}(\tau,x,\mu)$. $\mu$ is the cosine of an angle between normal vector from the slab and direction of emergent photons propagation.  
+The Stokes vector is usually contains 4 components, but due to angular symmetry of the star and absence of circular polarization source the last two of them will equal to zero.
+Thus one can put $\bm{I}(\tau,x,\mu)=\bm{I}(z,\nu,\mu) = (I,Q)^T$.
+The photon distribution on the bottom of the slab is considered to be Planckian with characteristic dimensionless temperature $T$.  In case of neutron star atmosphere this temperature is taken corresponding to photon energies around $1keV$ or $x\approx 0.002$ in  units of electron rest energy.
+Thus the initial intensity on the bottom of the slab according to the Planck's law is
+\be
+I_{in}(\tau=0,x)=\frac{2m_e^4c^6}{h^3}\frac{x^3}{e^{x/T}-1}
+\ee   
+\section{Radiative transfer}
+In order to describe the propagation of polarized radiation through a plane parallel electron slab we use the radiative transfer equation, which in our  simple case, when only Compton scattering is being considered while pair production and all sorts of emission are neglected, in terms of dimensionless quantities such as $$
+ I'=I \frac{H \sigma_T}{m_e c^3}=I \frac{\tau_T}{n_e m_e c^3} \qquad S'=S \frac{H \sigma_T}{m_e c^3}$$$$
+\sigma'_{CS}=\sigma_{CS}/\sigma_T \qquad d\tau= \sigma_T n_e dz $$
+takes its dimensionless form 
+\be
+\mu \frac{d I (\tau,x,\mu)}{d\tau} = -  \sigma_{CS}(x)I(\tau,x,\mu) + S(z,x,\mu) 
+\ee
+
+
+
+
+\section{The electron scattering source function}
+\be
+S(\tau,x,\mu)
+\ee
+
+
+
+
+
+\end{document}
