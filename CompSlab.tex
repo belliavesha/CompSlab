@@ -9,6 +9,7 @@
 \usepackage{graphicx}
 \usepackage{gensymb}
 \usepackage{lipsum}
+\usepackage{hyperref}
 %\usepackage[showframe]{geometry}% http://ctan.org/pkg/geometry
 %\usepackage{multicol}% http://ctan.org/pkg/multicols
 
@@ -52,11 +53,12 @@ The electron gas in the atmosphere is considered to be isotropic and isothermal 
 In case of neutron star the temperature $\Theta$ is corresponding to electron energies about $50 keV$ which is equivalent to $\Theta\approx 0.1$ in units of electron rest energy $m_ec^2$. 
 Since the electron velocities are relativistic, they are characterized by Lorenz factor $\gamma$
 The momentum distribution of the electrons is considered to be relativistic Maxwellian distribution characterized by reversed dimensionless temperature $Y = 1/ \Theta$ and given by 
-\be
-f(\gamma)= \frac{Y e^{-\gamma Y}}{4\pi K_2(Y)}
+\be 
+\label{eq:Maxwell}
+f_M(\gamma)= \frac{Y e^{-\gamma Y}}{4\pi K_2(Y)}
 \ee
 where $K_2$ is the second modified Bessel function.  
-Radiation intensity and polarization degree can be described by Stokes vector $\bm{I}(\tau,x,\mu)$. $\mu$ is the cosine of an angle between normal vector from the slab and direction of emergent photons propagation.  
+Radiation intensity and polarization degree can be described by Stokes vector $\bm{I}(\tau,x,\mu)$. $\mu$ is the cosine of an angle between vertical axis of the slab and direction of emergent photons propagation.  
 The Stokes vector is usually contains 4 components, but due to angular symmetry of the star and absence of circular polarization source the last two of them will equal to zero.
 Thus one can put $\bm{I}(\tau,x,\mu)=\bm{I}(z,\nu,\mu) = (I,Q)^T$.
 The photon distribution on the bottom of the slab is considered to be Planckian with characteristic dimensionless temperature $T$.  In case of neutron star atmosphere this temperature is taken corresponding to photon energies around $1keV$ or $x\approx 0.002$ in  units of electron rest energy.
@@ -70,16 +72,160 @@ In order to describe the propagation of polarized radiation through a plane para
 \sigma'_{CS}=\sigma_{CS}/\sigma_T \qquad d\tau= \sigma_T n_e dz $$
 takes its dimensionless form 
 \be
+\label{eq:transfer}
 \mu \frac{d I (\tau,x,\mu)}{d\tau} = -  \sigma_{CS}(x)I(\tau,x,\mu) + S(z,x,\mu) 
 \ee
-
-
-
-
-\section{The electron scattering source function}
+where $S$ is the source function, which can be expressed in terms of azimuth averaged Compton redistribution function $\bm{R}$, the 
+computation of which is discussed in section \ref{redistr} 
 \be
-S(\tau,x,\mu)
+\label{eq:Source}
+S(\tau,x,\mu)= x^2 \int_0^\infty \frac{dx_1}{x_1^2} \int_{-1}^1 d\mu_1 
+\bm{R}(x,\mu,x_1,\mu_1)\bm{I}(\tau,x_1,\mu_1)
 \ee
+The last equation can be simply written in form of integral operator
+\be
+\label{eq:Rop}
+\bm{S}=\hat{\bm{R}}\bm{I}
+\ee
+ The integrodifferential equation \eqref{eq:transfer} can be solved by expanding the solution $\bm{I}$ in scattering orders
+ \be
+ \bm{I}=\sum_{k=0}^\infty \bm{I}_k
+\ee
+ where $\bm{I}_k$ is the Stokes vector describing the photons  that have undergone $k$ scatterings. Each of them can also be written in form of integral operator  of $k$-th source function $\bm{S}_k$
+\be
+\label{eq:Sop}
+ \bm{I}_k=\hat{\bm{\Sigma}}\bm{S}_k
+\ee
+which is
+ \be
+ \hat{\bm{\Sigma}}\bm{S}=\int_{\tau_TH(\mu)}^\tau \frac{d\tau'}\mu \bm{S}(\tau',x,\mu) e^{\sigma(x)\frac{\tau'-\tau}\mu}
+\ee 
+where $H(\mu)$ is Heaviside step function. The initial Stokes vector $\bm{I}_0$ which describes nonscattered photons would be
+\be
+\bm{I}_0(\tau,x,\mu)=I_{in}(x) e^{\sigma(x)\tau/\mu}
+\ee 
+and the Stokes vector for $k$-th scattering order is obtained from the previous one using \eqref{eq:Rop} and \eqref{eq:Sop}
+\be
+\bm{I}_k=\hat{\bm{\Sigma}}\hat{\bm{R}}\bm{I}_{k-1}
+\ee
+
+
+\section{Compton redistribution matrices} \label{redistr}
+
+The redistribution matrix $\bm{R}(x,\mu,x_1,\mu_1)$
+is used in \eqref{eq:Source} and describes the probability for a photon with energy $x_1$ and propagation lean $\mu_1$ to have energy $x$ 
+and lean $\mu$ after a scattering.  
+Further let all the values that characterize photons before scattering be denoted with subscript 1,
+and for photons after scattering have none. 
+If one use the logarithmic scale for energies it is more convenient to use the slightly different expression for $\bm{R}$  
+$$
+\bm{R}^l(y,\mu,y_1,\mu_1)=\frac{x^2}{x_1}\bm{R}(x,\mu,x_1,\mu_1) $$$$
+x=e^y \qquad x_1=e^{y_1}
+$$
+And the equation \eqref{eq:Source} is being written  without the energy factor $x^2/x_1^2$ 
+\be
+S(\tau,y,\mu)= \int_{-\infty}^\infty dy \int_{-1}^1 d\mu_1 
+\bm{R}^l(y,\mu,y_1,\mu_1)\bm{I}(\tau,y_1,\mu_1)
+\ee
+The the limits of the integral over logarithmic energy $y$ just must be enough 
+for the expression below the integral to contain the majority of the photon energies, which are mostly between the characteristic temperatures of electron gas $(\Theta)$ and initial radiation ($T$).
+
+(Nagirner \& Poutanen 1993)
+
+\be
+\bm{R}(x,\mu,x_1,\mu_1)=\int_0^{2\pi}d\varphi 
+\bm{L}(-\chi)
+\bm{R}^t(x,x_1,\xi)
+\bm{L}(\chi_1)
+\ee
+
+
+$$
+\eta=\sqrt{1-\mu^2} \qquad \eta_1=\sqrt{1-\mu_1^2}
+$$
+\be
+\xi=\cos\theta=\mu \mu_1 + \eta \eta_1 \cos \phi
+\ee
+
+\be
+\bm{L}(\chi)=
+\left( {\begin{array}{cccc}
+    1 & 0 & 0 & 0 \\
+    0 & \cos{2\chi} & \sin{2\chi} & 0 \\
+    0 & \sin{2\chi} & \cos{2\chi} & 0 \\
+    0 & 0 & 0 & 1  
+   \end{array} } \right)
+\ee
+
+\be
+\cos\chi=\frac{\mu_1-\mu\xi}{\eta\sin\theta}
+\qquad
+\cos\chi_1=\frac{\mu-\mu_1\xi}{\eta_1\sin\theta}
+\ee
+
+\be
+\sin\chi=\frac{\eta_1\sin\varphi}{\sin\theta}
+\qquad
+\sin\chi_1=-\frac{\eta\sin\varphi}{\sin\theta}
+\ee
+
+
+\be
+\cos2\chi=2\frac{(\mu_1-\mu\xi)^2}{\eta^2(1-\xi^2)}-1
+\ee
+\be
+\cos2\chi_1=2\frac{(\mu-\mu_1\xi)^2}{\eta_1^2(1-\xi^2)}-1
+\ee
+\be
+\sin2\chi\sin2\chi_1=-
+\frac{(\mu_1-\mu\xi)(\mu-\mu_1\xi)\sin^2\varphi}{(1-\xi^2)^2}
+\ee
+
+From the three matrices product only upper left 2 by 2 corner is needed
+
+\be
+\bm{R}=
+\left( {\begin{array}{cc}
+    R_{11} & R_{12}  \\
+    R_{21} & R_{22}  
+    \end{array} } \right)
+\ee
+and the components are
+$$
+R_{11}=\int_0^{2\pi} d\varphi R^t 
+$$$$
+R_{12}=\int_0^{2\pi} d\varphi R^t_I\cos2\chi_1 
+$$$$
+R_{21}=\int_0^{2\pi} d\varphi R^t_I\cos2\chi 
+$$$$
+R_{22}=\int_0^{2\pi} d\varphi (R^t_Q\cos2\chi\cos2\chi_1 + R^t_U \sin2\chi\sin2\chi_1)
+$$
+The functions $R^t,\,R^t_I,\,R^t_Q,\,R^t_U$ are components of thermal Compton redistribution matrix $\bm{R}^t(x,x_1,\xi)$ 
+\be
+\bm{R}^t= 
+\left( {\begin{array}{cccc}
+    R^t & R^t_I & 0 & 0 \\
+     R^t_I &  R^t_Q & 0 & 0 \\
+    0 & 0 &  R^t_U & 0 \\
+    0 & 0 & 0 &  R^t_V  
+   \end{array} } \right)
+\ee
+which is obtained by taking an integral over electron Lorenz factor $\gamma$ with a distribution function $f(\gamma)$ which
+in the case is given by the formula \eqref{eq:Maxwell}
+\be
+\bm{R}^t(x,x_1,\xi)=\frac38\int_{\gamma_*}^\infty d\gamma
+f(\gamma)\bm{R}^m(x,x_1,\xi,\gamma)
+\ee
+
+$$
+q=xx_1(1-\xi)$$$$
+Q=\sqrt{(x-x_1)^2-2q}
+$$
+\be
+\gamma_*=\frac{x-x_1+Q\sqrt{1+2/q}}2
+\ee
+
+
 
 
 

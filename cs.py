@@ -17,21 +17,23 @@ from matplotlib.pyplot import *
 #import matplotlib.pyplot as plt
 s,gn=pr(s,gn, 'importing')
 
+colors='rygcbm' # Rainbow
+
 #physical constants:
 evere=.5109989e6 # electron volts in elecron rest energy 
 incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
-ScatterNum = 10 # total number of scatterings
+ScatterNum = 16 # total number of scatterings
 NGamma=10 # number of Lorenz factor points (\gamma)
 NAzimuth=10 # (*) numbers of azimuth angles (\phi)
-NDirection = 12 # (*) number of propagation angle cosines (\mu) 
-NEnergy = 21 # number of energy points (x)
-NDepth = 20 # number of optical depth levels (\tau)
+NDirection = 8 # (*) number of propagation angle cosines (\mu) 
+NEnergy = 50 # number of energy points (x)
+NDepth = 10 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
-tau_T= .5 # Thomson optical depth of thermalization 
-x_l, x_u = -6. , 0. # lower and upper bounds of the log_10 energy span
+tau_T= .1 # Thomson optical depth of thermalization 
+x_l, x_u = -7. , 2. # lower and upper bounds of the log_10 energy span
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
 IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
@@ -56,11 +58,16 @@ def Planck(x):
       Planck returns the intensity of  BB radiation
       """
       eps=1e-5
-      C= 2. * incgs # some dimension constant.
+      C=2. * incgs # some dimension constant.
       R=C*x*x # Rayleigh Jeans law
-      I=R*x/(exp(x/T)-1.) if x/T > eps else R*T
+      I=.0 if x/T>5e2 else R*x/(exp(x/T)-1.) if x/T > eps else R*T 
       
       return I
+
+def Delta(x):
+      C=2e4
+      I=C*exp(-1e2*(x-T)**2/T/T)
+      return I      
 
 def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-section  based on electron momentum distribution
       """ This function compute the Compton scattering cross-section in electron rest frame 
@@ -209,10 +216,18 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
 
 s,gn=pr(s,gn,'funcs')
 
-if True: #draw Planck
+if False: #draw Planck
       x=IntEnergy[0]
       plot(x,map(lambda e: log(e*Planck(e)),x),'g')
-      
+
+if False: #draw delta
+      x=IntEnergy[0]
+      plot(x,map(lambda e: (e*Delta(e)),x),'g')
+      xscale('log')
+      yscale('log')
+      show()
+      exit()
+
 if False: # compare the numbers to ones obtained from old fortran code
       from compare import Factor
       Factor(Compton_redistribution_aa)
@@ -262,25 +277,33 @@ if True : # Computing redistribution matrices for all energies and angles
       s,gn=pr(s,gn,'RMtable')
 
 if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
+      inI=Planck
       tau,tau_weight=IntDepth
-      Source=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
-      Stokes=empty((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
-      Stokes_out=empty((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
-      Stokes_in=empty((NDepth,NEnergy,NDirection,2)) # Stokes vector of the initial raiation (0th scattering) 
-      Intensity=empty((NEnergy,NDirection,2)) # total intensity of all scattering orders from the slab suface 
+      Source=zeros((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
+      Stokes=zeros((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
+      Stokes_out=zeros((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
+      Stokes_in=zeros((NDepth,NEnergy,NDirection,2)) # Stokes vector of the initial raiation (0th scattering) 
+      Intensity=zeros((NEnergy,NDirection,2)) # total intensity of all scattering orders from the slab suface 
       for e in range(NEnergy):
             for d in range(NDirection):
                   for t in range(NDepth):
-                        Stokes_in[t][e][d][0]=Planck(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
+                        Stokes_in[t][e][d][0]=inI(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
                         Stokes_in[t][e][d][1]=0
                   else:
-                        Stokes_out[0][e][d][0]=Planck(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
+                        Stokes_out[0][e][d][0]=inI(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
                         Stokes_out[0][e][d][1]=0
-      Intensity=Stokes_out[0]
+      Intensity += Stokes_out[0]
       s,gn=pr(s,gn,'I0')
 
+if False:
+      xFx=[log(Stokes_out[0][e][d][0]*x[e]) for e in range(NEnergy)]
+      plot(x,xFx,'r')
+      xscale('log')
+      show()
+      exit()
+
 for k in range(ScatterNum): # do ScatterNum scattering iterations
-      for t in range(NDepth): # S_k= R T_{k-1}
+      for t in range(NDepth): # S_k= R I_{k-1}
             for e in range(NEnergy):
                   for d in range(NDirection):
                         S=zeros(2)
@@ -293,7 +316,7 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                                     # print w, r, I
                                     S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] )
                                     S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] )
-                        Source[k][t][e][d]=S
+                        Source[k][t][e][d]+=S
                         # print 'S: ', S*x[e]**2
       
       
@@ -306,32 +329,56 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                               # print I,w
-                        Stokes[k][t][e][d]=I/abs(mu[d])
+                        Stokes[k][t][e][d]+=I/abs(mu[d])
                         # print 'I: ',I
       else:
-            Stokes_out[k+1]=Stokes[k][t]
+            Stokes_out[k+1]+=Stokes[k][t]
             Intensity+=Stokes[k][t]       
-      s,gn=pr(s,gn,'I'+str(1+k)) # do ScatterNum scattering iterations
+      s,gn=pr(s,gn,'I'+str(1+k))
 
 out = open('res','w')
-d=NDirection*3/5
+d=NDirection-1#*3/5
 out.write(str(mu[d])+str(list(x))+'\n')
 #range(NDirection/2,NDirection):
 print d
-for k in range(ScatterNum+1):
-      xFx=[log(Stokes_out[k][e][d][0]*x[e]) for e in range(NEnergy)]
-      plot(x,xFx,'r')
-      out.write(str(k)+' : '+str(mu[d])+str(xFx)+'\n')
+if True: # plotting intensity
+      out.write('xFlux\n')
+      figure(1)
+      for k in range(ScatterNum+1):
+            xFx=[(Stokes_out[k][e][d][0]*x[e]) for e in range(NEnergy)]
+            plot(x,xFx,colors[(k*5)/ScatterNum])
+            out.write(str(k)+' : '+str(mu[d])+str(xFx)+'\n')
+      else: 
+            xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
+            plot(x,xFx,'k')
+            out.write('t : '+str(mu[d])+str(xFx)+'\n')
+      yscale('log')
+      xscale('log')
+      s,gn=pr(s,gn,'plfl')
 
-xFx=[log(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
-plot(x,xFx)
+if True: # plotting plarization
+      figure(2)
+      out.write('ppc\not')
+      p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
+      for k in range(ScatterNum):
+            print k
+            yr=p(Stokes_out[k+1])
+            plot(x,yr,colors[(k*5)/ScatterNum])
+            out.write(str(k)+' : '+str(mu[d])+str(yr)+'\n')
+      else: 
+            yr=p(Intensity) 
+            plot(x,yr,'k')
+            out.write('t : '+str(mu[d])+str(yr)+'\n')
+      xscale('log')
+      s,gn=pr(s,gn,'plpl')
+
+
+
+
 
 # diff = (lambda a,b : (log(Intensity[a][d][0])-log(Intensity[b][d][0]))/(log(x[a])-log(x[b])))
 # print diff(10,12),diff(12,14) ,diff(14,16),diff(16,18)  
-# yscale('log')
-xscale('log')
-out.write('t : '+str(mu[d])+str(xFx)+'\n')
-show()                                           
+show()  
 
 print 'Total time : ', s-time0
 
