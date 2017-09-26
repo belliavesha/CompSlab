@@ -24,16 +24,16 @@ evere=.5109989e6 # electron volts in elecron rest energy
 incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
-ScatterNum = 12 # total number of scatterings
-NGamma=10 # number of Lorenz factor points (\gamma)
-NAzimuth=10 # (*) numbers of azimuth angles (\phi)
-NDirection = 8 # (*) number of propagation angle cosines (\mu) 
-NEnergy = 40 # number of energy points (x)
-NDepth = 10 # number of optical depth levels (\tau)
+ScatterNum = 16 # total number of scatterings
+NGamma=8 # number of Lorenz factor points (\gamma)
+NAzimuth=8 # (*) numbers of azimuth angles (\phi)
+NDirection = 14 # (*) number of propagation angle cosines (\mu) 
+NEnergy = 30 # number of energy points (x)
+NDepth = 20 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
 tau_T= 2 # Thomson optical depth of thermalization 
-x_l, x_u = -7. , 2. # lower and upper bounds of the log_10 energy span
+x_l, x_u = -7. , 1. # lower and upper bounds of the log_10 energy span
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
 IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
@@ -332,7 +332,8 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                   for d in range(NDirection): 
                         # m=mu[d]
                         I=zeros(2)
-                        for t1 in range(t) if mu[d]>0 else range (t+1,NDirection):
+                        for t1 in range(t+1) if mu[d]>0 else range (t,NDepth): #here is where zeros come from
+                              #print k,t1,e,d,t,mu[d],t+1,range(t)
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                               # print I,w
@@ -344,7 +345,7 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
       s,gn=pr(s,gn,'I'+str(1+k))
 
 out = open('res','w')
-d=NDirection-1#*3/5
+d=NDirection*3/5
 out.write(str(mu[d])+str(list(x))+'\n')
 #range(NDirection/2,NDirection):
 print d
@@ -358,14 +359,14 @@ if True: # plotting intensity
       else: 
             xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
             plot(x,xFx,'k')
-            out.write('t : '+str(mu[d])+str(xFx)+'\n')
+            out.write('st : '+str(mu[d])+str(xFx)+'\n')
       yscale('log')
       xscale('log')
       s,gn=pr(s,gn,'plfl')
 
 if True: # plotting plarization
       figure(2)
-      out.write('ppc\not')
+      out.write('ppc\n')
       p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
       for k in range(1+ScatterNum):
             print k
@@ -375,7 +376,29 @@ if True: # plotting plarization
       else: 
             yr=p(Intensity) 
             plot(x,yr,'k')
-            out.write('t : '+str(mu[d])+str(yr)+'\n')
+            out.write('pt : '+str(mu[d])+str(yr)+'\n')
+      xscale('log')
+      s,gn=pr(s,gn,'plpl')
+
+if True: # plotting intensity
+      out.write('xFlux\n')
+      figure(3)
+      for d in range(NDirection/2,NDirection):
+            xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
+            plot(x,xFx,colors [(5*(d-NDirection/2))*2/NDirection ])
+            out.write(str(d)+' : '+str(mu[d])+str(xFx)+'\n')
+      yscale('log')
+      xscale('log')
+      s,gn=pr(s,gn,'plfl')
+
+if True: # plotting plarization
+      figure(4)
+      out.write('ppc\n')
+      p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
+      for d in range(NDirection/2,NDirection):
+            yr=p(Intensity) 
+            plot(x,yr,colors [5*(d-NDirection/2)*2/NDirection ])
+            out.write(str(d)+' : '+str(mu[d])+str(yr)+'\n')
       xscale('log')
       s,gn=pr(s,gn,'plpl')
 
