@@ -102,12 +102,19 @@ which is
 \ee 
 where $H(\mu)$ is Heaviside step function. The initial Stokes vector $\bm{I}_0$ which describes nonscattered photons would be
 \be
-\bm{I}_0(\tau,x,\mu)=I_{in}(x) e^{\sigma(x)\tau/\mu}
+\bm{I}_0(\tau,x,\mu)=I_{in}(x) e^{\sigma(x)\tau/\mu} (1, 0)^T
 \ee 
 and the Stokes vector for $k$-th scattering order is obtained from the previous one using \eqref{eq:Rop} and \eqref{eq:Sop}
 \be
 \bm{I}_k=\hat{\bm{\Sigma}}\hat{\bm{R}}\bm{I}_{k-1}
 \ee
+
+Then one can compute the emergent flux $xF_x(x,\mu)$
+and the polarization degree of the outgoing radiation
+\be
+p(x,\mu)=100\%\frac{I(\tau_T,x,\mu)}{Q(\tau_T,x,\mu)}
+\ee
+
 
 
 \section{Compton redistribution matrices} \label{redistr}

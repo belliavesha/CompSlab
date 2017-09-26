@@ -24,15 +24,15 @@ evere=.5109989e6 # electron volts in elecron rest energy
 incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
-ScatterNum = 16 # total number of scatterings
+ScatterNum = 12 # total number of scatterings
 NGamma=10 # number of Lorenz factor points (\gamma)
 NAzimuth=10 # (*) numbers of azimuth angles (\phi)
 NDirection = 8 # (*) number of propagation angle cosines (\mu) 
-NEnergy = 50 # number of energy points (x)
+NEnergy = 40 # number of energy points (x)
 NDepth = 10 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
-tau_T= .1 # Thomson optical depth of thermalization 
+tau_T= 2 # Thomson optical depth of thermalization 
 x_l, x_u = -7. , 2. # lower and upper bounds of the log_10 energy span
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -59,9 +59,8 @@ def Planck(x):
       """
       eps=1e-5
       C=2. * incgs # some dimension constant.
-      R=C*x*x # Rayleigh Jeans law
-      I=.0 if x/T>5e2 else R*x/(exp(x/T)-1.) if x/T > eps else R*T 
-      
+      R=C*x*x # Rayleigh Jeans law'
+      I=.0 if x/T>5e2 else R*x/(exp(x/T)-1.) if x/T > eps else R*T
       return I
 
 def Delta(x):
@@ -218,10 +217,18 @@ s,gn=pr(s,gn,'funcs')
 
 if False: #draw Planck
       x=IntEnergy[0]
-      plot(x,map(lambda e: log(e*Planck(e)),x),'g')
+      print x
+      print map(lambda e: (e*Planck(e)),x)
+      
+      plot(x,map(lambda e: (e*Planck(e)),x),'g')
+      xscale('log')
+      yscale('log')
+      show()
 
 if False: #draw delta
       x=IntEnergy[0]
+      print map(lambda e: (e*Delta(e)),x)
+      print x
       plot(x,map(lambda e: (e*Delta(e)),x),'g')
       xscale('log')
       yscale('log')
@@ -277,7 +284,7 @@ if True : # Computing redistribution matrices for all energies and angles
       s,gn=pr(s,gn,'RMtable')
 
 if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
-      inI=Planck
+      Iin=Planck
       tau,tau_weight=IntDepth
       Source=zeros((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
@@ -287,10 +294,10 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
       for e in range(NEnergy):
             for d in range(NDirection):
                   for t in range(NDepth):
-                        Stokes_in[t][e][d][0]=inI(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
+                        Stokes_in[t][e][d][0]=Iin(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
                         Stokes_in[t][e][d][1]=0
                   else:
-                        Stokes_out[0][e][d][0]=inI(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
+                        Stokes_out[0][e][d][0]=Iin(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
                         Stokes_out[0][e][d][1]=0
       Intensity += Stokes_out[0]
       s,gn=pr(s,gn,'I0')
@@ -329,7 +336,7 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                               # print I,w
-                        Stokes[k][t][e][d]+=I/abs(mu[d])
+                        Stokes[k][t][e][d]+=I/mu[d]#/abs(mu[d])
                         # print 'I: ',I
       else:
             Stokes_out[k+1]+=Stokes[k][t]
@@ -360,9 +367,9 @@ if True: # plotting plarization
       figure(2)
       out.write('ppc\not')
       p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
-      for k in range(ScatterNum):
+      for k in range(1+ScatterNum):
             print k
-            yr=p(Stokes_out[k+1])
+            yr=p(Stokes_out[k])
             plot(x,yr,colors[(k*5)/ScatterNum])
             out.write(str(k)+' : '+str(mu[d])+str(yr)+'\n')
       else: 
