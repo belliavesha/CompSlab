@@ -46,7 +46,8 @@
 
 \maketitle
 
-\section{Setup}
+\section{Compton scattering}\label{Compton}
+\subsection{Setup}
 The simple neutron star atmosphere model is considered in which the atmosphere is a plane parallel electron consisting slab lying on an optically thick source of thermalized  black body radiation.
 The atmosphere slab has vertical hight $H$ which is equivalent to optical depth of thermalization layer $\tau_T=\sigma_Tn_eH$    
 The electron gas in the atmosphere is considered to be isotropic and isothermal with constant dimensionless electron temperature $\Theta$ for any depth under surface from the bottom of the slab $\tau=0$ up to the surface $\tau=\tau_T$.
@@ -117,7 +118,7 @@ p(x,\mu)=100\%\frac{I(\tau_T,x,\mu)}{Q(\tau_T,x,\mu)}
 
 
 
-\section{Compton redistribution matrices} \label{redistr}
+\subsection{Compton redistribution matrices} \label{redistr}
 
 The redistribution matrix $\bm{R}(x,\mu,x_1,\mu_1)$
 is used in \eqref{eq:Source} and describes the probability for a photon with energy $x_1$ and propagation lean $\mu_1$ to have energy $x$ 
@@ -232,7 +233,16 @@ $$
 \gamma_*=\frac{x-x_1+Q\sqrt{1+2/q}}2
 \ee
 
-
+The matrix $\bm{R}^m$ is the Compton redistribution matrix for monoenergetic electron gas. If each electron has a Lorenz factor of $\gamma$ then the redistributon matrix in such gas is
+\be
+\bm{R}^m(x,x_1,\xi,\gamma)= 
+\left( {\begin{array}{cccc}
+    R^m & R^m_I & 0 & 0 \\
+     R^m_I &  R^m_Q & 0 & 0 \\
+    0 & 0 &  R^m_U & 0 \\
+    0 & 0 & 0 &  R^m_V  
+   \end{array} } \right)
+\ee
 
 
 
