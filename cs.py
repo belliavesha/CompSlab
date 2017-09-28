@@ -24,16 +24,16 @@ evere=.5109989e6 # electron volts in elecron rest energy
 incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
-ScatterNum = 16 # total number of scatterings
-NGamma=8 # number of Lorenz factor points (\gamma)
-NAzimuth=8 # (*) numbers of azimuth angles (\phi)
-NDirection = 14 # (*) number of propagation angle cosines (\mu) 
-NEnergy = 30 # number of energy points (x)
-NDepth = 20 # number of optical depth levels (\tau)
+ScatterNum = 4 # total number of scatterings
+NGamma=10 # number of Lorenz factor points (\gamma)
+NAzimuth=10 # (*) numbers of azimuth angles (\phi)
+NDirection = 8 # (*) number of propagation angle cosines (\mu) 
+NEnergy = 12 # number of energy points (x)
+NDepth = 6 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
-tau_T= 2 # Thomson optical depth of thermalization 
-x_l, x_u = -7. , 1. # lower and upper bounds of the log_10 energy span
+tau_T= .5 # Thomson optical depth of thermalization 
+x_l, x_u = -5 , .1 # lower and upper bounds of the log_10 energy span
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
 IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
@@ -46,7 +46,7 @@ def setTe(T):
       K = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
       return (T, K) # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
 
-Theta, K2Y = setTe(0.1) # it's about 0.1
+Theta, K2Y = setTe(.5e5/evere) # it's about 0.1
 T = 1e1/evere # photon black body temperature
 s,gn=pr(s,gn,'precomps')
 
@@ -57,10 +57,10 @@ def Planck(x):
       The photon temperature is given by T also in units of electron rest mass
       Planck returns the intensity of  BB radiation
       """
-      eps=1e-5
-      C=2. * incgs # some dimension constant.
-      R=C*x*x # Rayleigh Jeans law'
-      I=.0 if x/T>5e2 else R*x/(exp(x/T)-1.) if x/T > eps else R*T
+      e=x/T
+      C=1.  # some dimension constant.
+      R=C*e*e # Rayleigh Jeans law'
+      I=.0 if e>5e2 else R*e/(exp(e)-1.) if e > 1e-5 else R
       return I
 
 def Delta(x):
@@ -105,6 +105,8 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       q = x1*x2*(1.-mu)
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu ) # sqrt( (x1-x2)**2 +2.*q ) # the formula probably gives the same also
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
+
+      # print  gamma-gammaStar, gammaStar,gamma,Q,u,(u-Q)/(Q+u)
 
       if gamma < gammaStar : 
             print 'w' # I belive that in the case fucntion just won't be called
@@ -215,6 +217,59 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
 
 s,gn=pr(s,gn,'funcs')
 
+
+
+if False : #check cross section  
+      cro = open('cros.dat','r')
+      figure(10)
+      x=[]
+      cs=[]
+      sgm=[]
+      for n in range(85):
+            line = cro.readline().split()
+            de=lambda X : float (X[:X.find('D')]+'e'+X[X.find('D')+1:])
+            x.append(de(line[3]))
+            cs.append(de(line[5]))
+            sgm.append(sigma_cs(10**(x[-1])))
+            # print x, cs
+      plot(x,cs)
+      plot(x,sgm)
+      show()
+      exit()
+
+
+
+if True : 
+      spe=open('tes1.spe','r')
+      figure(1)
+      for n in range(5):
+            pra=spe.readline()
+            # print pra
+            x=[]
+            # xFx1=[]
+            # xFx2=[]
+            # xFx3=[]
+            # xFx4=[]
+            xFx5=[]
+            for e in range(85):
+                  line=spe.readline().split()
+                  x.append(float (line[0]))
+                  # xFx1.append(line[1])
+                  # xFx2.append(line[2])
+                  # xFx3.append(line[3])
+                  # xFx4.append(line[4])
+                  xFx5.append(float (line[5]) * x[-1])
+            # plot(x,xFx1,colors[1])
+            # plot(x,xFx2,colors[2])
+            # plot(x,xFx3,colors[3])
+            # plot(x,xFx4,colors[4])
+            plot(x,xFx5,colors[5])
+            s,gn=pr(s,gn,pra[-2])
+      xscale('log')
+      yscale('log')
+      # show()
+      # exit()
+
 if False: #draw Planck
       x=IntEnergy[0]
       print x
@@ -235,20 +290,22 @@ if False: #draw delta
       show()
       exit()
 
-if False: # compare the numbers to ones obtained from old fortran code
+if False : # compare the numbers to ones obtained from old fortran code
       from compare import Factor
       Factor(Compton_redistribution_aa)
       
-if False: # checking symmetries
+if False : # checking symmetries
       from check import *
       print CheckAngularSymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5)
       s,gn=pr(s,gn,'ang-check')
       print CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.1,0.5,-0.5,Theta)
       s,gn=pr(s,gn,'freq-check')
+      exit()
 
 if True: # Computing Compton scattering cross section for all energies
       x,x_weight=IntEnergy
       sigma=map(sigma_cs,x)   
+      # sigma = zeros(NEnergy) + 1
 
 if True : # Computing redistribution matrices for all energies and angles 
       mu,mu_weight=IntDirection
@@ -302,7 +359,7 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
       Intensity += Stokes_out[0]
       s,gn=pr(s,gn,'I0')
 
-if False:
+if True:
       xFx=[log(Stokes_out[0][e][d][0]*x[e]) for e in range(NEnergy)]
       plot(x,xFx,'r')
       xscale('log')
@@ -324,6 +381,9 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                                     S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] )
                                     S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] )
                         Source[k][t][e][d]+=S
+                        # print 'S ',abs(mu[d])/mu[d], I
+
+                        if False : print  'no'
                         # print 'S: ', S*x[e]**2
       
       
@@ -332,12 +392,14 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                   for d in range(NDirection): 
                         # m=mu[d]
                         I=zeros(2)
-                        for t1 in range(t+1) if mu[d]>0 else range (t,NDepth): #here is where zeros come from
+                        lilst=range(t+1) if mu[d]>0 else range (t,NDepth)
+                        for t1 in range(t+1) if mu[d]>0 else range (t,NDepth): #here is where zeros used to come from
                               #print k,t1,e,d,t,mu[d],t+1,range(t)
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                               # print I,w
-                        Stokes[k][t][e][d]+=I/mu[d]#/abs(mu[d])
+                        Stokes[k][t][e][d]+=I/abs(mu[d])
+                        print 'I ',abs(mu[d])/mu[d], I ,t1
                         # print 'I: ',I
       else:
             Stokes_out[k+1]+=Stokes[k][t]
@@ -345,10 +407,11 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
       s,gn=pr(s,gn,'I'+str(1+k))
 
 out = open('res','w')
-d=NDirection*3/5
+d=NDirection-1#*3/5
 out.write(str(mu[d])+str(list(x))+'\n')
 #range(NDirection/2,NDirection):
-print d
+print d, mu[d]
+
 if True: # plotting intensity
       out.write('xFlux\n')
       figure(1)
@@ -364,7 +427,7 @@ if True: # plotting intensity
       xscale('log')
       s,gn=pr(s,gn,'plfl')
 
-if True: # plotting plarization
+if False: # plotting polarization
       figure(2)
       out.write('ppc\n')
       p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
@@ -380,7 +443,7 @@ if True: # plotting plarization
       xscale('log')
       s,gn=pr(s,gn,'plpl')
 
-if True: # plotting intensity
+if False: # plotting intensity
       out.write('xFlux\n')
       figure(3)
       for d in range(NDirection/2,NDirection):
@@ -391,7 +454,7 @@ if True: # plotting intensity
       xscale('log')
       s,gn=pr(s,gn,'plfl')
 
-if True: # plotting plarization
+if False: # plotting plarization
       figure(4)
       out.write('ppc\n')
       p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
@@ -401,8 +464,6 @@ if True: # plotting plarization
             out.write(str(d)+' : '+str(mu[d])+str(yr)+'\n')
       xscale('log')
       s,gn=pr(s,gn,'plpl')
-
-
 
 
 

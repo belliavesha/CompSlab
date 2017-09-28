@@ -101,7 +101,7 @@ which is
  \be
  \hat{\bm{\Sigma}}\bm{S}=\int_{\tau_TH(\mu)}^\tau \frac{d\tau'}\mu \bm{S}(\tau',x,\mu) e^{\sigma(x)\frac{\tau'-\tau}\mu}
 \ee 
-where $H(\mu)$ is Heaviside step function. The initial Stokes vector $\bm{I}_0$ which describes nonscattered photons would be
+where $H(\mu)$ is Heaviside step function. The initial Stokes vector $\bm{I}_0$ which describes non-scattered photons would be
 \be
 \bm{I}_0(\tau,x,\mu)=I_{in}(x) e^{\sigma(x)\tau/\mu} (1, 0)^T
 \ee 
@@ -234,7 +234,7 @@ $$
 \gamma_*=\frac{x-x_1+Q\sqrt{1+2/q}}2
 \ee
 
-The matrix $\bm{R}^m$ is the Compton redistribution matrix for monoenergetic electron gas. If each electron has a Lorenz factor of $\gamma$ then the redistributon matrix in such gas is
+The matrix $\bm{R}^m$ is the Compton redistribution matrix for mono-energetic electron gas. If each electron has a Lorenz factor of $\gamma$ then the redistribution matrix in such gas is
 \be
 \bm{R}^m(x,x_1,\xi,\gamma)= 
 \left( {\begin{array}{cccc}
@@ -247,6 +247,17 @@ The matrix $\bm{R}^m$ is the Compton redistribution matrix for monoenergetic ele
 
 
 
+The redistribution matrix has symmetry properties
+
+Energy symmetry:\be
+\bm{R}(x_1,\mu,x,\mu_1)=\bm{R}(x,\mu,x_1,\mu_1) e^\frac{x-x_1}\Theta \ee
+Angular symmetries:
+Energy symmetry:\be
+\bm{R}(x,\mu_1,x,\mu)=\bm{R}^T(x,\mu,x_1,\mu_1) \ee
+\be
+\bm{R}(x,-\mu,x,-\mu_1)=\bm{R}(x,\mu,x_1,\mu_1) \ee
+\be
+\bm{R}(x,-\mu_1,x,-\mu)=\bm{R}^T(x,\mu,x_1,\mu_1) \ee
 
 
 \end{document}
