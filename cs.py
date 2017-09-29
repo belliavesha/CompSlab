@@ -21,7 +21,7 @@ colors='rygcbm' # Rainbow
 
 #physical constants:
 evere=.5109989e6 # electron volts in elecron rest energy 
-incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
+# incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
 ScatterNum = 10 # total number of scatterings
@@ -29,7 +29,7 @@ NGamma=10 # number of Lorenz factor points (\gamma)
 NAzimuth=10 # (*) numbers of azimuth angles (\phi)
 NZenith = 14 # (*) number of propagation zenith angle cosines (\mu) [-1,1]
 NEnergy = 50 # number of energy points (x)
-NDepth = 10 # number of optical depth levels (\tau)
+NDepth = 11 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
 tau_T= .5 # Thomson optical depth of thermalization 
@@ -46,7 +46,7 @@ def setTe(T):
       K = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
       return (T, K) # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
 
-Theta, K2Y = setTe(.5e5/evere) # it's about 0.1
+Theta, K2Y = setTe(0.1) # it's about 0.1
 T = 1e1/evere # photon black body temperature
 s,gn=pr(s,gn,'precomps')
 
@@ -68,14 +68,14 @@ def Delta(x):
       I=C*exp(-1e2*(x-T)**2/T/T)
       return I      
 
-def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-section  based on electron momentum distribution
+def sigma_cs(x): # not averaged on electron distribution 
       """ This function compute the Compton scattering cross-section in electron rest frame 
       x is the energy of the scattering photon in units of electron rest energy
       this function approaches the mean compton cross-section when electron gas temperature is small
       """ 
       if x<.1:
             a,n,s=3./8.,0.,0.
-            while(abs(a)*(n+2)**2>1e-11): # Tailor series sum of the formula below
+            while(abs(a)*(n+2)**2>1e-11): # Taylor series sum of the formula below
                   s=s+a*(n+2+2/(n+1)+8/(n+2)-16/(n+3))
                   n=n+1
                   a=-2*x*a
@@ -153,7 +153,7 @@ def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the fu
       """
       q = x1*x2*(1.-mu)
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
-      gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
+      gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2. # lower bound of integration 
       C=3./8.*Theta*Maxwell_r(gammaStar)
             
      
@@ -161,7 +161,7 @@ def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the fu
       NL = range(NGamma) # list of indeces
       
       summands = map(lambda i : map(lambda x: C*x*gamma_weight[i],\
-           Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)),NL)
+           Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)),NL) # Theta gamma
       R = [sum([summands[j][i] for j in NL]) for i in range(4)] # summing to obtain the integrals
       
       # # the next 5 lines do the same thing as previous three but faster for some reason
@@ -349,7 +349,7 @@ if True : # Computing redistribution matrices for all energies and angles
       s,gn=pr(s,gn,'RMtable')
 
 if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
-      Iin=Planck
+      Iin=Planck # Delta # initial photon distribution 
       tau,tau_weight=IntDepth
       Source=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
@@ -438,7 +438,7 @@ if False: # plotting polarization
 if False: # plotting intensity
       out.write('xFlux\n')
       figure(3)
-      for d in range(NZenith/2,NZenith):
+      for d in range(NZenith/2,NZenith): # [0,1]
             xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
             plot(x,xFx,colors [(5*(d-NZenith/2))*2/NZenith ])
             out.write(str(d)+' : '+str(mu[d])+str(xFx)+'\n')
@@ -450,7 +450,7 @@ if False: # plotting plarization
       figure(4)
       out.write('ppc\n')
       p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
-      for d in range(NZenith/2,NZenith):
+      for d in range(NZenith/2,NZenith): # [0,1]
             yr=p(Intensity) 
             plot(x,yr,colors [5*(d-NZenith/2)*2/NZenith ])
             out.write(str(d)+' : '+str(mu[d])+str(yr)+'\n')
@@ -458,9 +458,8 @@ if False: # plotting plarization
       s,gn=pr(s,gn,'plpl')
 
 
-
 # diff = (lambda a,b : (log(Intensity[a][d][0])-log(Intensity[b][d][0]))/(log(x[a])-log(x[b])))
-# print diff(10,12),diff(12,14) ,diff(14,16),diff(16,18)  
+# print diff(10,12),diff(12,14) ,diff(14,16),diff(16,18) # estimating the slope 
 show()  
 
 print 'Total time : ', s-time0
