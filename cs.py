@@ -27,7 +27,7 @@ incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 ScatterNum = 10 # total number of scatterings
 NGamma=10 # number of Lorenz factor points (\gamma)
 NAzimuth=10 # (*) numbers of azimuth angles (\phi)
-NDirection = 14 # (*) number of propagation angle cosines (\mu) 
+NZenith = 14 # (*) number of propagation zenith angle cosines (\mu) [-1,1]
 NEnergy = 50 # number of energy points (x)
 NDepth = 10 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
@@ -37,7 +37,7 @@ x_l, x_u = -5 , .1 # lower and upper bounds of the log_10 energy span
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
 IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
-IntDirection = leggauss(NDirection) #  sample points and weights for computing the source function of one given incoming photon energy
+IntZenith = leggauss(NZenith) #  sample points and weights for computing the source function of one given incoming photon energy
 IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for computing the full source function 
 IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weights for computing the intensities
 
@@ -304,14 +304,14 @@ if True: # Computing Compton scattering cross section for all energies
       # sigma = zeros(NEnergy) + 1
 
 if True : # Computing redistribution matrices for all energies and angles 
-      mu,mu_weight=IntDirection
-      RedistributionMatrix = ones( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
-      for e in range(NEnergy): # x
-            for e1 in range(e,NEnergy): # x1
-                  for d in range(NDirection/2): # mu 
-                        for d1 in range(d,NDirection/2): #mu1
-                              md=NDirection-d-1 # -mu
-                              md1=NDirection-d1-1 # -mu1
+      mu,mu_weight=IntZenith
+      RedistributionMatrix = ones( (NEnergy,NEnergy,NZenith,NZenith,2,2) )
+      for e in range(NEnergy): # x [-\infty,\infty]
+            for e1 in range(e,NEnergy): # x1 [x,\infty]
+                  for d in range(NZenith/2): # mu [-1,0]
+                        for d1 in range(d,NZenith/2): #mu1 [-1,mu]
+                              md=NZenith-d-1 # -mu
+                              md1=NZenith-d1-1 # -mu1
                               t=d1>d
                               f=e1>e
 
@@ -351,13 +351,13 @@ if True : # Computing redistribution matrices for all energies and angles
 if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
       Iin=Planck
       tau,tau_weight=IntDepth
-      Source=zeros((ScatterNum,NDepth,NEnergy,NDirection,2)) # source function                 
-      Stokes=zeros((ScatterNum,NDepth,NEnergy,NDirection,2)) # intensity Stokes vector
-      Stokes_out=zeros((ScatterNum+1,NEnergy,NDirection,2)) # outgoing Stokes vector of each scattering
-      Stokes_in=zeros((NDepth,NEnergy,NDirection,2)) # Stokes vector of the initial raiation (0th scattering) 
-      Intensity=zeros((NEnergy,NDirection,2)) # total intensity of all scattering orders from the slab suface 
+      Source=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
+      Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
+      Stokes_out=zeros((ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
+      Stokes_in=zeros((NDepth,NEnergy,NZenith,2)) # Stokes vector of the initial raiation (0th scattering) 
+      Intensity=zeros((NEnergy,NZenith,2)) # total intensity of all scattering orders from the slab suface 
       for e in range(NEnergy):
-            for d in range(NDirection):
+            for d in range(NZenith):
                   for t in range(NDepth):
                         Stokes_in[t][e][d][0]=Iin(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
                         Stokes_in[t][e][d][1]=0
@@ -370,10 +370,10 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
 for k in range(ScatterNum): # do ScatterNum scattering iterations
       for t in range(NDepth): # S_k= R I_{k-1}
             for e in range(NEnergy):
-                  for d in range(NDirection):
+                  for d in range(NZenith):
                         S=zeros(2)
                         for e1 in range(NEnergy):
-                              for d1 in range(NDirection):
+                              for d1 in range(NZenith):
                                     w = mu_weight[d1]*x_weight # total weight
                                     r = RedistributionMatrix[e][e1][d][d1]
                                     I = Stokes[k-1][t][e1][d1] if k>0 \
@@ -384,9 +384,9 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                                     if (r[0][0]-1.)*(r[0][0]-1.)<1e-10 : print '!!!', e,e1,d,d1  
                         Source[k][t][e][d]+=S      
       
-      for t in range(NDepth):
-            for e in range(NEnergy): # I_k= integral S_k
-                  for d in range(NDirection): 
+      for t in range(NDepth):# I_k= integral S_k
+            for e in range(NEnergy): 
+                  for d in range(NZenith): 
                         I=zeros(2)
                         for t1 in range(t+1) if mu[d]>0 else range (t,NDepth): #here is where zeros used to come from
                               S=Source[k][t1][e][d]
@@ -399,9 +399,9 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
       s,gn=pr(s,gn,'I'+str(1+k))
 
 out = open('res','w')
-d=NDirection-1#*3/5
+d=NZenith-1#*3/5
 out.write(str(mu[d])+str(list(x))+'\n')
-#range(NDirection/2,NDirection):
+#range(NZenith/2,NZenith):
 print d, mu[d]
 
 if True: # plotting intensity
@@ -438,9 +438,9 @@ if False: # plotting polarization
 if False: # plotting intensity
       out.write('xFlux\n')
       figure(3)
-      for d in range(NDirection/2,NDirection):
+      for d in range(NZenith/2,NZenith):
             xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
-            plot(x,xFx,colors [(5*(d-NDirection/2))*2/NDirection ])
+            plot(x,xFx,colors [(5*(d-NZenith/2))*2/NZenith ])
             out.write(str(d)+' : '+str(mu[d])+str(xFx)+'\n')
       yscale('log')
       xscale('log')
@@ -450,9 +450,9 @@ if False: # plotting plarization
       figure(4)
       out.write('ppc\n')
       p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
-      for d in range(NDirection/2,NDirection):
+      for d in range(NZenith/2,NZenith):
             yr=p(Intensity) 
-            plot(x,yr,colors [5*(d-NDirection/2)*2/NDirection ])
+            plot(x,yr,colors [5*(d-NZenith/2)*2/NZenith ])
             out.write(str(d)+' : '+str(mu[d])+str(yr)+'\n')
       xscale('log')
       s,gn=pr(s,gn,'plpl')
