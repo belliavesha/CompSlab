@@ -7,7 +7,7 @@ def pr(s,gn,message = ''):
 s,gn=pr(time0,0)
 
 #import:
-from numpy import linspace, logspace, empty, zeros
+from numpy import linspace, logspace, empty, zeros,ones
 from numpy import pi, exp, log, sqrt, sin, cos
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
@@ -24,12 +24,12 @@ evere=.5109989e6 # electron volts in elecron rest energy
 incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 #precomputations :
-ScatterNum = 4 # total number of scatterings
+ScatterNum = 10 # total number of scatterings
 NGamma=10 # number of Lorenz factor points (\gamma)
 NAzimuth=10 # (*) numbers of azimuth angles (\phi)
-NDirection = 8 # (*) number of propagation angle cosines (\mu) 
-NEnergy = 12 # number of energy points (x)
-NDepth = 6 # number of optical depth levels (\tau)
+NDirection = 14 # (*) number of propagation angle cosines (\mu) 
+NEnergy = 50 # number of energy points (x)
+NDepth = 10 # number of optical depth levels (\tau)
       # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
       # That may lead to Zero Division Error in these functions, be careful and cautious 
 tau_T= .5 # Thomson optical depth of thermalization 
@@ -74,7 +74,7 @@ def sigma_cs(x): # if Theta isn't small one will need to compute the mean cross-
       this function approaches the mean compton cross-section when electron gas temperature is small
       """ 
       if x<.1:
-            a,n,s=3./8 , 0. , 0.
+            a,n,s=3./8.,0.,0.
             while(abs(a)*(n+2)**2>1e-11): # Tailor series sum of the formula below
                   s=s+a*(n+2+2/(n+1)+8/(n+2)-16/(n+3))
                   n=n+1
@@ -217,8 +217,6 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
 
 s,gn=pr(s,gn,'funcs')
 
-
-
 if False : #check cross section  
       cro = open('cros.dat','r')
       figure(10)
@@ -237,9 +235,7 @@ if False : #check cross section
       show()
       exit()
 
-
-
-if True : 
+if True : # Check spectra
       spe=open('tes1.spe','r')
       figure(1)
       for n in range(5):
@@ -309,35 +305,47 @@ if True: # Computing Compton scattering cross section for all energies
 
 if True : # Computing redistribution matrices for all energies and angles 
       mu,mu_weight=IntDirection
-      RedistributionMatrix = empty( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
-      for e in range(NEnergy):
-            for e1 in range(e,NEnergy):
-                  for d in range(NDirection/2): 
-                        for d1 in range(d,NDirection/2):
-                              r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
-
+      RedistributionMatrix = ones( (NEnergy,NEnergy,NDirection,NDirection,2,2) )
+      for e in range(NEnergy): # x
+            for e1 in range(e,NEnergy): # x1
+                  for d in range(NDirection/2): # mu 
+                        for d1 in range(d,NDirection/2): #mu1
+                              md=NDirection-d-1 # -mu
+                              md1=NDirection-d1-1 # -mu1
                               t=d1>d
                               f=e1>e
-                 
-                              md=NDirection-d-1 
-                              md1=NDirection-d1-1
 
-                              RedistributionMatrix[e][e1][d][d1]=r
-                              RedistributionMatrix[e][e1][md][md1]=r
-                              if t: #angular symmetry
-                                    rt=r
-                                    rt[0][1],rt[1][0]=rt[1][0],rt[0][1]
+                              if 1: 
+                                    r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
+                                    rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
+                                    RedistributionMatrix[e][e1][d][d1]=r
+                                    RedistributionMatrix[e][e1][md][md1]=r
+                                    RedistributionMatrix[e][e1][d][md1]=rm
+                                    RedistributionMatrix[e][e1][md][d1]=rm
+                              if t: # angular symmetry
+                                    rt=r # transponed
+                                    rmt=rm # matrices
+                                    rt[0][1],rt[1][0]=r[1][0],r[0][1]
+                                    rmt[0][1],rmt[1][0]=rm[1][0],rm[0][1]
                                     RedistributionMatrix[e][e1][d1][d]=rt
                                     RedistributionMatrix[e][e1][md1][md]=rt
-                              if f: #frequency symmetry
+                                    RedistributionMatrix[e][e1][md1][d]=rmt
+                                    RedistributionMatrix[e][e1][d1][md]=rmt
+                              if f: # frequency symmetry
                                     m=exp((x[e]-x[e1])/Theta)
-                                    rf=r*m
+                                    rf=r*m  # when Maxwellian
+                                    rmf=rm*m  # or Wein distributions
                                     RedistributionMatrix[e1][e][d][d1]=rf
                                     RedistributionMatrix[e1][e][md][md1]=rf
-                              if t and f: # both
+                                    RedistributionMatrix[e1][e][d][md1]=rmf
+                                    RedistributionMatrix[e1][e][md][d1]=rmf
+                              if t and f: # both symmeties 
                                     rtf=rt*m
+                                    rmtf=rmt*m
                                     RedistributionMatrix[e1][e][d1][d]=rtf
                                     RedistributionMatrix[e1][e][md1][md]=rtf
+                                    RedistributionMatrix[e1][e][md1][d]=rmtf
+                                    RedistributionMatrix[e1][e][d1][md]=rmtf
       s,gn=pr(s,gn,'RMtable')
 
 if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
@@ -359,13 +367,6 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
       Intensity += Stokes_out[0]
       s,gn=pr(s,gn,'I0')
 
-if True:
-      xFx=[log(Stokes_out[0][e][d][0]*x[e]) for e in range(NEnergy)]
-      plot(x,xFx,'r')
-      xscale('log')
-      show()
-      exit()
-
 for k in range(ScatterNum): # do ScatterNum scattering iterations
       for t in range(NDepth): # S_k= R I_{k-1}
             for e in range(NEnergy):
@@ -380,30 +381,21 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                                     # print w, r, I
                                     S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] )
                                     S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] )
-                        Source[k][t][e][d]+=S
-                        # print 'S ',abs(mu[d])/mu[d], I
-
-                        if False : print  'no'
-                        # print 'S: ', S*x[e]**2
-      
+                                    if (r[0][0]-1.)*(r[0][0]-1.)<1e-10 : print '!!!', e,e1,d,d1  
+                        Source[k][t][e][d]+=S      
       
       for t in range(NDepth):
             for e in range(NEnergy): # I_k= integral S_k
                   for d in range(NDirection): 
-                        # m=mu[d]
                         I=zeros(2)
-                        lilst=range(t+1) if mu[d]>0 else range (t,NDepth)
                         for t1 in range(t+1) if mu[d]>0 else range (t,NDepth): #here is where zeros used to come from
-                              #print k,t1,e,d,t,mu[d],t+1,range(t)
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
-                              # print I,w
-                        Stokes[k][t][e][d]+=I/abs(mu[d])
-                        print 'I ',abs(mu[d])/mu[d], I ,t1
-                        # print 'I: ',I
+                        Stokes[k][t][e][d]+=I/abs(mu[d]) #abs
+                        if I[0]>100 : print 'wow!',t,e,d
       else:
             Stokes_out[k+1]+=Stokes[k][t]
-            Intensity+=Stokes[k][t]       
+            Intensity+=Stokes[k][t]    
       s,gn=pr(s,gn,'I'+str(1+k))
 
 out = open('res','w')
