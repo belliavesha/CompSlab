@@ -70,7 +70,7 @@ IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample 
 IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weights for integrations over the optical depth computing intencity 
 IntZenith = leggauss(NZenith) #  sample points and weights for integrations over zenith angle in positive and negative directions together
 
-K2Y = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
+K2Y = kn(2,1./Theta) # second modified Bessel function of reversed dimensionless temperature       
 
 s,gn=pr(s,gn,'precomps')
 
