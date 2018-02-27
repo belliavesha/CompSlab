@@ -1,54 +1,84 @@
+
+# In[44]:
+
+
 # timer:
 from time import time
 time0=time()
 def pr(s,gn,message = ''): 
-      print gn,' :'+message+': ',time()-s
+      print(gn,' :'+message+': ',time()-s)
       return time(),gn+1
 s,gn=pr(time0,0)
 
+
+# In[45]:
+
+
+
 #import:
-from numpy import linspace, logspace, empty, zeros,ones
-from numpy import pi, exp, log, sqrt, sin, cos
+from numpy import linspace, logspace, empty, zeros, ones
+from numpy import pi, exp, log, sqrt, sin, cos, arccos
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
+from scipy.interpolate import interp1d
 from scipy.special import kn
 from matplotlib.pyplot import *
+
 #import numpy as np
 #import matplotlib.pyplot as plt
 s,gn=pr(s,gn, 'importing')
 
-colors='rygcbm' # Rainbow
+
+# In[46]:
+
+
+
+colors=['xkcd:red',
+        'xkcd:orange',
+        'xkcd:dark yellow',
+        'xkcd:dark yellow green',
+        'xkcd:deep green',
+        'xkcd:dark cyan',
+        'xkcd:blue',
+        'xkcd:purple'   
+] # 'rygcbm' # Rainbow 
+NColors=len(colors)
 
 #physical constants:
 evere=.5109989e6 # electron volts in elecron rest energy 
 # incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
+# parameters: 
+tau_T= 0.05 # Thomson optical depth of thermalization 
+x_l, x_u = -5.5 , 0.5 # lower and upper bounds of the log_10 energy span
+Theta = 0.1 # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
+T = 1e1/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
+saveName='T10Thp1tp05' # the prefix for all result files related to the set of parameters
+
 #precomputations :
 ScatterNum = 10 # total number of scatterings
-NGamma=10 # number of Lorenz factor points (\gamma)
-NAzimuth=10 # (*) numbers of azimuth angles (\phi)
-NZenith = 14 # (*) number of propagation zenith angle cosines (\mu) [-1,1]
-NEnergy = 50 # number of energy points (x)
-NDepth = 11 # number of optical depth levels (\tau)
-      # (*) Notice that if some numer of points is odd then there may be a zero angle or a cosine which equals to 1
-      # That may lead to Zero Division Error in these functions, be careful and cautious 
-tau_T= .5 # Thomson optical depth of thermalization 
-x_l, x_u = -5 , .1 # lower and upper bounds of the log_10 energy span
+NGamma= 10 # number of Lorenz factor points (\gamma)
+NAzimuth= 8 # numbers of azimuth angles (\phi) [0,pi]
+NEnergy = 100 # number of energy points (x)
+NDepth = 31 # number of optical depth levels (\tau)
+NMu = 11 # number of propagation zenith angle cosines (\mu) [0,1]
+NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
-IntAzimuth = leggauss(NAzimuth) # sample points and weights for computing azimuth-averaged matrix
-IntZenith = leggauss(NZenith) #  sample points and weights for computing the source function of one given incoming photon energy
-IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for computing the full source function 
-IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weights for computing the intensities
+IntAzimuth = leggauss(NAzimuth*2) # sample points and weights for computing azimuth-averaged matrix
+IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for integrations over the spectrum computing sorce function
+IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weights for integrations over the optical depth computing intencity 
+IntZenith = leggauss(NZenith) #  sample points and weights for integrations over zenith angle in positive and negative directions together
 
-def setTe(T):
-      " Use this function to set electron gas Maxwellian temperature"
-      K = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
-      return (T, K) # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
+K2Y = kn(2,1./T) # second modified Bessel function of reversed dimensionless temperature       
 
-Theta, K2Y = setTe(0.1) # it's about 0.1
-T = 1e1/evere # photon black body temperature
 s,gn=pr(s,gn,'precomps')
+
+
+
+
+# In[47]:
+
 
 
 def Planck(x):
@@ -106,10 +136,10 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu ) # sqrt( (x1-x2)**2 +2.*q ) # the formula probably gives the same also
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2.
 
-      # print  gamma-gammaStar, gammaStar,gamma,Q,u,(u-Q)/(Q+u)
+      # print(  gamma-gammaStar, gammaStar,gamma,Q,u,(u-Q)/(Q+u))
 
       if gamma < gammaStar : 
-            print 'w' # I belive that in the case fucntion just won't be called
+            print ('w') # I belive that in the case fucntion just won't be called
             return  (0.,0.,0.,0.)
       else: 
 
@@ -123,8 +153,8 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
             RU = Rd + 2.*Rc
             RQ = RU + Ra
             
-            #print r,v,u,q,Q,gammaStar,Ra,Rb,Rc,R
-            #print x1,x2,mu,gamma,R,RI,RQ,RU
+            #print(r,v,u,q,Q,gammaStar,Ra,Rb,Rc,R)
+            #print(x1,x2,mu,gamma,R,RI,RQ,RU)
             
             return (R,RI,RQ,RU)
             #the return values of this functon seem to be all right
@@ -155,22 +185,14 @@ def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the fu
       Q = sqrt( x1*x1 + x2*x2 - 2.*x1*x2*mu )
       gammaStar = (x1-x2+Q*sqrt( 1. + 2./q ) )/2. # lower bound of integration 
       C=3./8.*Theta*Maxwell_r(gammaStar)
-            
-     
+
       gamma, gamma_weight = IntGamma 
-      NL = range(NGamma) # list of indeces
       
-      summands = map(lambda i : map(lambda x: C*x*gamma_weight[i],\
-           Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)),NL) # Theta gamma
-      R = [sum([summands[j][i] for j in NL]) for i in range(4)] # summing to obtain the integrals
-      
-      # # the next 5 lines do the same thing as previous three but faster for some reason
-      # # ( actually, only 2% faster, not very helpful) 
-      # R=[0.,0.,0.,0.]
-      # for i in NL:
-      #       T=Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)
-      #       for j in range(4):
-      #             R[j]+=C*gamma_weight[i]*T[j]
+      R=[0.,0.,0.,0.]
+      for i in range(NGamma):
+            T=Compton_redistribution_m(x1,x2,mu,Theta*gamma[i]+gammaStar)
+            for j in range(4):
+                  R[j]+=C*gamma_weight[i]*T[j]
 
       return tuple(R)
       
@@ -192,11 +214,10 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       eta1 = 1. - mu1*mu1  # squared sinuses of the angles 
       eta2 = 1. - mu2*mu2  
       
-      point, point_weight = IntAzimuth
-      NL = range(NAzimuth) # indeces list
+      phi, phi_weight = IntAzimuth
       
-      az_c=cos(pi*point)  # list of azimuth cosines
-      az_s=sin(pi*point)**2  # list of azimuth square sinuses
+      az_c=cos(pi*phi)  # list of azimuth cosines
+      az_s=sin(pi*phi)**2  # list of azimuth square sinuses
       sc_c=mu1*mu2-sqrt(eta1*eta2)*az_c # list of scattering angles' cosines
       sc_s=1. - sc_c**2 # list of scattering angles' squared sinuses
       cos2chi1 = 2.*(mu1*sc_c-mu2)*(mu1*sc_c-mu2)/eta1/sc_s-1.  # list[ cos( 2 \chi_1 ) ]
@@ -204,120 +225,66 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       sin2chiP = 4.*(mu1-mu2*sc_c)*(mu1*sc_c-mu2)*az_s/sc_s**2  # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
 
       R=zeros( (2,2,) )
-      for i in NL:
+      for i in range(NAzimuth*2):
             (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i])
-            R[0][0]+=C*pi*point_weight[i]
-            R[0][1]+=I*pi*cos2chi2[i]*point_weight[i]
-            R[1][0]+=I*pi*cos2chi1[i]*point_weight[i]
-            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*point_weight[i]         
+            R[0][0]+=C*pi*phi_weight[i]
+            R[0][1]+=I*pi*cos2chi2[i]*phi_weight[i]
+            R[1][0]+=I*pi*cos2chi1[i]*phi_weight[i]
+            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*phi_weight[i]         
       
       
-     # print x1,x2,mu1,mu2,R
+      # print(x1,x2,mu1,mu2,R)
       return R*x1*x1/x2
 
 s,gn=pr(s,gn,'funcs')
 
-if False : #check cross section  
-      cro = open('cros.dat','r')
-      figure(10)
-      x=[]
-      cs=[]
-      sgm=[]
-      for n in range(85):
-            line = cro.readline().split()
-            de=lambda X : float (X[:X.find('D')]+'e'+X[X.find('D')+1:])
-            x.append(de(line[3]))
-            cs.append(de(line[5]))
-            sgm.append(sigma_cs(10**(x[-1])))
-            # print x, cs
-      plot(x,cs)
-      plot(x,sgm)
-      show()
-      exit()
 
-if True : # Check spectra
-      spe=open('tes1.spe','r')
-      figure(1)
-      for n in range(5):
-            pra=spe.readline()
-            # print pra
-            x=[]
-            # xFx1=[]
-            # xFx2=[]
-            # xFx3=[]
-            # xFx4=[]
-            xFx5=[]
-            for e in range(85):
-                  line=spe.readline().split()
-                  x.append(float (line[0]))
-                  # xFx1.append(line[1])
-                  # xFx2.append(line[2])
-                  # xFx3.append(line[3])
-                  # xFx4.append(line[4])
-                  xFx5.append(float (line[5]) * x[-1])
-            # plot(x,xFx1,colors[1])
-            # plot(x,xFx2,colors[2])
-            # plot(x,xFx3,colors[3])
-            # plot(x,xFx4,colors[4])
-            plot(x,xFx5,colors[5])
-            s,gn=pr(s,gn,pra[-2])
-      xscale('log')
-      yscale('log')
-      # show()
+      
+
+# In[51]:
+
+
+if True : # checking symmetries
+      from check import *
+      print('Angular symmetry: ',CheckAngularSymmetry(Compton_redistribution_aa,0.02,0.02,-0.4,0.5)) # sample values 
+      s,gn=pr(s,gn,'ang-check')
+      print('Energy symmetry: ',CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.02,0.5,0.5,Theta))
+      s,gn=pr(s,gn,'freq-check')
       # exit()
 
-if False: #draw Planck
-      x=IntEnergy[0]
-      print x
-      print map(lambda e: (e*Planck(e)),x)
-      
-      plot(x,map(lambda e: (e*Planck(e)),x),'g')
-      xscale('log')
-      yscale('log')
-      show()
 
-if False: #draw delta
-      x=IntEnergy[0]
-      print map(lambda e: (e*Delta(e)),x)
-      print x
-      plot(x,map(lambda e: (e*Delta(e)),x),'g')
-      xscale('log')
-      yscale('log')
-      show()
-      exit()
+# In[52]:
 
-if False : # compare the numbers to ones obtained from old fortran code
-      from compare import Factor
-      Factor(Compton_redistribution_aa)
-      
-if False : # checking symmetries
-      from check import *
-      print CheckAngularSymmetry(Compton_redistribution_aa,0.01,0.1,-0.4,0.5)
-      s,gn=pr(s,gn,'ang-check')
-      print CheckFrequencySymmetry(Compton_redistribution_aa,0.01,0.1,0.5,-0.5,Theta)
-      s,gn=pr(s,gn,'freq-check')
-      exit()
+
 
 if True: # Computing Compton scattering cross section for all energies
       x,x_weight=IntEnergy
-      sigma=map(sigma_cs,x)   
-      # sigma = zeros(NEnergy) + 1
+      sigma=list(map(sigma_cs,x))   
+      sigma2=zeros(NEnergy)
+      s,gn=pr(s,gn,'sigma-cre')  
+
+
+# In[53]:
+
+
 
 if True : # Computing redistribution matrices for all energies and angles 
       mu,mu_weight=IntZenith
       RedistributionMatrix = ones( (NEnergy,NEnergy,NZenith,NZenith,2,2) )
       for e in range(NEnergy): # x [-\infty,\infty]
             for e1 in range(e,NEnergy): # x1 [x,\infty]
-                  for d in range(NZenith/2): # mu [-1,0]
-                        for d1 in range(d,NZenith/2): #mu1 [-1,mu]
+                  for d in range(NMu): # mu [-1,0]
+                        for d1 in range(d,NMu): # mu1 [-1,mu]
                               md=NZenith-d-1 # -mu
                               md1=NZenith-d1-1 # -mu1
+                              w=mu_weight[d1]*x_weight*mu_weight[d]
                               t=d1>d
                               f=e1>e
 
                               if 1: 
                                     r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
                                     rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
+                                    sigma2[e1]+=(r[0][0]+rm[0][0])*w
                                     RedistributionMatrix[e][e1][d][d1]=r
                                     RedistributionMatrix[e][e1][md][md1]=r
                                     RedistributionMatrix[e][e1][d][md1]=rm
@@ -327,14 +294,16 @@ if True : # Computing redistribution matrices for all energies and angles
                                     rmt=rm # matrices
                                     rt[0][1],rt[1][0]=r[1][0],r[0][1]
                                     rmt[0][1],rmt[1][0]=rm[1][0],rm[0][1]
+                                    sigma2[e1]+=(rt[0][0]+rmt[0][0])*w
                                     RedistributionMatrix[e][e1][d1][d]=rt
                                     RedistributionMatrix[e][e1][md1][md]=rt
                                     RedistributionMatrix[e][e1][md1][d]=rmt
                                     RedistributionMatrix[e][e1][d1][md]=rmt
                               if f: # frequency symmetry
-                                    m=exp((x[e]-x[e1])/Theta)
+                                    m=exp((x[e]-x[e1])/Theta)*x[e1]**3/x[e]**3
                                     rf=r*m  # when Maxwellian
                                     rmf=rm*m  # or Wein distributions
+                                    sigma2[e]+=(rf[0][0]+rmf[0][0])*w
                                     RedistributionMatrix[e1][e][d][d1]=rf
                                     RedistributionMatrix[e1][e][md][md1]=rf
                                     RedistributionMatrix[e1][e][d][md1]=rmf
@@ -342,11 +311,53 @@ if True : # Computing redistribution matrices for all energies and angles
                               if t and f: # both symmeties 
                                     rtf=rt*m
                                     rmtf=rmt*m
+                                    sigma2[e]+=(rtf[0][0]+rmtf[0][0])*w
                                     RedistributionMatrix[e1][e][d1][d]=rtf
                                     RedistributionMatrix[e1][e][md1][md]=rtf
                                     RedistributionMatrix[e1][e][md1][d]=rmtf
                                     RedistributionMatrix[e1][e][d1][md]=rmtf
       s,gn=pr(s,gn,'RMtable')
+
+
+
+# In[54]:
+
+
+
+if False : #check cross section  
+      cro = open('cros.dat','r')
+      figure(1)
+      xscale('log')
+      fx=[0.0]
+      cs=[1.0]
+      sgm=[1.0]
+      de=lambda X : float (X[:X.find('D')]+'e'+X[X.find('D')+1:])
+      for n in range(85):
+            line = cro.readline().split()
+            fx.append(10**de(line[3]))
+            cs.append(de(line[5]))
+            sgm.append(sigma_cs(fx[-1]))
+            # print x, cs
+      cs.append(0)
+      fx.append(x[-1])
+      sgm.append(sigma_cs(x[-1]))
+      fcs=interp1d(fx,cs)
+      fcsx=fcs(x)
+      plot(fx,cs)
+      plot(x,fcsx,'k')
+      plot(fx,sgm)
+      plot(x,sigma,'r')
+      plot(x,sigma2,'b')
+      plot(x,sigma2-fcsx)
+      print(sigma2,fcsx,sigma2-fcsx)
+      savefig('compsigma.png')
+      s,gn=pr(s,gn,'sigmaplot') 
+      show()
+
+
+# In[55]:
+
+
 
 if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
       Iin=Planck # Delta # initial photon distribution 
@@ -367,6 +378,12 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
       Intensity += Stokes_out[0]
       s,gn=pr(s,gn,'I0')
 
+
+
+# In[56]:
+
+
+
 for k in range(ScatterNum): # do ScatterNum scattering iterations
       for t in range(NDepth): # S_k= R I_{k-1}
             for e in range(NEnergy):
@@ -375,92 +392,106 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
                         for e1 in range(NEnergy):
                               for d1 in range(NZenith):
                                     w = mu_weight[d1]*x_weight # total weight
-                                    r = RedistributionMatrix[e][e1][d][d1]
-                                    I = Stokes[k-1][t][e1][d1] if k>0 \
-                                          else Stokes_in[t][e1][d1]
-                                    # print w, r, I
-                                    S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] )
-                                    S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] )
-                                    if (r[0][0]-1.)*(r[0][0]-1.)<1e-10 : print '!!!', e,e1,d,d1  
-                        Source[k][t][e][d]+=S      
+                                    r = RedistributionMatrix[e][e1][d][d1]  #  
+                                    I = Stokes[k-1][t][e1][d1] if k>0 else Stokes_in[t][e1][d1]
+                                    S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] ) # 
+                                    S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] ) #
+                                    if (r[0][0]-1.)*(r[0][0]-1.)<1e-10 : print('!!!', e,e1,d,d1  )
+                        Source[k][t][e][d]+=S #     
       
       for t in range(NDepth):# I_k= integral S_k
             for e in range(NEnergy): 
                   for d in range(NZenith): 
                         I=zeros(2)
-                        for t1 in range(t+1) if mu[d]>0 else range (t,NDepth): #here is where zeros used to come from
+                        for t1 in range(t+1) if mu[d]>0 else range (t+1,NDepth): #here is where zeros used to come from ! dunno
                               S=Source[k][t1][e][d]
                               I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                         Stokes[k][t][e][d]+=I/abs(mu[d]) #abs
-                        if I[0]>100 : print 'wow!',t,e,d
       else:
             Stokes_out[k+1]+=Stokes[k][t]
-            Intensity+=Stokes[k][t]    
+            Intensity+=Stokes[k][t]   
+       
       s,gn=pr(s,gn,'I'+str(1+k))
 
-out = open('res','w')
-d=NZenith-1#*3/5
-out.write(str(mu[d])+str(list(x))+'\n')
-#range(NZenith/2,NZenith):
-print d, mu[d]
 
-if True: # plotting intensity
-      out.write('xFlux\n')
-      figure(1)
-      for k in range(ScatterNum+1):
-            xFx=[(Stokes_out[k][e][d][0]*x[e]) for e in range(NEnergy)]
-            plot(x,xFx,colors[(k*5)/ScatterNum])
-            out.write(str(k)+' : '+str(mu[d])+str(xFx)+'\n')
-      else: 
-            xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
-            plot(x,xFx,'k')
-            out.write('st : '+str(mu[d])+str(xFx)+'\n')
+# In[67]:
+
+
+
+if True:  # All the tables and plots
+      Fout = open(saveName+'Fx.dat','w')
+      Pout = open(saveName+'Pd.dat','w')
+      frmt=lambda val, list: '{:>8}'.format(val)+': '+' '.join('{:15.5e}'.format(v) for v in list) +'\n'
+      Pout.write(frmt('Energies',x) )      
+      Fout.write(frmt('Energies',x) )      
+
+      figure(1,figsize=(16,18))
+      subplot(211) 
       yscale('log')
       xscale('log')
-      s,gn=pr(s,gn,'plfl')
-
-if False: # plotting polarization
-      figure(2)
-      out.write('ppc\n')
-      p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
-      for k in range(1+ScatterNum):
-            print k
-            yr=p(Stokes_out[k])
-            plot(x,yr,colors[(k*5)/ScatterNum])
-            out.write(str(k)+' : '+str(mu[d])+str(yr)+'\n')
-      else: 
-            yr=p(Intensity) 
-            plot(x,yr,'k')
-            out.write('pt : '+str(mu[d])+str(yr)+'\n')
+      gca().set_xlim([x[0],x[-1]])
+      gca().set_ylim([1e-13,2e-4])
+      xIinx=[(Iin(x[e])*x[e]) for e in range(NEnergy)]
+      plot(x,xIinx,'k-.')
+      subplot(212)      
       xscale('log')
-      s,gn=pr(s,gn,'plpl')
+      gca().set_xlim([x[0],x[-1]])      
+      plot(x,[.0]*NEnergy,'-.',color='xkcd:brown')  
 
-if False: # plotting intensity
-      out.write('xFlux\n')
-      figure(3)
-      for d in range(NZenith/2,NZenith): # [0,1]
-            xFx=[(Intensity[e][d][0]*x[e]) for e in range(NEnergy)]
-            plot(x,xFx,colors [(5*(d-NZenith/2))*2/NZenith ])
-            out.write(str(d)+' : '+str(mu[d])+str(xFx)+'\n')
-      yscale('log')
-      xscale('log')
-      s,gn=pr(s,gn,'plfl')
-
-if False: # plotting plarization
-      figure(4)
-      out.write('ppc\n')
-      p = lambda a :[1e2*a[e][d][1]/a[e][d][0] for e in range(NEnergy)]
-      for d in range(NZenith/2,NZenith): # [0,1]
-            yr=p(Intensity) 
-            plot(x,yr,colors [5*(d-NZenith/2)*2/NZenith ])
-            out.write(str(d)+' : '+str(mu[d])+str(yr)+'\n')
-      xscale('log')
-      s,gn=pr(s,gn,'plpl')
-
-
-# diff = (lambda a,b : (log(Intensity[a][d][0])-log(Intensity[b][d][0]))/(log(x[a])-log(x[b])))
-# print diff(10,12),diff(12,14) ,diff(14,16),diff(16,18) # estimating the slope 
-show()  
-
-print 'Total time : ', s-time0
+      for d in range(NMu):
+            d1=d+NMu
+            z=str(int(arccos(mu[d1])*180/pi))
+            xFx=[(Intensity[e][d1][0]*x[e]) for e in range(NEnergy)]
+            subplot(211)
+            plot(x,xFx,colors[(d*NColors)//NMu])
+            Fout.write( frmt(z+'deg',xFx) )
+            p=[(Intensity[e][d1][1]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
+            subplot(212)
+            plot(x,p,colors[(d*NColors)//NMu])
+            Pout.write( frmt(z+'deg',p) )
+            if d1==NZenith-1 or d>=0: # plotting vertical sp
+                  figure(d+2,figsize=(16,27))
+                  subplot(311)
+                  yscale('log')
+                  xscale('log')
+                  gca().set_xlim([x[0],x[-1]])
+                  gca().set_ylim([1e-17,3e-2])
+                  plot(x,xFx,'k')
+                  xFx=[(Stokes_out[0][e][d1][0]*x[e]) for e in range(NEnergy)]
+                  plot(x,xFx,'--',color='xkcd:brownish red')
+                  Fout.write(frmt('Sc.N.0',xFx) )      
+                  plot(x,xIinx,'-.',color='xkcd:brown')
+                  subplot(313)  
+                  gca().set_xlim([x[0],x[-1]])
+                  gca().set_xticklabels([])
+                  xscale('log')
+                  plot(x,p,'k')
+                  plot(x,[.0]*NEnergy,'--',color='xkcd:brownish red')  
+                  subplot(312)  
+                  gca().set_xlim([x[0],x[-1]])
+                  xscale('log')
+                  c=[(Stokes_out[0][e][d1][0]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
+                  plot(x,c,'--',color='xkcd:brownish red')  
+                  for k in range(ScatterNum):
+                        xFx=[(Stokes_out[k+1][e][d1][0]*x[e]) for e in range(NEnergy)]
+                        c=[(Stokes_out[k+1][e][d1][0]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
+                        p=[(Stokes_out[k+1][e][d1][1]/Stokes_out[k+1][e][d1][0]*1e2) for e in range(NEnergy)]
+                        Fout.write( frmt('Sc.N.'+str(k+1),xFx) )
+                        Pout.write( frmt('Sc.N.'+str(k+1),p) )
+                        subplot(311)
+                        plot(x,xFx,'--',color=colors[(k*NColors)//(ScatterNum)])
+                        subplot(312)
+                        plot(x,c,'--',color=colors[(k*NColors)//(ScatterNum)])      
+                        subplot(313)
+                        plot(x,p,'--',color=colors[(k*NColors)//(ScatterNum)])
+                  savefig(saveName+'z'+z+'.eps')
+                  savefig(saveName+'z'+z+'.pdf')
+                  figure(1)
+      
+      savefig(saveName+'zAll.pdf')
+      savefig(saveName+'zAll.eps')  
+      Fout.close()
+      Pout.close()
+      s,gn=pr(s,gn,'plap')
+      show()
 
