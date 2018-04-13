@@ -16,10 +16,9 @@ s,gn=pr(time0,0)
 # In[2]:
 
 
-
 #import:
-from numpy import linspace, logspace, empty, zeros, ones
-from numpy import pi, exp, log, sqrt, sin, cos, arccos
+from numpy import linspace, logspace, empty, zeros, ones, array
+from numpy import pi, exp, log, sqrt, sin, cos, arccos, asfarray,asfortranarray
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
 from scipy.interpolate import interp1d
@@ -54,18 +53,18 @@ evere=.5109989e6 # electron volts in elecron rest energy
 # parameters: 
 tau_T= 0.9# Thomson optical depth of thermalization 
 x_l, x_u = -5.1 , 0 # lower and upper bounds of the log_10 energy span
-Theta = 0.1 # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
+Theta = 0.08 # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
 T = 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
-saveName='T10Thp1tp9' # the prefix for all result files related to the set of parameters
+saveName='T10Thp08tp9' # the prefix for all result files related to the set of parameters
 # maybe here better be some clever algorythm compiling T, Theta and tau_T in a proper and readable filename 
 
 #precomputations :
-ScatterNum = 10 #20 # total number of scatterings
-NGamma= 10 # number of Lorenz factor points (\gamma)
-NAzimuth= 10 # numbers of azimuth angles (\phi) [0,pi]
-NEnergy = 21 # 91 # number of energy points (x)
-NDepth = 9 # 41 # number of optical depth levels (\tau)
-NMu = 6 # 15 # number of propagation zenith angle cosines (\mu) [0,1]
+ScatterNum = 30 #20 # total number of scatterings
+NGamma= 3 # number of Lorenz factor points (\gamma)
+NAzimuth= 6  # numbers of azimuth angles (\phi) [0,pi]
+NEnergy = 100 # 91 # number of energy points (x)
+NDepth = 41 # 41 # number of optical depth levels (\tau)
+NMu = 10 # 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -77,7 +76,6 @@ IntZenith = leggauss(NZenith) #  sample points and weights for integrations over
 K2Y = kn(2,1./Theta) # second modified Bessel function of reversed dimensionless temperature       
 
 s,gn=pr(s,gn,'precomps')
-
 
 # In[4]:
 
@@ -123,7 +121,7 @@ def Compton_redistribution_m(x1,x2,mu,gamma):
       
       This fuctions returns (R,RI,RQ,RU)
       which are scalar redistribution functions for isotropic monoenergetic gas
-      and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully
+      and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectively 
       R44 or RV is also not equal to zero but we never need it 
       """
 
@@ -180,7 +178,7 @@ def Compton_redistribution(x1,x2,mu): # if distribution is not Maxwellian the fu
       
       This fuctions returns (R,RI,RQ,RU)
       which are scalar redistribution functions for Maxwellian relativistic gas
-      and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectfully 
+      and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectively 
       R44 or RV is also not equal to zero but we never need it  
       """
       q = x1*x2*(1.-mu)
@@ -212,28 +210,26 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       # this function gives not the same result as its old fortran ancestor for some reason
       # the difference is a factor depending of x1 and x2, but the relations between different elements are alright
 
-
       eta1 = 1. - mu1*mu1  # squared sinuses of the angles 
       eta2 = 1. - mu2*mu2  
       
       phi, phi_weight = IntAzimuth
       
-      az_c=cos(pi*phi)  # list of azimuth cosines
-      az_s=sin(pi*phi)**2  # list of azimuth square sinuses
-      sc_c=mu1*mu2-sqrt(eta1*eta2)*az_c # list of scattering angles' cosines
-      sc_s=1. - sc_c**2 # list of scattering angles' squared sinuses
-      cos2chi1 = 2.*(mu1*sc_c-mu2)*(mu1*sc_c-mu2)/eta1/sc_s-1.  # list[ cos( 2 \chi_1 ) ]
-      cos2chi2 = 2.*(mu1-mu2*sc_c)*(mu1-mu2*sc_c)/eta2/sc_s-1.  # list[ cos( 2 \chi_2 ) ]
-      sin2chiP = 4.*(mu1-mu2*sc_c)*(mu1*sc_c-mu2)*az_s/sc_s**2  # list[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
+      az_c=cos(pi*phi)  # array of azimuth cosines
+      az_s=sin(pi*phi)**2  # array of azimuth square sinuses
+      sc_c=mu1*mu2-sqrt(eta1*eta2)*az_c # array of scattering angles' cosines
+      sc_s=1. - sc_c**2 # array of scattering angles' squared sinuses
+      cos2chi1 = 2.*(mu1*sc_c-mu2)*(mu1*sc_c-mu2)/eta1/sc_s-1.  # array[ cos( 2 \chi_1 ) ]
+      cos2chi2 = 2.*(mu1-mu2*sc_c)*(mu1-mu2*sc_c)/eta2/sc_s-1.  # array[ cos( 2 \chi_2 ) ]
+      sin2chiP = 4.*(mu1-mu2*sc_c)*(mu1*sc_c-mu2)*az_s/sc_s**2  # array[ sin( 2 \chi_1 )*sin( 2 \chi_2 ) ]
 
-      R=zeros( (2,2,) )
+      R=zeros( (2,2,),  )
       for i in range(NAzimuth*2):
             (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i])
             R[0][0]+=C*pi*phi_weight[i]
             R[0][1]+=I*pi*cos2chi2[i]*phi_weight[i]
             R[1][0]+=I*pi*cos2chi1[i]*phi_weight[i]
             R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*phi_weight[i]         
-      
       
       # print(x1,x2,mu1,mu2,R)
       return R*x1*x1/x2
@@ -252,20 +248,32 @@ if True : # checking symmetries #unnecessary
       s,gn=pr(s,gn,'freq-check')
       # exit()
 
+# print(Compton_redistribution_aa(0.02,0.01,0.5,0.2))
+# exit()
 
 # In[6]:
-
-
 
 
 
 if True : # Computing redistribution matrices for all energies and angles 
       mu,mu_weight=IntZenith
       x,x_weight=IntEnergy
+            # import FRM
+            # print(FRM.__doc__)
+            # print(FRM.cbf.__doc__)
+            # cr=Compton_redistribution_aa
+            # # FRM.cr=Compton_redistribution_aa
+            # RedistributionMatrix , sigma = FRM.fill( mu_weight,x_weight,x,mu,Theta,cr)
+            # print('7')
+            # # print(sigma)
+            # # exit()
       sigma=zeros(NEnergy)
       RedistributionMatrix = ones( (NEnergy,NEnergy,NZenith,NZenith,2,2) )
+      percent=0.0
       for e in range(NEnergy): # x [-\infty,\infty]
             for e1 in range(e,NEnergy): # x1 [x,\infty]
+                  percent+=200/NEnergy/(NEnergy+1)
+                  print('{:5.3f}%'.format(percent))
                   for d in range(NMu): # mu [-1,0]
                         for d1 in range(d,NMu): # mu1 [-1,mu]
                               md=NZenith-d-1 # -mu
@@ -337,12 +345,14 @@ if True : #check cross section
 #       fcs=interp1d(fx,cs)
 #       fcsx=fcs(x)
 #       plot(fx,cs)
-      plot(x,list(map(sigma_cs,x)),'b')
+      sigam=array(list(map(sigma_cs,x)))
+      plot(x,sigam,'b')
       plot(x,sigma,'r')
 #       plot(x,fcsx,'k')
 #       plot(fx,sgm)
 #       plot(x,sigma2-fcsx)
-#       print(sigma,list(map(sigma_cs,x)))
+      print(sigma)
+      print(sigam)
       savefig('compsigma.png')
       show()
       s,gn=pr(s,gn,'sigmaplot') 
@@ -368,20 +378,27 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
                   else:
                         Stokes_out[0][e][d][0]=Iin(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
                         Stokes_out[0][e][d][1]=0
-      Intensity += Stokes_out[0]
       s,gn=pr(s,gn,'I0')
 
 
 
 # In[9]:
+if True: # fortran loop
+      import FIF
+      # print(FIF.fill.__doc__)
+      Stokes=FIF.fill(ScatterNum,Stokes_in,RedistributionMatrix,x_weight,sigma,mu,mu_weight,tau,tau_weight)
+      Intensity += Stokes_out[0]
+      for k in range(ScatterNum):
+            Stokes_out[k+1]+=Stokes[k][-1]
+            Intensity += Stokes[k][-1]
+      s,gn=pr(s,gn,'I')
 
 
-
-for k in range(ScatterNum): # do ScatterNum scattering iterations
+for k in []: # range(ScatterNum): # do ScatterNum scattering iterations # or do not if the fortran does work
       for t in range(NDepth): # S_k= R I_{k-1}
             for e in range(NEnergy):
                   for d in range(NZenith):
-                        S=zeros(2)
+                        S=zeros(2)  
                         for e1 in range(NEnergy):
                               for d1 in range(NZenith):
                                     w = mu_weight[d1]*x_weight # total weight
@@ -406,11 +423,9 @@ for k in range(ScatterNum): # do ScatterNum scattering iterations
        
       s,gn=pr(s,gn,'I'+str(1+k))
 
-
 # In[10]:
 
 
-# ScatterNum=20
 if True: # plot Everything and save All pics and tabs
       outF = open(saveName+'Fx.dat','w')
       outp = open(saveName+'Pd.dat','w')
@@ -454,7 +469,7 @@ if True: # plot Everything and save All pics and tabs
                   figS.suptitle(r'$\tau_T=$'+str(tau_T)+
                                 r'$,\,T={:5.1f}eV$'.format(T*evere)+
                                 r'$,\,\Theta=$'+str(Theta)+
-                                r'$,\,\mu={:5.3f}$'.format(mu[d])+
+                                r'$,\,\mu={:5.3f}$'.format(mu[d1])+
                                 r'$\,(z\approx$'+z+
                                 r'$^{\circ})$',fontsize=fontsize)  
                   plotSF=figS.add_subplot(3,1,1,xscale='log',yscale='log') 
@@ -511,3 +526,4 @@ if True: # plot Everything and save All pics and tabs
       outp.close()
 
       s,gn=pr(s,gn,'plap')
+
