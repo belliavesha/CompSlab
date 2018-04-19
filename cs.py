@@ -591,7 +591,7 @@ print('end')
 if computeFlux:
 
 
-      NPhase = 500 # Number of equidistant phase points
+      NPhase = 100 # Number of equidistant phase points
       NBend= 8 # Number of knots in light bending integrations
       NBendPhase= 1000 # Number of psi/aplha grid points
       IntBend = leggauss(NBend)
@@ -599,7 +599,7 @@ if computeFlux:
       phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
       R_e=12.0 # equatorial radius of the star in kilometers
       M=1.4 # star mass in solar masses
-      nu=100 # star rotation frequency in Hz
+      nu=300 # star rotation frequency in Hz
       R_g=M*2.95 # gravitational Schwarzschild radius
       
 
@@ -609,7 +609,8 @@ if computeFlux:
             returns the radius and its derivative at the spot
             """
             Omega_bar=2*pi*nu*sqrt(R_e**3/G*M)
-            o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2
+            o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2 # (R_p-R_e)/R_e
+            print(o_2)
             return R_e*(1 + o_2*eta**2), R_e*o_2*eta*sqrt(1. - eta**2)
 
       def Sphere(theta):
@@ -666,10 +667,10 @@ if computeFlux:
       Flux=zeros((NPhase,NEnergy,3))
 
 
-      i=pi/6 # line of sight colatitude
+      i=0.5 # line of sight colatitude
 
       NSpots= 2 # * somewhat
-      theta = [pi/6, 5*pi/6] # spot colatitude
+      theta = [0.5,pi-0.5] # spot colatitude
       l=[0,pi] # spot longitude
       dS=[1,1] # some arbitrary units
 
@@ -682,11 +683,11 @@ if computeFlux:
 
       e_max=NEnergy-2
 
-      for p in range(NSpots):
+      for p in [0,1]:# range(NSpots):
             sin_theta=sin(theta[p])
             cos_theta=cos(theta[p])
             R,dR=AlGendy(cos_theta)
-            R,dR=Sphere(cos_theta) 
+            # R,dR=Sphere(cos_theta) 
             redshift=1.0/sqrt(1.0-R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
             # print(R_g/R,redshift)
             f=redshift/R*dR
@@ -743,9 +744,9 @@ if computeFlux:
 
                         sin_sigma = sqrt(1. - cos_sigma)
                         mu0=delta*cos_sigma # cos(sigma')
-                        Omega=dS[p]*mu0*redshift**2*dcos_alpha  
-                        # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi)
-                        if mu0<0:
+                        Omega=dS[p]*mu0*redshift**2*dcos_alpha   
+                        # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi,cos_alpha,cos_psi,Omega)
+                        if mu0<0: # this only for speeding up. the backwards intensity is usually zero
                               continue 
 
 
@@ -773,7 +774,7 @@ if computeFlux:
                         # print(chi_prime,' \t',cos_chi_prime )
 
 
-                  d2=bisect(mu[NMu:-1],mu0)+NMu
+                  d2=bisect(mu[:-1],mu0)
                   d1=d2-1
                   # print(mu0,mu[d2],mu[d1],d2,d1,'       ')
                   mu1,mu2=mu[d1],mu[d2]
@@ -792,7 +793,8 @@ if computeFlux:
                               dx1*dmu2*Intensity[e2][d1] +
                               dx1*dmu1*Intensity[e2][d2]
                         )/dx/dmu * shift**3 * Omega
-                        
+                        if e==45:
+                              print('   ',t,e,'**',I,Omega)
                         if I<0:
                               e_max=min(e_max,e)
 
@@ -816,12 +818,22 @@ if True:
       labelsize=20
       fontsize=25
       
-      for e in range(0,e_max,2): 
+      for e in range(0,e_max,3): 
+            F=zeros(NPhase+1)
+            Q=zeros(NPhase+1)
+            U=zeros(NPhase+1)
+            for t in range(-1,NPhase):
+                  F[t],Q[t],U[t]=Flux[t][e]*x[e]
+                  # print(Flux[t][e],sqrt(Q[e]**2+U[e]**2)/F[e]*100)
+
+            p=sqrt(Q**2+U**2)/F*100
+            PA=arctan2(-U,-Q)*90/pi+90
+            
             figA=figure(e+2,figsize=(16,18))
             figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
                           r'$,\,R_e={:5.1f}km$'.format(R_e)+
                           r'$,\,M=$'+str(M)+r'$M_{\odot}$'+
-                          r'$,\,x={:6.1e} m_ec^2$'.format(x[e]),fontsize=fontsize)  
+                          r'$,\,lg(x/m_ec^2)={:5.1f}$'.format(log(x[e])/log(1e1)),fontsize=fontsize)  
             plotAF=figA.add_subplot(3,1,1,yscale='log') 
             plotAp=figA.add_subplot(3,1,2)      #
             plotAc=figA.add_subplot(3,1,3)      #
@@ -829,7 +841,8 @@ if True:
 
             # plotAF.set_xlim([x[0],x[-1]])
             plotAF.set_xlim(0,1)
-            #plotAF.set_ylim([1e-7,1.])
+            
+            # plotAF.locator_params(axis='y', nbins=10)
             plotAF.set_ylabel(r'$xF_x(\varphi,x)$',fontsize=fontsize)
             plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
             # plotAF.plot(x,xIinx,'k-.')
@@ -842,21 +855,14 @@ if True:
             plotAc.set_xlim(0,1)
             plotAc.tick_params(axis='both', which='major', labelsize=labelsize)
             plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
-            plotAc.set_xlabel(r'$\varphi/(2\pi)$',fontsize=fontsize)
+            plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
             plotAc.plot(phase,[.0]*(NPhase+1),'-.',color='xkcd:brown')  
+            
             col=colors[(e*NColors)//NEnergy]
-            F=zeros(NPhase+1)
-            Q=zeros(NPhase+1)
-            U=zeros(NPhase+1)
-            for t in range(-1,NPhase):
-                  F[t],Q[t],U[t]=Flux[t][e]*x[e]
-                  # print(Flux[t][e],sqrt(Q[e]**2+U[e]**2)/F[e]*100)
-
             plotAF.plot(phase,F,color=col)
-            p=sqrt(Q**2+U**2)/F*100
-            PA=arctan2(U,Q)*90/pi
             plotAp.plot(phase,p,color=col)
             plotAc.plot(phase,PA,color=col)
+
             figA.savefig(saveName+'Ff'+str(e)+'.pdf')
       # show()
       
