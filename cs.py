@@ -12,18 +12,29 @@ def pr(s,gn,message = ''):
       return time(),gn+1
 s,gn=pr(time0,0)
 
+Surface={
+      1:'Compton',
+      2:'Burst',
+      3:'Thomson', # not yet
+      0:'FromFile'
+}[0]
+
+saveName='res/T1Thp1t1M' # the prefix for all result files related to the set of parameters
+plotFigures=False
+computeFlux=True
 
 # In[2]:
 
 
 #import:
-from numpy import linspace, logspace, empty, zeros, ones, array
-from numpy import pi, exp, log, sqrt, sin, cos, arccos, asfarray,asfortranarray
+from numpy import linspace, logspace, empty, zeros, ones, array, fromfile
+from numpy import pi, exp, log, sqrt, sin, cos, arccos, arctan2, floor, ceil
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
 from scipy.interpolate import interp1d
 from scipy.special import kn
 from matplotlib.pyplot import *
+from bisect import bisect
 
 #import numpy as np
 #import matplotlib.pyplot as plt
@@ -48,23 +59,24 @@ NColors=len(colors)
 
 #physical constants:
 evere=.5109989e6 # electron volts in elecron rest energy 
+G=13275412528e1 # G*M_sol in km^3/s^2 
+c=299792458e-3 # speed of light in km/s
 # incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
 # parameters: 
-tau_T= 0.9# Thomson optical depth of thermalization 
-x_l, x_u = -5.1 , 0 # lower and upper bounds of the log_10 energy span
-Theta = 0.08 # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
-T = 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
-saveName='T10Thp08tp9' # the prefix for all result files related to the set of parameters
+tau_T= 1.# Thomson optical depth of thermalization 
+x_l, x_u = -3.5 , 0.5 # lower and upper bounds of the log_10 energy span
+Theta = 0.1 # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
+T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 # maybe here better be some clever algorythm compiling T, Theta and tau_T in a proper and readable filename 
 
 #precomputations :
 ScatterNum = 30 #20 # total number of scatterings
-NGamma= 3 # number of Lorenz factor points (\gamma)
-NAzimuth= 6  # numbers of azimuth angles (\phi) [0,pi]
-NEnergy = 100 # 91 # number of energy points (x)
-NDepth = 41 # 41 # number of optical depth levels (\tau)
-NMu = 10 # 15 # number of propagation zenith angle cosines (\mu) [0,1]
+NGamma= 7 # number of Lorenz factor points (\gamma)
+NAzimuth= 10  # numbers of azimuth angles (\phi) [0,pi]
+NEnergy = 61 # 91 # number of energy points (x)
+NDepth = 51 # 41 # number of optical depth levels (\tau)
+NMu = 12 # 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -74,6 +86,11 @@ IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weight
 IntZenith = leggauss(NZenith) #  sample points and weights for integrations over zenith angle in positive and negative directions together
 
 K2Y = kn(2,1./Theta) # second modified Bessel function of reversed dimensionless temperature       
+
+mu,mu_weight=IntZenith
+x,x_weight=IntEnergy
+tau,tau_weight=IntDepth
+
 
 s,gn=pr(s,gn,'precomps')
 
@@ -240,7 +257,7 @@ s,gn=pr(s,gn,'funcs')
 # In[5]:
 
 
-if True : # checking symmetries #unnecessary 
+if Surface=='Compton' : # checking symmetries #unnecessary 
       from check import *
       print('Angular symmetry: ',CheckAngularSymmetry(Compton_redistribution_aa,0.02,0.02,-0.4,0.5))
       s,gn=pr(s,gn,'ang-check')
@@ -251,29 +268,28 @@ if True : # checking symmetries #unnecessary
 # print(Compton_redistribution_aa(0.02,0.01,0.5,0.2))
 # exit()
 
-# In[6]:
 
-
-
-if True : # Computing redistribution matrices for all energies and angles 
-      mu,mu_weight=IntZenith
-      x,x_weight=IntEnergy
-            # import FRM
-            # print(FRM.__doc__)
-            # print(FRM.cbf.__doc__)
-            # cr=Compton_redistribution_aa
-            # # FRM.cr=Compton_redistribution_aa
-            # RedistributionMatrix , sigma = FRM.fill( mu_weight,x_weight,x,mu,Theta,cr)
-            # print('7')
-            # # print(sigma)
-            # # exit()
+if Surface=='Compton' : # Computing redistribution matrices for all energies and angles 
+      # import FRM
+      # print(FRM.__doc__)
+      # print(FRM.fill.__doc__)
+      # def cr(x1,x2,m1,m2):
+      #       R=Compton_redistribution_aa(x1,x2,m1,m2)
+      #       return 1.0,1.0,2.0,1.0
+      #       # return R[0][0],R[0][1],R[1][0],R[1][1]
+      # # FRM.cr=Compton_redistribution_aa
+      # RedistributionMatrix , sigma = FRM.fill( mu_weight,x_weight,x,mu,Theta,cr)
+      # print('7')
+      # # print(sigma)
+      # # exit()
       sigma=zeros(NEnergy)
       RedistributionMatrix = ones( (NEnergy,NEnergy,NZenith,NZenith,2,2) )
       percent=0.0
       for e in range(NEnergy): # x [-\infty,\infty]
             for e1 in range(e,NEnergy): # x1 [x,\infty]
                   percent+=200/NEnergy/(NEnergy+1)
-                  print('{:5.3f}%'.format(percent))
+                  npc=int(percent*0.6)
+                  print('||'+'%'*npc+' '*(60-npc)+'|| {:5.3f}%'.format(percent))
                   for d in range(NMu): # mu [-1,0]
                         for d1 in range(d,NMu): # mu1 [-1,mu]
                               md=NZenith-d-1 # -mu
@@ -320,39 +336,40 @@ if True : # Computing redistribution matrices for all energies and angles
       s,gn=pr(s,gn,'RMtable')
 
 
-
 # In[11]:
 
 
 
-if True : #check cross section  
-#       cro = open('cros.dat','r')
+if Surface=='Compton' : #check cross section  
+      # cro = open('cros.dat','r')
       figure(1,figsize=(10,9))
       xscale('log')
-#       fx=[0.0]
-#       cs=[1.0]
-#       sgm=[1.0]
-#       de=lambda X : float (X[:X.find('D')]+'e'+X[X.find('D')+1:])
-#       for n in range(85):
-#             line = cro.readline().split()
-#             fx.append(10**de(line[3]))
-#             cs.append(de(line[5]))
-#             sgm.append(sigma_cs(fx[-1]))
-#             # print x, cs
-#       cs.append(0)
-#       fx.append(x[-1])
-#       sgm.append(sigma_cs(x[-1]))
-#       fcs=interp1d(fx,cs)
-#       fcsx=fcs(x)
-#       plot(fx,cs)
+      # fx=[0.0]
+      # cs=[1.0]
+      # sgm=[1.0]
+      # de=lambda X : float (X[:X.find('D')]+'e'+X[X.find('D')+1:])
+      # for n in range(85):
+      #       line = cro.readline().split()
+      #       fx.append(10**de(line[3]))
+      #       cs.append(de(line[5]))
+      #       sgm.append(sigma_cs(fx[-1]))
+      #       # print x, cs
+      # cs.append(0)
+      # fx.append(x[-1])
+      # sgm.append(sigma_cs(x[-1]))
+      # fcs=interp1d(fx,cs)
+      # fcsx=fcs(x)
+      # plot(fx,cs)
       sigam=array(list(map(sigma_cs,x)))
       plot(x,sigam,'b')
       plot(x,sigma,'r')
-#       plot(x,fcsx,'k')
-#       plot(fx,sgm)
-#       plot(x,sigma2-fcsx)
+      # plot(x,fcsx,'k')
+      # plot(fx,sgm)
+      # plot(x,sigma2-fcsx)
       print(sigma)
       print(sigam)
+      print(sigam-sigma)
+      print(x)
       savefig('compsigma.png')
       show()
       s,gn=pr(s,gn,'sigmaplot') 
@@ -362,9 +379,8 @@ if True : #check cross section
 
 
 
-if True : # Initializing Stokes vectors arrays, computing zeroth scattering 
+if Surface=='Compton' : # Initializing Stokes vectors arrays, computing zeroth scattering 
       Iin=Planck # Delta # initial photon distribution 
-      tau,tau_weight=IntDepth
       Source=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
       Stokes_out=zeros((ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
@@ -382,51 +398,89 @@ if True : # Initializing Stokes vectors arrays, computing zeroth scattering
 
 
 
-# In[9]:
-if True: # fortran loop
-      import FIF
-      # print(FIF.fill.__doc__)
-      Stokes=FIF.fill(ScatterNum,Stokes_in,RedistributionMatrix,x_weight,sigma,mu,mu_weight,tau,tau_weight)
+      try: # Fortran
+            import FIF
+            # print(FIF.fill.__doc__)
+            Stokes=FIF.fill(ScatterNum,Stokes_in,RedistributionMatrix,x_weight,sigma,mu,mu_weight,tau,tau_weight)
+            s,gn=pr(s,gn,'I')
+
+
+      except: # python
+            for k in range(ScatterNum): # do ScatterNum scattering iterations
+                  for t in range(NDepth): # S_k= R I_{k-1}
+                        for e in range(NEnergy):
+                              for d in range(NZenith):
+                                    S=zeros(2)  
+                                    for e1 in range(NEnergy):
+                                          for d1 in range(NZenith):
+                                                w = mu_weight[d1]*x_weight # total weight
+                                                r = RedistributionMatrix[e][e1][d][d1]  #  
+                                                I = Stokes[k-1][t][e1][d1] if k>0 else Stokes_in[t][e1][d1]
+                                                S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] ) # 
+                                                S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] ) #
+                                    Source[k][t][e][d]+=S #     
+                  
+                  for t in range(NDepth):# I_k= integral S_k
+                        for e in range(NEnergy): 
+                              for d in range(NZenith): 
+                                    I=zeros(2)
+                                    I+=tau_weight/2*Source[k][t][e][d]
+                                    if mu[d]>0:
+                                          for t1 in range(t) : #
+                                                S=Source[k][t1][e][d] #
+                                                I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
+                                          S=Source[k][0][e][d] #
+                                          I+=tau_weight*S*exp(sigma[e]*(-tau[t])/mu[d])
+                                    else:
+                                          for t1 in range (t+1,NDepth):
+                                                S=Source[k][t1][e][d] #
+                                                I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
+                                          S=Source[k][NDepth-1][e][d] #
+                                          I+=tau_weight*S*exp(sigma[e]*(tau[NDepth-1]-tau[t])/mu[d])
+                                    Stokes[k][t][e][d]+=I/abs(mu[d]) #abs
+                  s,gn=pr(s,gn,'I'+str(1+k))
+                 
       Intensity += Stokes_out[0]
       for k in range(ScatterNum):
             Stokes_out[k+1]+=Stokes[k][-1]
             Intensity += Stokes[k][-1]
-      s,gn=pr(s,gn,'I')
-
-
-for k in []: # range(ScatterNum): # do ScatterNum scattering iterations # or do not if the fortran does work
-      for t in range(NDepth): # S_k= R I_{k-1}
-            for e in range(NEnergy):
-                  for d in range(NZenith):
-                        S=zeros(2)  
-                        for e1 in range(NEnergy):
-                              for d1 in range(NZenith):
-                                    w = mu_weight[d1]*x_weight # total weight
-                                    r = RedistributionMatrix[e][e1][d][d1]  #  
-                                    I = Stokes[k-1][t][e1][d1] if k>0 else Stokes_in[t][e1][d1]
-                                    S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] ) # 
-                                    S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] ) #
-                        Source[k][t][e][d]+=S #     
-      
-      for t in range(NDepth):# I_k= integral S_k
-            for e in range(NEnergy): 
-                  for d in range(NZenith): 
-                        I=zeros(2)
-                        I+=tau_weight/2*Source[k][t][e][d]
-                        for t1 in range(t) if mu[d]>0 else range (t+1,NDepth): #
-                              S=Source[k][t1][e][d] #
-                              I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
-                        Stokes[k][t][e][d]+=I/abs(mu[d]) #abs
-      else:
-            Stokes_out[k+1]+=Stokes[k][t]
-            Intensity+=Stokes[k][t]   
-       
-      s,gn=pr(s,gn,'I'+str(1+k))
 
 # In[10]:
 
 
-if True: # plot Everything and save All pics and tabs
+if Surface=='Burst' : # Initializing Stokes vectors arrays, computing zeroth scattering 
+      Bol=(Theta/T)
+      Intensity=zeros((NEnergy,NZenith,2)) # total intensity of all scattering orders from the slab suface 
+      for e in range(NEnergy):
+            E=x[e]/Theta
+            for d in range(NZenith):
+                  Intensity[e][d][0]=(E**3/(exp(E)-1.)/Bol if E > 1e-5 else E**2/Bol)*(1+2.06*mu[d])
+                  Intensity[e][d][1]=Intensity[e][d][0]*0.1171*(1-mu[d])/(1+3.582*abs(mu[d]))
+      s,gn=pr(s,gn,'I0')
+
+if Surface=='FromFile' :
+      inI = open(saveName+'I.bin')
+      inx = open(saveName+'x.bin')
+      inm = open(saveName+'m.bin')
+      x=fromfile(inx)
+      mu=fromfile(inm)
+      NEnergy=len(x)
+      NZenith=len(mu)
+      Intensity=fromfile(inI).reshape((NEnergy,NZenith,2))
+      s,gn=pr(s,gn,'I is read')
+else: 
+      outI = open(saveName+'I.bin','w')
+      outx = open(saveName+'x.bin','w')
+      outm = open(saveName+'m.bin','w')
+      Intensity.tofile(outI,format="%e")
+      x.tofile(outx,format="%e")
+      mu.tofile(outm,format="%e")
+
+
+if plotFigures: # plot Everything and save All pics and tabs
+      Sangles= range(NMu) if Surface=='Compton' else [] # list of the angle indeces to be plot a detailed figure
+      Iin=Planck # Delta # initial photon distribution 
+      
       outF = open(saveName+'Fx.dat','w')
       outp = open(saveName+'Pd.dat','w')
       frmt=lambda val, list: '{:>8}'.format(val)+': '+' '.join('{:15.5e}'.format(v) for v in list) +'\n'
@@ -437,14 +491,14 @@ if True: # plot Everything and save All pics and tabs
       fontsize=25
       figA=figure(1,figsize=(16,18))
       figA.suptitle(r'$\tau_T=$'+str(tau_T)+
-                    r'$,\,T={:5.1f}eV$'.format(T*evere)+
+                    r'$,\,T={:5.1f}keV$'.format(T*evere/1e3)+
                     r'$,\,\Theta=$'+str(Theta),fontsize=fontsize)  
       plotAF=figA.add_subplot(2,1,1,xscale='log',yscale='log') 
       plotAp=figA.add_subplot(2,1,2,xscale='log')      
       
       xIinx=[(Iin(x[e])*x[e]) for e in range(NEnergy)]
       plotAF.set_xlim([x[0],x[-1]])
-      plotAF.set_ylim([1e-7,2e-4])
+      plotAF.set_ylim([1e-7,1.])
       plotAF.set_ylabel(r'$xI_x(\tau_T,x)$',fontsize=fontsize)
       plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
       plotAF.plot(x,xIinx,'k-.')
@@ -464,10 +518,10 @@ if True: # plot Everything and save All pics and tabs
             p=[(Intensity[e][d1][1]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
             plotAp.plot(x,p,colors[(d*NColors)//NMu])
             outp.write( frmt(z+'deg',p) )
-            if True: # Specific angle 
+            if d in Sangles: # Specific angle 
                   figS=figure(2+d,figsize=(16,21))
                   figS.suptitle(r'$\tau_T=$'+str(tau_T)+
-                                r'$,\,T={:5.1f}eV$'.format(T*evere)+
+                                r'$,\,T={:5.1f}keV$'.format(T*evere*1e-3)+
                                 r'$,\,\Theta=$'+str(Theta)+
                                 r'$,\,\mu={:5.3f}$'.format(mu[d1])+
                                 r'$\,(z\approx$'+z+
@@ -479,7 +533,7 @@ if True: # plot Everything and save All pics and tabs
                   plotSF.set_ylabel(r'$xI_x(\tau_T,x)$',fontsize=fontsize)
                   plotSF.tick_params(axis='both', which='major', labelsize=labelsize)
                   plotSF.set_xlim([x[0],x[-1]])
-                  plotSF.set_ylim([1e-17,3e-3])
+                  plotSF.set_ylim([1e-10,1.])
                   plotSF.plot(x,xFx,'k')
                   plotSF.plot(x,xIinx,'-.',color='xkcd:brown')
                   outF.write(frmt('Sc.N.0',xFx) )      
@@ -527,3 +581,290 @@ if True: # plot Everything and save All pics and tabs
 
       s,gn=pr(s,gn,'plap')
 
+print('end')
+
+
+# In[]:
+
+
+
+if computeFlux:
+
+
+      NPhase = 500 # Number of equidistant phase points
+      NBend= 8 # Number of knots in light bending integrations
+      NBendPhase= 1000 # Number of psi/aplha grid points
+      IntBend = leggauss(NBend)
+
+      phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
+      R_e=12.0 # equatorial radius of the star in kilometers
+      M=1.4 # star mass in solar masses
+      nu=100 # star rotation frequency in Hz
+      R_g=M*2.95 # gravitational Schwarzschild radius
+      
+
+      def AlGendy(eta):
+            """Star shape function from AlGendy et al. (2014) 
+            the arguement is the colatitude of the spot 
+            returns the radius and its derivative at the spot
+            """
+            Omega_bar=2*pi*nu*sqrt(R_e**3/G*M)
+            o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2
+            return R_e*(1 + o_2*eta**2), R_e*o_2*eta*sqrt(1. - eta**2)
+
+      def Sphere(theta):
+            return R_e,0.0
+
+      def Beloborodov(cos_psi):
+            """Beloborodov's approximation for cos_alpha(cos_psi) light bending function
+            takes the cos psi 
+            returns the cos alpha and its derivative
+            """
+            return 1. + (cos_psi - 1.)/redshift**2 ,1./redshift**2
+
+      def Schwarzschild(R,alpha):
+            """Schwarzschild exact relation between the \psi and \\alpha angles, where
+            \\alpha is the angle between radius vector of the spot and the direction of the outgoing photon near the surface
+            and \psi is the angle between normal and light propagation at the limit of infinite distance.
+            For given distance from the mass center and the emission angle \\alpha 
+            this function returns two numbers: 
+                  the corresponding angle \psi 
+                  and the time lag over against the fotons emited with zero impact parameter at the radius.
+            """
+            kx,wx=IntBend
+            eps=(1+kx[0])/4e2
+            u=R_g/R 
+            b=sin(alpha)/sqrt(1-u)*R # impact parameter
+            if 2*alpha>pi+eps:
+                  cos_3eta=sqrt(27)*R_g/2/b
+                  if cos_3eta > 1:
+                        return pi+2*eps,0 # the timelag 
+                  closest_approach=-2*b/sqrt(3)*cos(arccos(cos_3eta)/3+2*pi/3)
+                  psi_max, lag_max= Schwarzschild(closest_approach,pi/2.)
+                  psi_min, lag_min= Schwarzschild(R,pi-alpha)
+                  psi=2*psi_max - psi_min    
+                  lag=2*lag_max - lag_min+2*(R - closest_approach + R_g*log((R-R_g)/(closest_approach-R_g)))/c
+                  if psi>pi:
+                        return pi+eps,lag
+            else:
+                  psi=0
+                  lag=(R_e - R + R_g*log( (R_e - R_g)/(R - R_g) ) )/c
+                  for i in range(NBend):
+                        ex=(kx[i]+1)/2
+                        q=(2-ex*ex-u*(1-ex*ex)**2/(1-u))*sin(alpha)**2
+                        sr=sqrt(cos(alpha)**2+ex*ex*q)
+                        if  2*alpha>pi-eps:
+                              dpsi=b/R/sqrt(q)*wx[i]
+                        else:
+                              dpsi=ex*b/R/sr*wx[i]
+                        dlag=dpsi*b/c/(1+sr)*wx[i]
+                        psi+= dpsi
+                        lag+=dlag
+            return psi,lag
+
+
+      Flux=zeros((NPhase,NEnergy,3))
+
+
+      i=pi/6 # line of sight colatitude
+
+      NSpots= 2 # * somewhat
+      theta = [pi/6, 5*pi/6] # spot colatitude
+      l=[0,pi] # spot longitude
+      dS=[1,1] # some arbitrary units
+
+      sin_i=sin(i)
+      cos_i=cos(i)
+
+      BoloFlux=zeros((NPhase,3))
+
+      s,gn=pr(s,gn,'second precomp')
+
+      e_max=NEnergy-2
+
+      for p in range(NSpots):
+            sin_theta=sin(theta[p])
+            cos_theta=cos(theta[p])
+            R,dR=AlGendy(cos_theta)
+            R,dR=Sphere(cos_theta) 
+            redshift=1.0/sqrt(1.0-R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
+            # print(R_g/R,redshift)
+            f=redshift/R*dR
+            sin_gamma=f/sqrt(1+f**2) # angle gamma is positive towards the north pole 
+            cos_gamma=1.0/sqrt(1+f**2)
+            beta=2*pi*nu*R*redshift*sin_theta/c
+            # print(beta,nu,R,redshift,sin_theta)
+            Gamma=1.0/sqrt(1.0-beta**2)
+            # exit()
+
+            alpha=linspace(0,arccos(-1/sqrt(2*R/R_g/3)),NBendPhase)
+            psi=zeros(NBendPhase)
+            dt=zeros(NBendPhase)
+            for a in range(NBendPhase):
+                  psi[a],dt[a]=Schwarzschild(R,alpha[a])
+                  
+
+            for t in range(NPhase):
+                  if True: # find mu
+                        sin_phi=sin(phi[t]+l[p])
+                        cos_phi=cos(phi[t]+l[p])
+                        cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
+                        sin_psi=sqrt(1. - cos_psi**2)
+                        
+                        # cos_alpha, dcos_alpha=Beloborodov(cos_psi) # insert exact formula here
+                        # sin_alpha = sqrt(1. - cos_alpha**2)
+                        # sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
+                        
+                        psi0=arccos(cos_psi)
+                        a2=bisect(psi,psi0)
+                        a1=a2-1 
+                        psi1=psi[a1]
+                        psi2=psi[a2]
+                        alpha1=alpha[a1]
+                        alpha2=alpha[a2]
+                        dpsi=psi2-psi1
+                        
+                        cos_alpha = cos( (alpha2*(psi0 - psi1) + (psi2 - psi0)*alpha1)/dpsi )
+                        sin_alpha = sqrt(1. - cos_alpha**2)
+                        sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
+                        dcos_alpha=sin_alpha_over_sin_psi *(alpha2 - alpha1)/dpsi # d cos\alpha \ over d \cos \psi
+                        
+                        dphi=(dt[a2]*(psi0 - psi1) + (psi2 - psi0)*dt[a1])*2*pi*nu/dpsi # \delta\phi = \phi_{obs} - \phi
+                        i=dphi/phi_weight
+                        di1=i-floor(i)
+                        di2=ceil(i)-i
+                        t2=int((t+i)%NPhase)
+                        t1=t2-1
+                        # print(t,t1,t2,i,di1,di2)
+
+                        cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
+                        delta = 1./Gamma/(1.-beta*cos_xi)
+                        cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
+
+                        sin_sigma = sqrt(1. - cos_sigma)
+                        mu0=delta*cos_sigma # cos(sigma')
+                        Omega=dS[p]*mu0*redshift**2*dcos_alpha  
+                        # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi)
+                        if mu0<0:
+                              continue 
+
+
+                  if True: # find chi
+                        sin_chi_0=-sin_theta*sin_phi # times sin psi
+                        cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
+                        chi_0=arctan2(sin_chi_0,cos_chi_0)
+                        
+                        sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin psi sin sigma 
+                        cos_chi_1=cos_gamma - cos_alpha*cos_sigma  #times sin psi sin sigma 
+                        chi_1=arctan2(sin_chi_1,cos_chi_1)
+                        
+                        sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
+                        cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
+                        cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
+                        # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
+                        sin_chi_prime=cos_eps*mu0*Gamma*beta # times mu cos sigma
+                        cos_chi_prime=1. - cos_sigma**2 /(1. - beta* cos_xi)
+                        chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
+
+                        chi=chi_0+chi_1+chi_prime
+
+                        sin_2chi=sin(2*chi)
+                        cos_2chi=cos(2*chi)
+                        # print(chi_prime,' \t',cos_chi_prime )
+
+
+                  d2=bisect(mu[NMu:-1],mu0)+NMu
+                  d1=d2-1
+                  # print(mu0,mu[d2],mu[d1],d2,d1,'       ')
+                  mu1,mu2=mu[d1],mu[d2]
+                  dmu, dmu1, dmu2 = mu2-mu1, mu0-mu1, mu2-mu0
+                  shift=delta/redshift
+                  for e in range(NEnergy): 
+                        x0=x[e]/shift
+                        e1=bisect(x[1:-1],x0) # not the fastest way? anybody cares?
+                        e2=e1+1
+                        # print(e,e1,e2)
+                        x1, x2 = x[e1], x[e2]
+                        dx, dx1, dx2 = x2-x1, x0-x1, x2-x0
+                        I, Q = (
+                              dx2*dmu2*Intensity[e1][d1] + 
+                              dx2*dmu1*Intensity[e1][d2] +
+                              dx1*dmu2*Intensity[e2][d1] +
+                              dx1*dmu1*Intensity[e2][d2]
+                        )/dx/dmu * shift**3 * Omega
+                        
+                        if I<0:
+                              e_max=min(e_max,e)
+
+                        F=array([I, Q*cos_2chi, Q*sin_2chi])
+                        Flux[t2][e] += F*di1
+                        Flux[t1][e] += F*di2
+
+
+
+       
+
+
+      s,gn=pr(s,gn,'curves done ')
+
+if True:
+      outF = open(saveName+'F.bin','w')
+      outf = open(saveName+'f.bin','w')
+      Flux.tofile(outF,format="%e")
+      phi.tofile(outf,format="%e")
+
+      labelsize=20
+      fontsize=25
+      
+      for e in range(0,e_max,2): 
+            figA=figure(e+2,figsize=(16,18))
+            figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
+                          r'$,\,R_e={:5.1f}km$'.format(R_e)+
+                          r'$,\,M=$'+str(M)+r'$M_{\odot}$'+
+                          r'$,\,x={:6.1e} m_ec^2$'.format(x[e]),fontsize=fontsize)  
+            plotAF=figA.add_subplot(3,1,1,yscale='log') 
+            plotAp=figA.add_subplot(3,1,2)      #
+            plotAc=figA.add_subplot(3,1,3)      #
+            phase=list(phi/2/pi)+[1.]
+
+            # plotAF.set_xlim([x[0],x[-1]])
+            plotAF.set_xlim(0,1)
+            #plotAF.set_ylim([1e-7,1.])
+            plotAF.set_ylabel(r'$xF_x(\varphi,x)$',fontsize=fontsize)
+            plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
+            # plotAF.plot(x,xIinx,'k-.')
+            
+            # plotAF.set_xlim([x[0],x[-1]])
+            plotAp.set_xlim(0,1)
+            plotAp.tick_params(axis='both', which='major', labelsize=labelsize)
+            plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
+            plotAp.plot(phase,[.0]*(NPhase+1),'-.',color='xkcd:brown')  
+            plotAc.set_xlim(0,1)
+            plotAc.tick_params(axis='both', which='major', labelsize=labelsize)
+            plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
+            plotAc.set_xlabel(r'$\varphi/(2\pi)$',fontsize=fontsize)
+            plotAc.plot(phase,[.0]*(NPhase+1),'-.',color='xkcd:brown')  
+            col=colors[(e*NColors)//NEnergy]
+            F=zeros(NPhase+1)
+            Q=zeros(NPhase+1)
+            U=zeros(NPhase+1)
+            for t in range(-1,NPhase):
+                  F[t],Q[t],U[t]=Flux[t][e]*x[e]
+                  # print(Flux[t][e],sqrt(Q[e]**2+U[e]**2)/F[e]*100)
+
+            plotAF.plot(phase,F,color=col)
+            p=sqrt(Q**2+U**2)/F*100
+            PA=arctan2(U,Q)*90/pi
+            plotAp.plot(phase,p,color=col)
+            plotAc.plot(phase,PA,color=col)
+            figA.savefig(saveName+'Ff'+str(e)+'.pdf')
+      # show()
+      
+
+
+
+
+            
+
+s,gn=pr(s,gn,'phase pics drawn ')      
+print('end end')
