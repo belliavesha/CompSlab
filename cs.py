@@ -1,9 +1,4 @@
 
-# coding: utf-8
-
-# In[1]:
-
-
 # timer:
 from time import time
 time0=time()
@@ -17,11 +12,13 @@ Surface={
       2:'Burst',
       3:'Thomson', # not yet
       0:'FromFile'
-}[0]
+}[1]
 
-saveName='res/T1Thp1t1M' # the prefix for all result files related to the set of parameters
-plotFigures=False
-computeFlux=True
+AtmName='res/M2' # the prefix for all result files related to the set of parameters
+PulsName=AtmName+'P1'
+computePulse=True
+plotAtm=True
+plotPulse=True
 
 # In[2]:
 
@@ -61,22 +58,20 @@ NColors=len(colors)
 evere=.5109989e6 # electron volts in elecron rest energy 
 G=13275412528e1 # G*M_sol in km^3/s^2 
 c=299792458e-3 # speed of light in km/s
-# incgs=3.43670379e30 # 2 m_e^4 c^6 / h^3
 
-# parameters: 
-tau_T= 1.# Thomson optical depth of thermalization 
-x_l, x_u = -3.5 , 0.5 # lower and upper bounds of the log_10 energy span
-Theta = 0.1 # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
-T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
-# maybe here better be some clever algorythm compiling T, Theta and tau_T in a proper and readable filename 
+# Atmosphere parameters: 
+tau_T= 1.0 # Thomson optical depth of thermalization 
+x_l, x_u = -3.2 , 0.7 # lower and upper bounds of the log_10 energy span
+Theta = 0.2  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
+T = 0.001 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 
 #precomputations :
-ScatterNum = 30 #20 # total number of scatterings
-NGamma= 7 # number of Lorenz factor points (\gamma)
-NAzimuth= 10  # numbers of azimuth angles (\phi) [0,pi]
-NEnergy = 61 # 91 # number of energy points (x)
-NDepth = 51 # 41 # number of optical depth levels (\tau)
-NMu = 12 # 15 # number of propagation zenith angle cosines (\mu) [0,1]
+ScatterNum = 30 # total number of scatterings
+NGamma= 7# number of Lorenz factor points (\gamma)
+NAzimuth= 10 # 12 # numbers of azimuth angles (\phi) [0,pi]
+NEnergy = 50# 101 # number of energy points (x)
+NDepth = 40# 101  # number of optical depth levels (\tau)
+NMu = 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -90,6 +85,18 @@ K2Y = kn(2,1./Theta) # second modified Bessel function of reversed dimensionless
 mu,mu_weight=IntZenith
 x,x_weight=IntEnergy
 tau,tau_weight=IntDepth
+
+outParams = open(AtmName+'.dat','w')
+outParams.write(Surface+'\n')
+outParams.write(str(tau_T)+' = total depth tau_T\n')
+outParams.write(str(x_l)+' '+str(x_u)+' = log_10 energy span from to\n')
+outParams.write(str(Theta)+' = dimensionless electron gas temperature in m_ec^2\n')
+outParams.write(str(T)+' = dimensionless initial bb photons temperature in m_ec^2\n')
+outParams.write(str(ScatterNum)+' = Number of scatterings computed\n')
+outParams.write(str(NMu)+' = NMu, NZenith=2 NMu, number of points in mu grid\n')
+outParams.write(str(NEnergy)+' = NEnergy, number of points in x grid\n')
+outParams.write(str(NGamma)+' '+str(NAzimuth)+' '+str(NDepth)+' = NGamma NAzimuth NDepth parameters\n')
+
 
 
 s,gn=pr(s,gn,'precomps')
@@ -371,7 +378,8 @@ if Surface=='Compton' : #check cross section
       print(sigam-sigma)
       print(x)
       savefig('compsigma.png')
-      show()
+      # show()
+      clf()
       s,gn=pr(s,gn,'sigmaplot') 
 
 
@@ -379,7 +387,7 @@ if Surface=='Compton' : #check cross section
 
 
 
-if Surface=='Compton' : # Initializing Stokes vectors arrays, computing zeroth scattering 
+if Surface=='Compton' : # Initializing Stokes vectors arrays, computiong scatterings 
       Iin=Planck # Delta # initial photon distribution 
       Source=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
@@ -459,9 +467,9 @@ if Surface=='Burst' : # Initializing Stokes vectors arrays, computing zeroth sca
       s,gn=pr(s,gn,'I0')
 
 if Surface=='FromFile' :
-      inI = open(saveName+'I.bin')
-      inx = open(saveName+'x.bin')
-      inm = open(saveName+'m.bin')
+      inI = open(AtmName+'I.bin')
+      inx = open(AtmName+'x.bin')
+      inm = open(AtmName+'m.bin')
       x=fromfile(inx)
       mu=fromfile(inm)
       NEnergy=len(x)
@@ -469,20 +477,21 @@ if Surface=='FromFile' :
       Intensity=fromfile(inI).reshape((NEnergy,NZenith,2))
       s,gn=pr(s,gn,'I is read')
 else: 
-      outI = open(saveName+'I.bin','w')
-      outx = open(saveName+'x.bin','w')
-      outm = open(saveName+'m.bin','w')
+      outI = open(AtmName+'I.bin','w')
+      outx = open(AtmName+'x.bin','w')
+      outm = open(AtmName+'m.bin','w')
       Intensity.tofile(outI,format="%e")
       x.tofile(outx,format="%e")
       mu.tofile(outm,format="%e")
 
 
-if plotFigures: # plot Everything and save All pics and tabs
+if plotAtm: # plot Everything and save All pics and tabs
       Sangles= range(NMu) if Surface=='Compton' else [] # list of the angle indeces to be plot a detailed figure
       Iin=Planck # Delta # initial photon distribution 
-      
-      outF = open(saveName+'Fx.dat','w')
-      outp = open(saveName+'Pd.dat','w')
+      Senergy=[int(0.5+n*log(1+4*Theta)/x_weight) for n in range(NColors) ]if Surface=='Compton' else [] 
+      print(Senergy)
+      outF = open(AtmName+'Fx.dat','w')
+      outp = open(AtmName+'Pd.dat','w')
       frmt=lambda val, list: '{:>8}'.format(val)+': '+' '.join('{:15.5e}'.format(v) for v in list) +'\n'
       outp.write(frmt('Energies',x) )      
       outF.write(frmt('Energies',x) )       
@@ -519,7 +528,7 @@ if plotFigures: # plot Everything and save All pics and tabs
             plotAp.plot(x,p,colors[(d*NColors)//NMu])
             outp.write( frmt(z+'deg',p) )
             if d in Sangles: # Specific angle 
-                  figS=figure(2+d,figsize=(16,21))
+                  figS=figure(2,figsize=(16,21))
                   figS.suptitle(r'$\tau_T=$'+str(tau_T)+
                                 r'$,\,T={:5.1f}keV$'.format(T*evere*1e-3)+
                                 r'$,\,\Theta=$'+str(Theta)+
@@ -550,57 +559,96 @@ if plotFigures: # plot Everything and save All pics and tabs
                   
                   for k in range(ScatterNum+1):
                         xFx=[(Stokes_out[k][e][d1][0]*x[e]) for e in range(NEnergy)]
-                        c=[(Stokes_out[k][e][d1][0]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
+                        contribution=[(Stokes_out[k][e][d1][0]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
                         p=[.0]*NEnergy  if k==0 else (
                             [(Stokes_out[k][e][d1][1]/Stokes_out[k][e][d1][0]*1e2) for e in range(NEnergy)])
                         outF.write( frmt('Sc.N.'+str(k),xFx) )
                         outp.write( frmt('Sc.N.'+str(k),p) )
                         plotSF.plot(x,xFx,'--',color=colors[(k*NColors)//(ScatterNum+1)])
-                        plotSc.plot(x,c,'--',color=colors[(k*NColors)//(ScatterNum+1)])      
+                        plotSc.plot(x,contribution,'--',color=colors[(k*NColors)//(ScatterNum+1)])      
                         plotSp.plot(x,p,'--',color=colors[(k*NColors)//(ScatterNum+1)])
-                  figS.savefig(saveName+'z'+z+'.eps')
-                  figS.savefig(saveName+'z'+z+'.pdf')
+                  figS.savefig(AtmName+'z'+z+'.pdf')
+                  figS.clf()
       
-      figA.savefig(saveName+'zAll.pdf')
-      figA.savefig(saveName+'zAll.eps')  
-      show() 
+      figA.savefig(AtmName+'zAll.pdf')
+      figA.clf()
+      figA.suptitle(r'$\tau_T=$'+str(tau_T)+
+                    r'$,\,T={:5.1f}keV$'.format(T*evere/1e3)+
+                    r'$,\,\Theta=$'+str(Theta),fontsize=fontsize)  
+      plotAF=figA.add_subplot(2,1,1,xscale='linear',yscale='linear') 
+      plotAp=figA.add_subplot(2,1,2,xscale='linear')      
+      
+      plotAF.set_xlim(0,1)
+      # plotAF.set_ylim()
+      plotAF.set_ylabel(r'$I_x(\tau_T,\mu)/I_x(\tau_T,1)$',fontsize=fontsize)
+      plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
+      
+      plotAp.set_xlim(0,1)
+      plotAp.tick_params(axis='both', which='major', labelsize=labelsize)
+      plotAp.set_xlabel(r'$\mu$',fontsize=fontsize)
+      plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
+      plotAp.plot(mu[NMu:NZenith],[.0]*NMu,'-.',color='xkcd:brown')  
+
+
+
+      # show() 
       outp.write('\n\n' )      
       outF.write('\n\n' )
       outp.write(frmt('Cosines',mu[NMu:]) )      
       outF.write(frmt('Cosines',mu[NMu:]) ) 
       outp.write(frmt('Angles',arccos(mu[NMu:])*180/pi) )
-      outF.write(frmt('Angles',arccos(mu[NMu:])*180/pi) )      
+      outF.write(frmt('Angles',arccos(mu[NMu:])*180/pi) )
+      k=-1     
       for e in range(NEnergy):
             Esp="{:<8.2e}".format(x[e])
-            xFx=[(Intensity[e][d1][0]*x[e]) for d1 in range(NMu,NZenith)]
+            Inorm=[(Intensity[e][d1][0]/Intensity[e][NZenith-1][0]) for d1 in range(NMu,NZenith)]
             p=[(Intensity[e][d1][1]/Intensity[e][d1][0]*1e2) for d1 in range(NMu,NZenith)]
-            outF.write( frmt(Esp,xFx) )
+            outF.write( frmt(Esp,Inorm) )
             outp.write( frmt(Esp,p) )
+            if e in Senergy:
+                  k=k+1
+                  # plotAp.plot(mu[NMu:NZenith],p,'-.',color='xkcd:black')  
+                  # plotAF.plot(mu[NMu:NZenith],Inorm,'-.',color='xkcd:black')  
+                  Inorm=[(Stokes_out[k][e][d1][0]/Stokes_out[k][e][NZenith-1][0]) for d1 in range(NMu,NZenith)]
+                  p=[.0]*NMu  if k==0 else (
+                        [(Stokes_out[k][e][d1][1]/Stokes_out[k][e][d1][0]*1e2) for d1 in range(NMu,NZenith)])
+                  plotAp.plot(mu[NMu:NZenith],p,'-',color=colors[k])  
+                  plotAF.plot(mu[NMu:NZenith],Inorm,'-',color=colors[k])
+            
+      figA.savefig(AtmName+'In.pdf')
+
       outF.close()
       outp.close()
 
       s,gn=pr(s,gn,'plap')
 
-print('end')
 
 
 # In[]:
 
 
 
-if computeFlux:
+if computePulse:
 
 
-      NPhase = 100 # Number of equidistant phase points
-      NBend= 8 # Number of knots in light bending integrations
-      NBendPhase= 1000 # Number of psi/aplha grid points
+      NPhase = 120 # Number of equidistant phase points
+      NBend= 20 # Number of knots in light bending integrations
+      NBendPhase= 10000 # Number of psi/aplha grid points
       IntBend = leggauss(NBend)
 
       phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
       R_e=12.0 # equatorial radius of the star in kilometers
       M=1.4 # star mass in solar masses
-      nu=300 # star rotation frequency in Hz
+      nu=100 # star rotation frequency in Hz
       R_g=M*2.95 # gravitational Schwarzschild radius
+
+      outParams = open(PulsName+'.dat','w')
+      outParams.write(AtmName+'.dat is the name of file with some corresponding atmosphere model\n')
+      outParams.write(str(R_e)+' = equatorial radius R_e\n')
+      outParams.write(str(M)+' = star mass M in solar masses\n')
+      outParams.write(str(nu)+' = star rotation frequency nu in Hz\n')
+      outParams.write(str(NPhase)+' '+str(NBend)+' '+str(NBendPhase)+' = NPhase NBend NBendPhase parameters\n')
+
       
 
       def AlGendy(eta):
@@ -610,10 +658,11 @@ if computeFlux:
             """
             Omega_bar=2*pi*nu*sqrt(R_e**3/G*M)
             o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2 # (R_p-R_e)/R_e
-            print(o_2)
+            # print(o_2)
             return R_e*(1 + o_2*eta**2), R_e*o_2*eta*sqrt(1. - eta**2)
 
       def Sphere(theta):
+            pass
             return R_e,0.0
 
       def Beloborodov(cos_psi):
@@ -667,21 +716,26 @@ if computeFlux:
       Flux=zeros((NPhase,NEnergy,3))
 
 
-      i=0.5 # line of sight colatitude
+      i=1    # line of sight colatitude
 
       NSpots= 2 # * somewhat
-      theta = [0.5,pi-0.5] # spot colatitude
+      theta = [1.5,pi-1.5] # spot colatitude
       l=[0,pi] # spot longitude
       dS=[1,1] # some arbitrary units
 
+      outParams.write(str(i)+' = sight colatitude i\n')
+      outParams.write(str(theta)+' = spot colatitudes theta\n')
+      outParams.write(str(l)+' = spot longitudes l\n')
+      
       sin_i=sin(i)
       cos_i=cos(i)
 
       BoloFlux=zeros((NPhase,3))
 
+      e_max=NEnergy
+
       s,gn=pr(s,gn,'second precomp')
 
-      e_max=NEnergy-2
 
       for p in [0,1]:# range(NSpots):
             sin_theta=sin(theta[p])
@@ -728,15 +782,14 @@ if computeFlux:
                         cos_alpha = cos( (alpha2*(psi0 - psi1) + (psi2 - psi0)*alpha1)/dpsi )
                         sin_alpha = sqrt(1. - cos_alpha**2)
                         sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
-                        dcos_alpha=sin_alpha_over_sin_psi *(alpha2 - alpha1)/dpsi # d cos\alpha \ over d \cos \psi
+                        dcos_alpha=sin_alpha_over_sin_psi *(alpha2 - alpha1)/dpsi # d cos\alpha \over d \cos \psi
                         
                         dphi=(dt[a2]*(psi0 - psi1) + (psi2 - psi0)*dt[a1])*2*pi*nu/dpsi # \delta\phi = \phi_{obs} - \phi
                         i=dphi/phi_weight
                         di1=i-floor(i)
-                        di2=ceil(i)-i
+                        di2=floor(i)+1-i
                         t2=int((t+i)%NPhase)
                         t1=t2-1
-                        # print(t,t1,t2,i,di1,di2)
 
                         cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
                         delta = 1./Gamma/(1.-beta*cos_xi)
@@ -763,8 +816,8 @@ if computeFlux:
                         cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
                         cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
                         # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-                        sin_chi_prime=cos_eps*mu0*Gamma*beta # times mu cos sigma
-                        cos_chi_prime=1. - cos_sigma**2 /(1. - beta* cos_xi)
+                        sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
+                        cos_chi_prime=1. - cos_sigma**2 /(1. - beta* cos_xi) # times the samething
                         chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
 
                         chi=chi_0+chi_1+chi_prime
@@ -782,7 +835,7 @@ if computeFlux:
                   shift=delta/redshift
                   for e in range(NEnergy): 
                         x0=x[e]/shift
-                        e1=bisect(x[1:-1],x0) # not the fastest way? anybody cares?
+                        e1=bisect(x[1:-1],x0) # not the fastest way? anybody cares? ## seems, that light bending is more time consuming anyways
                         e2=e1+1
                         # print(e,e1,e2)
                         x1, x2 = x[e1], x[e2]
@@ -793,11 +846,8 @@ if computeFlux:
                               dx1*dmu2*Intensity[e2][d1] +
                               dx1*dmu1*Intensity[e2][d2]
                         )/dx/dmu * shift**3 * Omega
-                        if e==45:
-                              print('   ',t,e,'**',I,Omega)
-                        if I<0:
+                        if I<0: ############
                               e_max=min(e_max,e)
-
                         F=array([I, Q*cos_2chi, Q*sin_2chi])
                         Flux[t2][e] += F*di1
                         Flux[t1][e] += F*di2
@@ -809,41 +859,42 @@ if computeFlux:
 
       s,gn=pr(s,gn,'curves done ')
 
-if True:
-      outF = open(saveName+'F.bin','w')
-      outf = open(saveName+'f.bin','w')
+if plotPulse:
+      outF = open(PulsName+'F.bin','w')
+      outf = open(PulsName+'f.bin','w')
       Flux.tofile(outF,format="%e")
       phi.tofile(outf,format="%e")
 
       labelsize=20
       fontsize=25
       
-      for e in range(0,e_max,3): 
-            F=zeros(NPhase+1)
+      for e in range(0,e_max,2): # too many pictures
+            phase=list(phi/2/pi)+[1.]
+            I=zeros(NPhase+1)
             Q=zeros(NPhase+1)
             U=zeros(NPhase+1)
-            for t in range(-1,NPhase):
-                  F[t],Q[t],U[t]=Flux[t][e]*x[e]
-                  # print(Flux[t][e],sqrt(Q[e]**2+U[e]**2)/F[e]*100)
+            for t in range(NPhase+1):
+                  I[t],Q[t],U[t]=Flux[t-1][e]*x[e]
 
-            p=sqrt(Q**2+U**2)/F*100
+            p=sqrt(Q**2+U**2)/I*100
             PA=arctan2(-U,-Q)*90/pi+90
             
-            figA=figure(e+2,figsize=(16,18))
+            figA=figure(2,figsize=(16,18))
             figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
                           r'$,\,R_e={:5.1f}km$'.format(R_e)+
-                          r'$,\,M=$'+str(M)+r'$M_{\odot}$'+
-                          r'$,\,lg(x/m_ec^2)={:5.1f}$'.format(log(x[e])/log(1e1)),fontsize=fontsize)  
+                          r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
+                          r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+
+                          r'$,\,i={:5.1f}\degree$'.format(i*180/pi)+',\n'+
+                          r'$\,\lg(x/m_ec^2)={:6.2f}$'.format(log(x[e])/log(1e1)),fontsize=fontsize)  
             plotAF=figA.add_subplot(3,1,1,yscale='log') 
             plotAp=figA.add_subplot(3,1,2)      #
             plotAc=figA.add_subplot(3,1,3)      #
-            phase=list(phi/2/pi)+[1.]
 
             # plotAF.set_xlim([x[0],x[-1]])
             plotAF.set_xlim(0,1)
             
             # plotAF.locator_params(axis='y', nbins=10)
-            plotAF.set_ylabel(r'$xF_x(\varphi,x)$',fontsize=fontsize)
+            plotAF.set_ylabel(r'$I_x(\varphi,x)$',fontsize=fontsize)
             plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
             # plotAF.plot(x,xIinx,'k-.')
             
@@ -851,26 +902,25 @@ if True:
             plotAp.set_xlim(0,1)
             plotAp.tick_params(axis='both', which='major', labelsize=labelsize)
             plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
-            plotAp.plot(phase,[.0]*(NPhase+1),'-.',color='xkcd:brown')  
             plotAc.set_xlim(0,1)
+            plotAc.set_ylim(0,180)
+            plotAc.set_yticks([0,30,60,90,120,150,180])
             plotAc.tick_params(axis='both', which='major', labelsize=labelsize)
             plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
             plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
-            plotAc.plot(phase,[.0]*(NPhase+1),'-.',color='xkcd:brown')  
             
             col=colors[(e*NColors)//NEnergy]
-            plotAF.plot(phase,F,color=col)
+            plotAF.plot(phase,I,color=col)
             plotAp.plot(phase,p,color=col)
             plotAc.plot(phase,PA,color=col)
 
-            figA.savefig(saveName+'Ff'+str(e)+'.pdf')
+            figA.savefig(PulsName+'Ff'+'{:02d}'.format(e)+'.pdf')
+            figA.clf()
+            # figA.close()
       # show()
       
 
 
 
-
-            
-
 s,gn=pr(s,gn,'phase pics drawn ')      
-print('end end')
+print('end')
