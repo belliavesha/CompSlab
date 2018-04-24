@@ -12,10 +12,10 @@ Surface={
       2:'Burst',
       3:'Thomson', # not yet
       0:'FromFile'
-}[1]
+}[3]
 
-AtmName='res/M2' # the prefix for all result files related to the set of parameters
-PulsName=AtmName+'P1'
+AtmName='T2' # the prefix for all result files related to the set of parameters
+PulsName=AtmName+'P2'
 computePulse=True
 plotAtm=True
 plotPulse=True
@@ -62,16 +62,16 @@ c=299792458e-3 # speed of light in km/s
 # Atmosphere parameters: 
 tau_T= 1.0 # Thomson optical depth of thermalization 
 x_l, x_u = -3.2 , 0.7 # lower and upper bounds of the log_10 energy span
-Theta = 0.2  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
-T = 0.001 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
+Theta = 0.1  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
+T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 
 #precomputations :
-ScatterNum = 30 # total number of scatterings
+ScatterNum = 20 # total number of scatterings
 NGamma= 7# number of Lorenz factor points (\gamma)
 NAzimuth= 10 # 12 # numbers of azimuth angles (\phi) [0,pi]
 NEnergy = 50# 101 # number of energy points (x)
 NDepth = 40# 101  # number of optical depth levels (\tau)
-NMu = 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
+NMu = 30 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -349,7 +349,7 @@ if Surface=='Compton' : # Computing redistribution matrices for all energies and
 
 if Surface=='Compton' : #check cross section  
       # cro = open('cros.dat','r')
-      figure(1,figsize=(10,9))
+      figure(1,figsize=(16,18))
       xscale('log')
       # fx=[0.0]
       # cs=[1.0]
@@ -438,13 +438,13 @@ if Surface=='Compton' : # Initializing Stokes vectors arrays, computiong scatter
                                                 S=Source[k][t1][e][d] #
                                                 I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                                           S=Source[k][0][e][d] #
-                                          I+=tau_weight*S*exp(sigma[e]*(-tau[t])/mu[d])
+                                          I-=tau_weight*S*exp(sigma[e]*(-tau[t])/mu[d])
                                     else:
                                           for t1 in range (t+1,NDepth):
                                                 S=Source[k][t1][e][d] #
                                                 I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
                                           S=Source[k][NDepth-1][e][d] #
-                                          I+=tau_weight*S*exp(sigma[e]*(tau[NDepth-1]-tau[t])/mu[d])
+                                          I-=tau_weight*S*exp(sigma[e]*(tau_T-tau[t])/mu[d])
                                     Stokes[k][t][e][d]+=I/abs(mu[d]) #abs
                   s,gn=pr(s,gn,'I'+str(1+k))
                  
@@ -466,6 +466,76 @@ if Surface=='Burst' : # Initializing Stokes vectors arrays, computing zeroth sca
                   Intensity[e][d][1]=Intensity[e][d][0]*0.1171*(1-mu[d])/(1+3.582*abs(mu[d]))
       s,gn=pr(s,gn,'I0')
 
+
+if Surface=='Thomson':
+      Iin=Planck # Delta # initial photon distribution                  
+      Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
+      Stokes_out=zeros((ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
+      Intensity=zeros((NEnergy,NZenith,2)) # total intensity of all scattering orders from the slab suface 
+      I_l = zeros((NDepth,NZenith))
+      I_r = zeros((NDepth,NZenith))
+      A=zeros(NDepth)
+      B=zeros(NDepth)
+      C=zeros(NDepth)
+      x_factor=1.
+      print('Thart')
+
+
+      for d in range(NZenith):
+            for t in range(NDepth):
+                  I_l[t][d]=exp(-tau[t]/mu[d]) if mu[d]>0 else 0 
+                  I_r[t][d]=I_l[t][d]
+                  for e in range(NEnergy):
+                        Stokes_out[0][e][d][0]=Iin(x[e])*(I_l[t][d] + I_r[t][d])
+                        Stokes_out[0][e][d][1]=0
+      for k in range(ScatterNum): # do ScatterNum scattering iterations
+            x_factor *= 1 + 4*Theta
+            A[:]=0.
+            B[:]=0.
+            C[:]=0.
+            for t in range(NDepth): #
+                  for d in range(NMu):
+                        md=NZenith-d-1
+                        A[t]+=(1. - mu[d]**2)*(I_l[t][d] + I_l[t][md])*mu_weight[d]*3./4./3
+                        B[t]+=(mu[md]**2)*(I_l[t][d] + I_r[t][md])*mu_weight[d]*3./8./3
+                        C[t]+=(I_r[t][md] + I_r[t][d])*mu_weight[d]*3./8./3
+            I_l[:]=0.
+            I_r[:]=0.
+            for t in range(NDepth): #
+                  for d in range(NZenith):
+                        w=tau_weight/abs(mu[d])
+                        I_l[t][d]+=(A[t]*(1 - mu[d]**2) + (B[t] + C[t])*mu[d]**2)*w/2
+                        I_r[t][d]+=(B[t] + C[t])*w/2
+                        if mu[d]>0:
+                              trange=range(t)
+                              t1=0
+                        else:
+                              trange=range(t+1,NDepth)
+                              t1=-1
+                        I_l[t][d]-=exp((tau[t1]-tau[t])/mu[d])*(A[t1]*(1. - mu[d]**2) + (B[t1] + C[t1])*mu[d]**2)*w/2
+                        I_r[t][d]-=exp((tau[t1]-tau[t])/mu[d])*(B[t1] + C[t1])*w/2
+                        for t1 in trange:
+                              I_l[t][d]+=exp((tau[t1] - tau[t])/mu[d])*(A[t1]*(1. - mu[d]**2) + (B[t1] + C[t1])*mu[d]**2)*w
+                              I_r[t][d]+=exp((tau[t1] - tau[t])/mu[d])*(B[t1]+C[t1])*w
+
+                        
+                        for e in range(NEnergy):
+                              Stokes[k][t][e][d][0]=Iin(x[e]/x_factor)*(I_l[t][d] + I_r[t][d])
+                              Stokes[k][t][e][d][1]=Iin(x[e]/x_factor)*(I_l[t][d] - I_r[t][d])
+            s,gn=pr(s,gn,'I'+str(k+1))
+
+
+      Intensity += Stokes_out[0]
+      for k in range(ScatterNum):
+            Stokes_out[k+1]+=Stokes[k][-1]
+            Intensity += Stokes[k][-1]
+            
+
+      s,gn=pr(s,gn,'I0')
+
+
+
+
 if Surface=='FromFile' :
       inI = open(AtmName+'I.bin')
       inx = open(AtmName+'x.bin')
@@ -486,9 +556,10 @@ else:
 
 
 if plotAtm: # plot Everything and save All pics and tabs
-      Sangles= range(NMu) if Surface=='Compton' else [] # list of the angle indeces to be plot a detailed figure
       Iin=Planck # Delta # initial photon distribution 
-      Senergy=[int(0.5+n*log(1+4*Theta)/x_weight) for n in range(NColors) ]if Surface=='Compton' else [] 
+      Stokes_defined=Surface=='Compton' or Surface=='Thomson'
+      Sangles= range(NMu) if Stokes_defined else [] # list of the angle indeces to be plot a detailed figure
+      Senergy=[int(0.5+n*log(1+4*Theta)/x_weight) for n in range(NColors) ] if Stokes_defined else [] 
       print(Senergy)
       outF = open(AtmName+'Fx.dat','w')
       outp = open(AtmName+'Pd.dat','w')
@@ -507,7 +578,7 @@ if plotAtm: # plot Everything and save All pics and tabs
       
       xIinx=[(Iin(x[e])*x[e]) for e in range(NEnergy)]
       plotAF.set_xlim([x[0],x[-1]])
-      plotAF.set_ylim([1e-7,1.])
+      plotAF.set_ylim([1e-11,1.])
       plotAF.set_ylabel(r'$xI_x(\tau_T,x)$',fontsize=fontsize)
       plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
       plotAF.plot(x,xIinx,'k-.')
@@ -542,7 +613,7 @@ if plotAtm: # plot Everything and save All pics and tabs
                   plotSF.set_ylabel(r'$xI_x(\tau_T,x)$',fontsize=fontsize)
                   plotSF.tick_params(axis='both', which='major', labelsize=labelsize)
                   plotSF.set_xlim([x[0],x[-1]])
-                  plotSF.set_ylim([1e-10,1.])
+                  plotSF.set_ylim([1e-12,1.])
                   plotSF.plot(x,xFx,'k')
                   plotSF.plot(x,xIinx,'-.',color='xkcd:brown')
                   outF.write(frmt('Sc.N.0',xFx) )      
@@ -716,10 +787,10 @@ if computePulse:
       Flux=zeros((NPhase,NEnergy,3))
 
 
-      i=1    # line of sight colatitude
+      i=1.5    # line of sight colatitude
 
       NSpots= 2 # * somewhat
-      theta = [1.5,pi-1.5] # spot colatitude
+      theta = [1.,pi-1.] # spot colatitude
       l=[0,pi] # spot longitude
       dS=[1,1] # some arbitrary units
 
