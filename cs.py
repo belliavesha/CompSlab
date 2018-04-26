@@ -7,18 +7,21 @@ def pr(s,gn,message = ''):
       return time(),gn+1
 s,gn=pr(time0,0)
 
-Surface={
+Spectrum={
       1:'Compton',
       2:'Burst',
-      3:'Thomson', # not yet
+      3:'Thomson',
       0:'FromFile'
-}[3]
+}[0]
 
-AtmName='T2' # the prefix for all result files related to the set of parameters
+oblateness='AlGendy'
+
+AtmName='res/C/C1' # the prefix for all result files related to the set of parameters
 PulsName=AtmName+'P2'
-computePulse=True
-plotAtm=True
+computePulse= True
+plotAtm=not True
 plotPulse=True
+mod=True
 
 # In[2]:
 
@@ -39,7 +42,6 @@ s,gn=pr(s,gn, 'importing')
 
 
 # In[3]:
-
 
 
 colors=['xkcd:brownish red',
@@ -66,12 +68,12 @@ Theta = 0.1  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) 
 T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 
 #precomputations :
-ScatterNum = 20 # total number of scatterings
+ScatterNum = 21 # total number of scatterings
 NGamma= 7# number of Lorenz factor points (\gamma)
 NAzimuth= 10 # 12 # numbers of azimuth angles (\phi) [0,pi]
-NEnergy = 50# 101 # number of energy points (x)
-NDepth = 40# 101  # number of optical depth levels (\tau)
-NMu = 30 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
+NEnergy = 70 # 50# 101 # number of energy points (x)
+NDepth = 60# 101  # number of optical depth levels (\tau)
+NMu = 20 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -80,6 +82,17 @@ IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample 
 IntDepth = linspace(0,tau_T,num=NDepth,retstep=True)  # sample points and weights for integrations over the optical depth computing intencity 
 IntZenith = leggauss(NZenith) #  sample points and weights for integrations over zenith angle in positive and negative directions together
 
+# IntZenith = linspace(1e-6-1,1-1e-6,num=NZenith), array([2.]+[2.]*(NZenith-2)+[2.])/(NZenith)
+# IntZenith = linspace(1/NZenith - 1,1 - 1/NZenith,num=NZenith), array([2.]*(NZenith))/(NZenith)
+
+# mu,mu_weight=IntZenith
+# mu=array( ([1-1e-7]+list(mu)+[1-1e-7]) )
+# mu_weight=array([1e-5]+list(mu_weight)+[1e-5])
+# IntZenith=(mu, mu_weight)
+# NZenith=NZenith+2
+# NMu=NMu+1
+
+
 K2Y = kn(2,1./Theta) # second modified Bessel function of reversed dimensionless temperature       
 
 mu,mu_weight=IntZenith
@@ -87,7 +100,7 @@ x,x_weight=IntEnergy
 tau,tau_weight=IntDepth
 
 outParams = open(AtmName+'.dat','w')
-outParams.write(Surface+'\n')
+outParams.write(Spectrum+'\n')
 outParams.write(str(tau_T)+' = total depth tau_T\n')
 outParams.write(str(x_l)+' '+str(x_u)+' = log_10 energy span from to\n')
 outParams.write(str(Theta)+' = dimensionless electron gas temperature in m_ec^2\n')
@@ -264,7 +277,7 @@ s,gn=pr(s,gn,'funcs')
 # In[5]:
 
 
-if Surface=='Compton' : # checking symmetries #unnecessary 
+if Spectrum=='Compton' : # checking symmetries #unnecessary 
       from check import *
       print('Angular symmetry: ',CheckAngularSymmetry(Compton_redistribution_aa,0.02,0.02,-0.4,0.5))
       s,gn=pr(s,gn,'ang-check')
@@ -272,11 +285,24 @@ if Surface=='Compton' : # checking symmetries #unnecessary
       s,gn=pr(s,gn,'freq-check')
       # exit()
 
-# print(Compton_redistribution_aa(0.02,0.01,0.5,0.2))
-# exit()
 
+# e=1#NEnergy//2
+# e1=0# e+1
+# d=NZenith-1# *3//4
+# print(d,mu[d],x[e],x[e1])
+# muu=mu[d]
+# S=zeros(2)
+# for d1 in range(NZenith):
+#       r=(Compton_redistribution_aa(x[e],x[e1],muu,mu[d1]))
+#       print(r,d1,r[0][0],r[1][0],mu_weight[d1],S,mu[d1])
+#       I=zeros(2)
+#       I[:]=1e-5*mu_weight[d1]*x_weight,0
+#       S += r[0][0]*I[0],r[1][0]*I[0]
+#       print(' ' )
+# print(S)
+# # exit()
 
-if Surface=='Compton' : # Computing redistribution matrices for all energies and angles 
+if Spectrum=='Compton' : # Computing redistribution matrices for all energies and angles 
       # import FRM
       # print(FRM.__doc__)
       # print(FRM.fill.__doc__)
@@ -296,7 +322,7 @@ if Surface=='Compton' : # Computing redistribution matrices for all energies and
             for e1 in range(e,NEnergy): # x1 [x,\infty]
                   percent+=200/NEnergy/(NEnergy+1)
                   npc=int(percent*0.6)
-                  print('||'+'%'*npc+' '*(60-npc)+'|| {:5.3f}%'.format(percent))
+                  print('||'+'%'*npc+' '*(59-npc)+'|| {:5.3f}%'.format(percent))
                   for d in range(NMu): # mu [-1,0]
                         for d1 in range(d,NMu): # mu1 [-1,mu]
                               md=NZenith-d-1 # -mu
@@ -305,24 +331,13 @@ if Surface=='Compton' : # Computing redistribution matrices for all energies and
                               t=d1>d
                               f=e1>e
 
-                              if 1: 
-                                    r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
-                                    rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
-                                    sigma[e1]+=(r[0][0]+rm[0][0])*w
-                                    RedistributionMatrix[e][e1][d][d1]=r
-                                    RedistributionMatrix[e][e1][md][md1]=r
-                                    RedistributionMatrix[e][e1][d][md1]=rm
-                                    RedistributionMatrix[e][e1][md][d1]=rm
-                              if t: # angular symmetry
-                                    rt=r # transponed
-                                    rmt=rm # matrices
-                                    rt[0][1],rt[1][0]=r[1][0],r[0][1]
-                                    rmt[0][1],rmt[1][0]=rm[1][0],rm[0][1]
-                                    sigma[e1]+=(rt[0][0]+rmt[0][0])*w
-                                    RedistributionMatrix[e][e1][d1][d]=rt
-                                    RedistributionMatrix[e][e1][md1][md]=rt
-                                    RedistributionMatrix[e][e1][md1][d]=rmt
-                                    RedistributionMatrix[e][e1][d1][md]=rmt
+                              r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
+                              rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
+                              sigma[e1]+=(r[0][0]+rm[0][0])*w
+                              RedistributionMatrix[e][e1][d][d1]=r
+                              RedistributionMatrix[e][e1][md][md1]=r
+                              RedistributionMatrix[e][e1][d][md1]=rm
+                              RedistributionMatrix[e][e1][md][d1]=rm
                               if f: # frequency symmetry
                                     m=exp((x[e]-x[e1])/Theta)*x[e1]**3/x[e]**3
                                     rf=r*m  # when Maxwellian
@@ -332,22 +347,32 @@ if Surface=='Compton' : # Computing redistribution matrices for all energies and
                                     RedistributionMatrix[e1][e][md][md1]=rf
                                     RedistributionMatrix[e1][e][d][md1]=rmf
                                     RedistributionMatrix[e1][e][md][d1]=rmf
-                              if t and f: # both symmeties 
-                                    rtf=rt*m
-                                    rmtf=rmt*m
-                                    sigma[e]+=(rtf[0][0]+rmtf[0][0])*w
-                                    RedistributionMatrix[e1][e][d1][d]=rtf
-                                    RedistributionMatrix[e1][e][md1][md]=rtf
-                                    RedistributionMatrix[e1][e][md1][d]=rmtf
-                                    RedistributionMatrix[e1][e][d1][md]=rmtf
+                              if t: # angular symmetry
+                                    r[0][1],r[1][0]=r[1][0],r[0][1]
+                                    rm[0][1],rm[1][0]=rm[1][0],rm[0][1]
+                                    sigma[e1]+=(r[0][0]+rm[0][0])*w
+                                    RedistributionMatrix[e][e1][d1][d]=r
+                                    RedistributionMatrix[e][e1][md1][md]=r
+                                    RedistributionMatrix[e][e1][md1][d]=rm
+                                    RedistributionMatrix[e][e1][d1][md]=rm
+                                    if f: # both symmeties 
+                                          rf=r*m
+                                          rmf=rm*m
+                                          sigma[e]+=(rf[0][0]+rmf[0][0])*w
+                                          RedistributionMatrix[e1][e][d1][d]=rf
+                                          RedistributionMatrix[e1][e][md1][md]=rf
+                                          RedistributionMatrix[e1][e][md1][d]=rmf
+                                          RedistributionMatrix[e1][e][d1][md]=rmf
       s,gn=pr(s,gn,'RMtable')
+
+
 
 
 # In[11]:
 
 
 
-if Surface=='Compton' : #check cross section  
+if Spectrum=='Compton' : #check cross section  
       # cro = open('cros.dat','r')
       figure(1,figsize=(16,18))
       xscale('log')
@@ -387,7 +412,7 @@ if Surface=='Compton' : #check cross section
 
 
 
-if Surface=='Compton' : # Initializing Stokes vectors arrays, computiong scatterings 
+if Spectrum=='Compton' : # Initializing Stokes vectors arrays, computiong scatterings 
       Iin=Planck # Delta # initial photon distribution 
       Source=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
@@ -405,14 +430,14 @@ if Surface=='Compton' : # Initializing Stokes vectors arrays, computiong scatter
       s,gn=pr(s,gn,'I0')
 
 
-
+      # if mod:
       try: # Fortran
             import FIF
             # print(FIF.fill.__doc__)
             Stokes=FIF.fill(ScatterNum,Stokes_in,RedistributionMatrix,x_weight,sigma,mu,mu_weight,tau,tau_weight)
             s,gn=pr(s,gn,'I')
 
-
+      # else:
       except: # python
             for k in range(ScatterNum): # do ScatterNum scattering iterations
                   for t in range(NDepth): # S_k= R I_{k-1}
@@ -431,8 +456,7 @@ if Surface=='Compton' : # Initializing Stokes vectors arrays, computiong scatter
                   for t in range(NDepth):# I_k= integral S_k
                         for e in range(NEnergy): 
                               for d in range(NZenith): 
-                                    I=zeros(2)
-                                    I+=tau_weight/2*Source[k][t][e][d]
+                                    I=tau_weight/2*Source[k][t][e][d]
                                     if mu[d]>0:
                                           for t1 in range(t) : #
                                                 S=Source[k][t1][e][d] #
@@ -456,7 +480,7 @@ if Surface=='Compton' : # Initializing Stokes vectors arrays, computiong scatter
 # In[10]:
 
 
-if Surface=='Burst' : # Initializing Stokes vectors arrays, computing zeroth scattering 
+if Spectrum=='Burst' : # Initializing Stokes vectors arrays, computing zeroth scattering 
       Bol=(Theta/T)
       Intensity=zeros((NEnergy,NZenith,2)) # total intensity of all scattering orders from the slab suface 
       for e in range(NEnergy):
@@ -467,7 +491,7 @@ if Surface=='Burst' : # Initializing Stokes vectors arrays, computing zeroth sca
       s,gn=pr(s,gn,'I0')
 
 
-if Surface=='Thomson':
+if Spectrum=='Thomson':
       Iin=Planck # Delta # initial photon distribution                  
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
       Stokes_out=zeros((ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
@@ -536,7 +560,7 @@ if Surface=='Thomson':
 
 
 
-if Surface=='FromFile' :
+if Spectrum=='FromFile' :
       inI = open(AtmName+'I.bin')
       inx = open(AtmName+'x.bin')
       inm = open(AtmName+'m.bin')
@@ -557,7 +581,7 @@ else:
 
 if plotAtm: # plot Everything and save All pics and tabs
       Iin=Planck # Delta # initial photon distribution 
-      Stokes_defined=Surface=='Compton' or Surface=='Thomson'
+      Stokes_defined=Spectrum=='Compton' or Spectrum=='Thomson'
       Sangles= range(NMu) if Stokes_defined else [] # list of the angle indeces to be plot a detailed figure
       Senergy=[int(0.5+n*log(1+4*Theta)/x_weight) for n in range(NColors) ] if Stokes_defined else [] 
       print(Senergy)
@@ -685,7 +709,6 @@ if plotAtm: # plot Everything and save All pics and tabs
                         [(Stokes_out[k][e][d1][1]/Stokes_out[k][e][d1][0]*1e2) for d1 in range(NMu,NZenith)])
                   plotAp.plot(mu[NMu:NZenith],p,'-',color=colors[k])  
                   plotAF.plot(mu[NMu:NZenith],Inorm,'-',color=colors[k])
-            
       figA.savefig(AtmName+'In.pdf')
 
       outF.close()
@@ -708,10 +731,23 @@ if computePulse:
       IntBend = leggauss(NBend)
 
       phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
-      R_e=12.0 # equatorial radius of the star in kilometers
-      M=1.4 # star mass in solar masses
       nu=100 # star rotation frequency in Hz
+      M=1.4 # star mass in solar masses
       R_g=M*2.95 # gravitational Schwarzschild radius
+      R_e=12.0 # equatorial radius of the star in kilometers
+      
+            # Omega_bar=2*pi*nu*sqrt(R_e**3/G*M)
+            # o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2 # (R_p-R_e)/R_e
+            # # print(o_2)
+            # return R_e*(1 + o_2*eta**2), R_e*o_2*eta*sqrt(1. - eta**2)
+
+      if oblateness=='AlGendy': # from AlGendy et. al. (2014)
+            Omega_bar=2*pi*nu*sqrt(2*R_e**3/R_g)/c
+            flattering=(0.778-0.515*R_g/R_e)*Omega_bar**2 
+      elif oblateness=='Sphere':
+            flattering=0.0
+      else:
+            flattering=oblateness
 
       outParams = open(PulsName+'.dat','w')
       outParams.write(AtmName+'.dat is the name of file with some corresponding atmosphere model\n')
@@ -721,20 +757,6 @@ if computePulse:
       outParams.write(str(NPhase)+' '+str(NBend)+' '+str(NBendPhase)+' = NPhase NBend NBendPhase parameters\n')
 
       
-
-      def AlGendy(eta):
-            """Star shape function from AlGendy et al. (2014) 
-            the arguement is the colatitude of the spot 
-            returns the radius and its derivative at the spot
-            """
-            Omega_bar=2*pi*nu*sqrt(R_e**3/G*M)
-            o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2 # (R_p-R_e)/R_e
-            # print(o_2)
-            return R_e*(1 + o_2*eta**2), R_e*o_2*eta*sqrt(1. - eta**2)
-
-      def Sphere(theta):
-            pass
-            return R_e,0.0
 
       def Beloborodov(cos_psi):
             """Beloborodov's approximation for cos_alpha(cos_psi) light bending function
@@ -786,11 +808,10 @@ if computePulse:
 
       Flux=zeros((NPhase,NEnergy,3))
 
-
-      i=1.5    # line of sight colatitude
+      i=.5    # line of sight colatitude
 
       NSpots= 2 # * somewhat
-      theta = [1.,pi-1.] # spot colatitude
+      theta = [1,pi-1] # spot colatitude
       l=[0,pi] # spot longitude
       dS=[1,1] # some arbitrary units
 
@@ -811,10 +832,11 @@ if computePulse:
       for p in [0,1]:# range(NSpots):
             sin_theta=sin(theta[p])
             cos_theta=cos(theta[p])
-            R,dR=AlGendy(cos_theta)
-            # R,dR=Sphere(cos_theta) 
+            print(flattering)
+            R=R_e*(1 - flattering*cos_theta**2) 
+            dR=R_e*flattering*cos_theta*sin_theta # dR / d\theta
+
             redshift=1.0/sqrt(1.0-R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
-            # print(R_g/R,redshift)
             f=redshift/R*dR
             sin_gamma=f/sqrt(1+f**2) # angle gamma is positive towards the north pole 
             cos_gamma=1.0/sqrt(1+f**2)
@@ -985,7 +1007,7 @@ if plotPulse:
             plotAp.plot(phase,p,color=col)
             plotAc.plot(phase,PA,color=col)
 
-            figA.savefig(PulsName+'Ff'+'{:02d}'.format(e)+'.pdf')
+            figA.savefig(PulsName+'Ff{:02d}.pdf'.format(e))
             figA.clf()
             # figA.close()
       # show()
