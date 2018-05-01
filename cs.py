@@ -12,16 +12,16 @@ Spectrum={
       2:'Burst',
       3:'Thomson',
       0:'FromFile'
-}[0]
+}[2]
 
 oblateness='AlGendy'
 
-AtmName='res/C/C1' # the prefix for all result files related to the set of parameters
-PulsName=AtmName+'P2'
+AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
+PulsName=AtmName+'P1'
 computePulse= True
-plotAtm=not True
+plotAtm=True
 plotPulse=True
-mod=True
+# mod=True
 
 # In[2]:
 
@@ -62,18 +62,18 @@ G=13275412528e1 # G*M_sol in km^3/s^2
 c=299792458e-3 # speed of light in km/s
 
 # Atmosphere parameters: 
-tau_T= 1.0 # Thomson optical depth of thermalization 
-x_l, x_u = -3.2 , 0.7 # lower and upper bounds of the log_10 energy span
+tau_T= 1.5 # Thomson optical depth of thermalization 
+x_l, x_u = -2.5 , 0.5 # lower and upper bounds of the log_10 energy span
 Theta = 0.1  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
 T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 
 #precomputations :
-ScatterNum = 21 # total number of scatterings
+ScatterNum = 35 # total number of scatterings
 NGamma= 7# number of Lorenz factor points (\gamma)
 NAzimuth= 10 # 12 # numbers of azimuth angles (\phi) [0,pi]
-NEnergy = 70 # 50# 101 # number of energy points (x)
-NDepth = 60# 101  # number of optical depth levels (\tau)
-NMu = 20 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
+NEnergy = 61 # 50# 101 # number of energy points (x)
+NDepth = 100# 101  # number of optical depth levels (\tau)
+NMu = 22 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -263,10 +263,10 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       R=zeros( (2,2,),  )
       for i in range(NAzimuth*2):
             (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i])
-            R[0][0]+=C*pi*phi_weight[i]
-            R[0][1]+=I*pi*cos2chi2[i]*phi_weight[i]
-            R[1][0]+=I*pi*cos2chi1[i]*phi_weight[i]
-            R[1][1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*phi_weight[i]         
+            R[0,0]+=C*pi*phi_weight[i]
+            R[0,1]+=I*pi*cos2chi2[i]*phi_weight[i]
+            R[1,0]+=I*pi*cos2chi1[i]*phi_weight[i]
+            R[1,1]+=pi*(Q*cos2chi1[i]*cos2chi2[i]+U*sin2chiP[i])*phi_weight[i]         
       
       # print(x1,x2,mu1,mu2,R)
       return R*x1*x1/x2
@@ -286,21 +286,6 @@ if Spectrum=='Compton' : # checking symmetries #unnecessary
       # exit()
 
 
-# e=1#NEnergy//2
-# e1=0# e+1
-# d=NZenith-1# *3//4
-# print(d,mu[d],x[e],x[e1])
-# muu=mu[d]
-# S=zeros(2)
-# for d1 in range(NZenith):
-#       r=(Compton_redistribution_aa(x[e],x[e1],muu,mu[d1]))
-#       print(r,d1,r[0][0],r[1][0],mu_weight[d1],S,mu[d1])
-#       I=zeros(2)
-#       I[:]=1e-5*mu_weight[d1]*x_weight,0
-#       S += r[0][0]*I[0],r[1][0]*I[0]
-#       print(' ' )
-# print(S)
-# # exit()
 
 if Spectrum=='Compton' : # Computing redistribution matrices for all energies and angles 
       # import FRM
@@ -333,36 +318,36 @@ if Spectrum=='Compton' : # Computing redistribution matrices for all energies an
 
                               r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
                               rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
-                              sigma[e1]+=(r[0][0]+rm[0][0])*w
-                              RedistributionMatrix[e][e1][d][d1]=r
-                              RedistributionMatrix[e][e1][md][md1]=r
-                              RedistributionMatrix[e][e1][d][md1]=rm
-                              RedistributionMatrix[e][e1][md][d1]=rm
+                              sigma[e1]+=(r[0,0]+rm[0,0])*w
+                              RedistributionMatrix[e,e1,d,d1]=r
+                              RedistributionMatrix[e,e1,md,md1]=r
+                              RedistributionMatrix[e,e1,d,md1]=rm
+                              RedistributionMatrix[e,e1,md,d1]=rm
                               if f: # frequency symmetry
                                     m=exp((x[e]-x[e1])/Theta)*x[e1]**3/x[e]**3
                                     rf=r*m  # when Maxwellian
                                     rmf=rm*m  # or Wein distributions
-                                    sigma[e]+=(rf[0][0]+rmf[0][0])*w
-                                    RedistributionMatrix[e1][e][d][d1]=rf
-                                    RedistributionMatrix[e1][e][md][md1]=rf
-                                    RedistributionMatrix[e1][e][d][md1]=rmf
-                                    RedistributionMatrix[e1][e][md][d1]=rmf
+                                    sigma[e]+=(rf[0,0]+rmf[0,0])*w
+                                    RedistributionMatrix[e1,e,d,d1]=rf
+                                    RedistributionMatrix[e1,e,md,md1]=rf
+                                    RedistributionMatrix[e1,e,d,md1]=rmf
+                                    RedistributionMatrix[e1,e,md,d1]=rmf
                               if t: # angular symmetry
-                                    r[0][1],r[1][0]=r[1][0],r[0][1]
-                                    rm[0][1],rm[1][0]=rm[1][0],rm[0][1]
-                                    sigma[e1]+=(r[0][0]+rm[0][0])*w
-                                    RedistributionMatrix[e][e1][d1][d]=r
-                                    RedistributionMatrix[e][e1][md1][md]=r
-                                    RedistributionMatrix[e][e1][md1][d]=rm
-                                    RedistributionMatrix[e][e1][d1][md]=rm
+                                    r[0,1],r[1,0]=r[1,0],r[0,1]
+                                    rm[0,1],rm[1,0]=rm[1,0],rm[0,1]
+                                    sigma[e1]+=(r[0,0]+rm[0,0])*w
+                                    RedistributionMatrix[e,e1,d1,d]=r
+                                    RedistributionMatrix[e,e1,md1,md]=r
+                                    RedistributionMatrix[e,e1,md1,d]=rm
+                                    RedistributionMatrix[e,e1,d1,md]=rm
                                     if f: # both symmeties 
                                           rf=r*m
                                           rmf=rm*m
-                                          sigma[e]+=(rf[0][0]+rmf[0][0])*w
-                                          RedistributionMatrix[e1][e][d1][d]=rf
-                                          RedistributionMatrix[e1][e][md1][md]=rf
-                                          RedistributionMatrix[e1][e][md1][d]=rmf
-                                          RedistributionMatrix[e1][e][d1][md]=rmf
+                                          sigma[e]+=(rf[0,0]+rmf[0,0])*w
+                                          RedistributionMatrix[e1,e,d1,d]=rf
+                                          RedistributionMatrix[e1,e,md1,md]=rf
+                                          RedistributionMatrix[e1,e,md1,d]=rmf
+                                          RedistributionMatrix[e1,e,d1,md]=rmf
       s,gn=pr(s,gn,'RMtable')
 
 
@@ -374,7 +359,7 @@ if Spectrum=='Compton' : # Computing redistribution matrices for all energies an
 
 if Spectrum=='Compton' : #check cross section  
       # cro = open('cros.dat','r')
-      figure(1,figsize=(16,18))
+      figure(1,figsize=(10,11))
       xscale('log')
       # fx=[0.0]
       # cs=[1.0]
@@ -422,11 +407,11 @@ if Spectrum=='Compton' : # Initializing Stokes vectors arrays, computiong scatte
       for e in range(NEnergy):
             for d in range(NZenith):
                   for t in range(NDepth):
-                        Stokes_in[t][e][d][0]=Iin(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
-                        Stokes_in[t][e][d][1]=0
+                        Stokes_in[t,e,d,0]=Iin(x[e])*exp(-tau[t]*sigma[e]/mu[d]) if mu[d]>0 else 0 
+                        Stokes_in[t,e,d,1]=0
                   else:
-                        Stokes_out[0][e][d][0]=Iin(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
-                        Stokes_out[0][e][d][1]=0
+                        Stokes_out[0,e,d,0]=Iin(x[e])*exp(-tau_T*sigma[e]/mu[d]) if mu[d]>0 else 0
+                        Stokes_out[0,e,d,1]=0
       s,gn=pr(s,gn,'I0')
 
 
@@ -447,35 +432,35 @@ if Spectrum=='Compton' : # Initializing Stokes vectors arrays, computiong scatte
                                     for e1 in range(NEnergy):
                                           for d1 in range(NZenith):
                                                 w = mu_weight[d1]*x_weight # total weight
-                                                r = RedistributionMatrix[e][e1][d][d1]  #  
-                                                I = Stokes[k-1][t][e1][d1] if k>0 else Stokes_in[t][e1][d1]
-                                                S[0]+= w*( I[0]*r[0][0] + I[1]*r[0][1] ) # 
-                                                S[1]+= w*( I[0]*r[1][0] + I[1]*r[1][1] ) #
-                                    Source[k][t][e][d]+=S #     
+                                                r = RedistributionMatrix[e,e1,d,d1]  #  
+                                                I = Stokes[k-1,t,e1,d1] if k>0 else Stokes_in[t,e1,d1]
+                                                S[0]+= w*( I[0]*r[0,0] + I[1]*r[0,1] ) # 
+                                                S[1]+= w*( I[0]*r[1,0] + I[1]*r[1,1] ) #
+                                    Source[k,t,e,d]+=S #     
                   
                   for t in range(NDepth):# I_k= integral S_k
                         for e in range(NEnergy): 
                               for d in range(NZenith): 
-                                    I=tau_weight/2*Source[k][t][e][d]
+                                    I=tau_weight/2*Source[k,t,e,d]
                                     if mu[d]>0:
                                           for t1 in range(t) : #
-                                                S=Source[k][t1][e][d] #
+                                                S=Source[k,t1,e,d] #
                                                 I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
-                                          S=Source[k][0][e][d] #
+                                          S=Source[k,0,e,d] #
                                           I-=tau_weight*S*exp(sigma[e]*(-tau[t])/mu[d])
                                     else:
                                           for t1 in range (t+1,NDepth):
-                                                S=Source[k][t1][e][d] #
+                                                S=Source[k,t1,e,d] #
                                                 I+=tau_weight*S*exp(sigma[e]*(tau[t1]-tau[t])/mu[d])
-                                          S=Source[k][NDepth-1][e][d] #
+                                          S=Source[k,NDepth-1,e,d] #
                                           I-=tau_weight*S*exp(sigma[e]*(tau_T-tau[t])/mu[d])
-                                    Stokes[k][t][e][d]+=I/abs(mu[d]) #abs
+                                    Stokes[k,t,e,d]+=I/abs(mu[d]) #abs
                   s,gn=pr(s,gn,'I'+str(1+k))
                  
       Intensity += Stokes_out[0]
       for k in range(ScatterNum):
-            Stokes_out[k+1]+=Stokes[k][-1]
-            Intensity += Stokes[k][-1]
+            Stokes_out[k+1]+=Stokes[k,-1]
+            Intensity += Stokes[k,-1]
 
 # In[10]:
 
@@ -486,8 +471,8 @@ if Spectrum=='Burst' : # Initializing Stokes vectors arrays, computing zeroth sc
       for e in range(NEnergy):
             E=x[e]/Theta
             for d in range(NZenith):
-                  Intensity[e][d][0]=(E**3/(exp(E)-1.)/Bol if E > 1e-5 else E**2/Bol)*(1+2.06*mu[d])
-                  Intensity[e][d][1]=Intensity[e][d][0]*0.1171*(1-mu[d])/(1+3.582*abs(mu[d]))
+                  Intensity[e,d,0]=(E**3/(exp(E) - 1.)/Bol if E > 1e-5 else E**2/Bol)*(1 + 2.06*mu[d])
+                  Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
       s,gn=pr(s,gn,'I0')
 
 
@@ -507,11 +492,11 @@ if Spectrum=='Thomson':
 
       for d in range(NZenith):
             for t in range(NDepth):
-                  I_l[t][d]=exp(-tau[t]/mu[d]) if mu[d]>0 else 0 
-                  I_r[t][d]=I_l[t][d]
+                  I_l[t,d]=exp(-tau[t]/mu[d]) if mu[d]>0 else 0 
+                  I_r[t,d]=I_l[t,d]
                   for e in range(NEnergy):
-                        Stokes_out[0][e][d][0]=Iin(x[e])*(I_l[t][d] + I_r[t][d])
-                        Stokes_out[0][e][d][1]=0
+                        Stokes_out[0,e,d,0]=Iin(x[e])*(I_l[t,d] + I_r[t,d])
+                        Stokes_out[0,e,d,1]=0
       for k in range(ScatterNum): # do ScatterNum scattering iterations
             x_factor *= 1 + 4*Theta
             A[:]=0.
@@ -520,39 +505,39 @@ if Spectrum=='Thomson':
             for t in range(NDepth): #
                   for d in range(NMu):
                         md=NZenith-d-1
-                        A[t]+=(1. - mu[d]**2)*(I_l[t][d] + I_l[t][md])*mu_weight[d]*3./4./3
-                        B[t]+=(mu[md]**2)*(I_l[t][d] + I_r[t][md])*mu_weight[d]*3./8./3
-                        C[t]+=(I_r[t][md] + I_r[t][d])*mu_weight[d]*3./8./3
+                        A[t]+=(1. - mu[d]**2)*(I_l[t,d] + I_l[t,md])*mu_weight[d]*3./4./3
+                        B[t]+=(mu[md]**2)*(I_l[t,d] + I_r[t,md])*mu_weight[d]*3./8./3
+                        C[t]+=(I_r[t,md] + I_r[t,d])*mu_weight[d]*3./8./3
             I_l[:]=0.
             I_r[:]=0.
             for t in range(NDepth): #
                   for d in range(NZenith):
                         w=tau_weight/abs(mu[d])
-                        I_l[t][d]+=(A[t]*(1 - mu[d]**2) + (B[t] + C[t])*mu[d]**2)*w/2
-                        I_r[t][d]+=(B[t] + C[t])*w/2
+                        I_l[t,d]+=(A[t]*(1 - mu[d]**2) + (B[t] + C[t])*mu[d]**2)*w/2
+                        I_r[t,d]+=(B[t] + C[t])*w/2
                         if mu[d]>0:
                               trange=range(t)
                               t1=0
                         else:
                               trange=range(t+1,NDepth)
                               t1=-1
-                        I_l[t][d]-=exp((tau[t1]-tau[t])/mu[d])*(A[t1]*(1. - mu[d]**2) + (B[t1] + C[t1])*mu[d]**2)*w/2
-                        I_r[t][d]-=exp((tau[t1]-tau[t])/mu[d])*(B[t1] + C[t1])*w/2
+                        I_l[t,d]-=exp((tau[t1]-tau[t])/mu[d])*(A[t1]*(1. - mu[d]**2) + (B[t1] + C[t1])*mu[d]**2)*w/2
+                        I_r[t,d]-=exp((tau[t1]-tau[t])/mu[d])*(B[t1] + C[t1])*w/2
                         for t1 in trange:
-                              I_l[t][d]+=exp((tau[t1] - tau[t])/mu[d])*(A[t1]*(1. - mu[d]**2) + (B[t1] + C[t1])*mu[d]**2)*w
-                              I_r[t][d]+=exp((tau[t1] - tau[t])/mu[d])*(B[t1]+C[t1])*w
+                              I_l[t,d]+=exp((tau[t1] - tau[t])/mu[d])*(A[t1]*(1. - mu[d]**2) + (B[t1] + C[t1])*mu[d]**2)*w
+                              I_r[t,d]+=exp((tau[t1] - tau[t])/mu[d])*(B[t1]+C[t1])*w
 
                         
                         for e in range(NEnergy):
-                              Stokes[k][t][e][d][0]=Iin(x[e]/x_factor)*(I_l[t][d] + I_r[t][d])
-                              Stokes[k][t][e][d][1]=Iin(x[e]/x_factor)*(I_l[t][d] - I_r[t][d])
+                              Stokes[k,t,e,d,0]=Iin(x[e]/x_factor)*(I_l[t,d] + I_r[t,d])
+                              Stokes[k,t,e,d,1]=Iin(x[e]/x_factor)*(I_l[t,d] - I_r[t,d])
             s,gn=pr(s,gn,'I'+str(k+1))
 
 
       Intensity += Stokes_out[0]
       for k in range(ScatterNum):
-            Stokes_out[k+1]+=Stokes[k][-1]
-            Intensity += Stokes[k][-1]
+            Stokes_out[k+1]+=Stokes[k,-1]
+            Intensity += Stokes[k,-1]
             
 
       s,gn=pr(s,gn,'I0')
@@ -593,7 +578,7 @@ if plotAtm: # plot Everything and save All pics and tabs
       
       labelsize=20
       fontsize=25
-      figA=figure(1,figsize=(16,18))
+      figA=figure(1,figsize=(10,11))
       figA.suptitle(r'$\tau_T=$'+str(tau_T)+
                     r'$,\,T={:5.1f}keV$'.format(T*evere/1e3)+
                     r'$,\,\Theta=$'+str(Theta),fontsize=fontsize)  
@@ -616,14 +601,14 @@ if plotAtm: # plot Everything and save All pics and tabs
       for d in range(NMu):
             d1=d+NMu
             z=str(int(arccos(mu[d1])*180/pi))
-            xFx=[(Intensity[e][d1][0]*x[e]) for e in range(NEnergy)]
+            xFx=(Intensity[:,d1,0]*x[:]) 
             plotAF.plot(x,xFx,colors[(d*NColors)//NMu])
             outF.write( frmt(z+'deg',xFx) )
-            p=[(Intensity[e][d1][1]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
+            p=(Intensity[:,d1,1]/Intensity[:,d1,0]*1e2) 
             plotAp.plot(x,p,colors[(d*NColors)//NMu])
             outp.write( frmt(z+'deg',p) )
             if d in Sangles: # Specific angle 
-                  figS=figure(2,figsize=(16,21))
+                  figS=figure(2,figsize=(10,13))
                   figS.suptitle(r'$\tau_T=$'+str(tau_T)+
                                 r'$,\,T={:5.1f}keV$'.format(T*evere*1e-3)+
                                 r'$,\,\Theta=$'+str(Theta)+
@@ -653,10 +638,9 @@ if plotAtm: # plot Everything and save All pics and tabs
                   plotSp.plot(x,p,'k')
                   
                   for k in range(ScatterNum+1):
-                        xFx=[(Stokes_out[k][e][d1][0]*x[e]) for e in range(NEnergy)]
-                        contribution=[(Stokes_out[k][e][d1][0]/Intensity[e][d1][0]*1e2) for e in range(NEnergy)]
-                        p=[.0]*NEnergy  if k==0 else (
-                            [(Stokes_out[k][e][d1][1]/Stokes_out[k][e][d1][0]*1e2) for e in range(NEnergy)])
+                        xFx=(Stokes_out[k,:,d1,0]*x[:]) 
+                        contribution=(Stokes_out[k,:,d1,0]/Intensity[:,d1,0]*1e2) 
+                        p=[.0]*NEnergy  if k==0 else (Stokes_out[k,:,d1,1]/Stokes_out[k,:,d1,0]*1e2) 
                         outF.write( frmt('Sc.N.'+str(k),xFx) )
                         outp.write( frmt('Sc.N.'+str(k),p) )
                         plotSF.plot(x,xFx,'--',color=colors[(k*NColors)//(ScatterNum+1)])
@@ -696,19 +680,18 @@ if plotAtm: # plot Everything and save All pics and tabs
       k=-1     
       for e in range(NEnergy):
             Esp="{:<8.2e}".format(x[e])
-            Inorm=[(Intensity[e][d1][0]/Intensity[e][NZenith-1][0]) for d1 in range(NMu,NZenith)]
-            p=[(Intensity[e][d1][1]/Intensity[e][d1][0]*1e2) for d1 in range(NMu,NZenith)]
+            Inorm=(Intensity[e,NMu:,0]/Intensity[e,-1,0]) 
+            p=(Intensity[e,NMu:,1]/Intensity[e,NMu:,0]*1e2) 
             outF.write( frmt(Esp,Inorm) )
             outp.write( frmt(Esp,p) )
             if e in Senergy:
                   k=k+1
                   # plotAp.plot(mu[NMu:NZenith],p,'-.',color='xkcd:black')  
                   # plotAF.plot(mu[NMu:NZenith],Inorm,'-.',color='xkcd:black')  
-                  Inorm=[(Stokes_out[k][e][d1][0]/Stokes_out[k][e][NZenith-1][0]) for d1 in range(NMu,NZenith)]
-                  p=[.0]*NMu  if k==0 else (
-                        [(Stokes_out[k][e][d1][1]/Stokes_out[k][e][d1][0]*1e2) for d1 in range(NMu,NZenith)])
-                  plotAp.plot(mu[NMu:NZenith],p,'-',color=colors[k])  
-                  plotAF.plot(mu[NMu:NZenith],Inorm,'-',color=colors[k])
+                  Inorm=(Stokes_out[k,e,NMu:,0]/Stokes_out[k,e,-1,0]) 
+                  p=[.0]*NMu  if k==0 else (Stokes_out[k,e,NMu:,1]/Stokes_out[k,e,NMu:,0]*1e2) 
+                  plotAp.plot(mu[NMu:],p,'-',color=colors[k])  
+                  plotAF.plot(mu[NMu:],Inorm,'-',color=colors[k])
       figA.savefig(AtmName+'In.pdf')
 
       outF.close()
@@ -731,16 +714,11 @@ if computePulse:
       IntBend = leggauss(NBend)
 
       phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
-      nu=100 # star rotation frequency in Hz
+      nu=600 # star rotation frequency in Hz
       M=1.4 # star mass in solar masses
       R_g=M*2.95 # gravitational Schwarzschild radius
-      R_e=12.0 # equatorial radius of the star in kilometers
+      R_e=9.0 # equatorial radius of the star in kilometers
       
-            # Omega_bar=2*pi*nu*sqrt(R_e**3/G*M)
-            # o_2=(-0.778+0.515*R_g/R_e)*Omega_bar**2 # (R_p-R_e)/R_e
-            # # print(o_2)
-            # return R_e*(1 + o_2*eta**2), R_e*o_2*eta*sqrt(1. - eta**2)
-
       if oblateness=='AlGendy': # from AlGendy et. al. (2014)
             Omega_bar=2*pi*nu*sqrt(2*R_e**3/R_g)/c
             flattering=(0.778-0.515*R_g/R_e)*Omega_bar**2 
@@ -786,7 +764,7 @@ if computePulse:
                   psi_max, lag_max= Schwarzschild(closest_approach,pi/2.)
                   psi_min, lag_min= Schwarzschild(R,pi-alpha)
                   psi=2*psi_max - psi_min    
-                  lag=2*lag_max - lag_min+2*(R - closest_approach + R_g*log((R-R_g)/(closest_approach-R_g)))/c
+                  lag=2*lag_max - lag_min + 2*(R - closest_approach + R_g*log((R - R_g)/(closest_approach - R_g)))/c
                   if psi>pi:
                         return pi+eps,lag
             else:
@@ -794,7 +772,7 @@ if computePulse:
                   lag=(R_e - R + R_g*log( (R_e - R_g)/(R - R_g) ) )/c
                   for i in range(NBend):
                         ex=(kx[i]+1)/2
-                        q=(2-ex*ex-u*(1-ex*ex)**2/(1-u))*sin(alpha)**2
+                        q=(2. - ex*ex - u*(1 - ex*ex)**2/(1 - u))*sin(alpha)**2
                         sr=sqrt(cos(alpha)**2+ex*ex*q)
                         if  2*alpha>pi-eps:
                               dpsi=b/R/sqrt(q)*wx[i]
@@ -802,13 +780,13 @@ if computePulse:
                               dpsi=ex*b/R/sr*wx[i]
                         dlag=dpsi*b/c/(1+sr)*wx[i]
                         psi+= dpsi
-                        lag+=dlag
+                        lag+= dlag
             return psi,lag
 
 
       Flux=zeros((NPhase,NEnergy,3))
 
-      i=.5    # line of sight colatitude
+      i=1.5    # line of sight colatitude
 
       NSpots= 2 # * somewhat
       theta = [1,pi-1] # spot colatitude
@@ -836,13 +814,14 @@ if computePulse:
             R=R_e*(1 - flattering*cos_theta**2) 
             dR=R_e*flattering*cos_theta*sin_theta # dR / d\theta
 
-            redshift=1.0/sqrt(1.0-R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
+            redshift=1.0/sqrt(1.0 - R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
             f=redshift/R*dR
-            sin_gamma=f/sqrt(1+f**2) # angle gamma is positive towards the north pole 
-            cos_gamma=1.0/sqrt(1+f**2)
+            sin_gamma=f/sqrt(1 + f**2) # angle gamma is positive towards the north pole 
+            cos_gamma=1.0/sqrt(1 + f**2)
             beta=2*pi*nu*R*redshift*sin_theta/c
+            # beta=0
             # print(beta,nu,R,redshift,sin_theta)
-            Gamma=1.0/sqrt(1.0-beta**2)
+            Gamma=1.0/sqrt(1.0 - beta**2)
             # exit()
 
             alpha=linspace(0,arccos(-1/sqrt(2*R/R_g/3)),NBendPhase)
@@ -859,30 +838,34 @@ if computePulse:
                         cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
                         sin_psi=sqrt(1. - cos_psi**2)
                         
-                        # cos_alpha, dcos_alpha=Beloborodov(cos_psi) # insert exact formula here
-                        # sin_alpha = sqrt(1. - cos_alpha**2)
-                        # sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
-                        
+
                         psi0=arccos(cos_psi)
                         a2=bisect(psi,psi0)
-                        a1=a2-1 
+                        a1=a2 - 1 
                         psi1=psi[a1]
                         psi2=psi[a2]
                         alpha1=alpha[a1]
                         alpha2=alpha[a2]
-                        dpsi=psi2-psi1
+                        dpsi=psi2 - psi1
                         
                         cos_alpha = cos( (alpha2*(psi0 - psi1) + (psi2 - psi0)*alpha1)/dpsi )
                         sin_alpha = sqrt(1. - cos_alpha**2)
                         sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
                         dcos_alpha=sin_alpha_over_sin_psi *(alpha2 - alpha1)/dpsi # d cos\alpha \over d \cos \psi
+                       
+                        # cos_alpha, dcos_alpha=Beloborodov(cos_psi) # insert exact formula here
+                        # sin_alpha = sqrt(1. - cos_alpha**2)
+                        # sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
                         
                         dphi=(dt[a2]*(psi0 - psi1) + (psi2 - psi0)*dt[a1])*2*pi*nu/dpsi # \delta\phi = \phi_{obs} - \phi
-                        i=dphi/phi_weight
-                        di1=i-floor(i)
-                        di2=floor(i)+1-i
-                        t2=int((t+i)%NPhase)
-                        t1=t2-1
+                        
+                        # dphi=0
+
+                        i0=dphi/phi_weight
+                        di1=i0 - floor(i0)
+                        di2=floor(i0) + 1 - i0
+                        t2=int((t + i0)%NPhase)
+                        t1=t2 - 1
 
                         cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
                         delta = 1./Gamma/(1.-beta*cos_xi)
@@ -890,14 +873,14 @@ if computePulse:
 
                         sin_sigma = sqrt(1. - cos_sigma)
                         mu0=delta*cos_sigma # cos(sigma')
-                        Omega=dS[p]*mu0*redshift**2*dcos_alpha   
+                        Omega=dS[p]*mu0*redshift**2*dcos_alpha/9*16   
                         # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi,cos_alpha,cos_psi,Omega)
                         if mu0<0: # this only for speeding up. the backwards intensity is usually zero
                               continue 
 
 
                   if True: # find chi
-                        sin_chi_0=-sin_theta*sin_phi # times sin psi
+                        sin_chi_0= - sin_theta*sin_phi # times sin psi
                         cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
                         chi_0=arctan2(sin_chi_0,cos_chi_0)
                         
@@ -910,10 +893,10 @@ if computePulse:
                         cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
                         # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
                         sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-                        cos_chi_prime=1. - cos_sigma**2 /(1. - beta* cos_xi) # times the samething
+                        cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
                         chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
 
-                        chi=chi_0+chi_1+chi_prime
+                        chi=chi_0 + chi_1 + chi_prime
 
                         sin_2chi=sin(2*chi)
                         cos_2chi=cos(2*chi)
@@ -924,7 +907,7 @@ if computePulse:
                   d1=d2-1
                   # print(mu0,mu[d2],mu[d1],d2,d1,'       ')
                   mu1,mu2=mu[d1],mu[d2]
-                  dmu, dmu1, dmu2 = mu2-mu1, mu0-mu1, mu2-mu0
+                  dmu, dmu1, dmu2 = mu2 - mu1, mu0 - mu1, mu2 - mu0
                   shift=delta/redshift
                   for e in range(NEnergy): 
                         x0=x[e]/shift
@@ -932,47 +915,43 @@ if computePulse:
                         e2=e1+1
                         # print(e,e1,e2)
                         x1, x2 = x[e1], x[e2]
-                        dx, dx1, dx2 = x2-x1, x0-x1, x2-x0
+                        dx, dx1, dx2 = x2 - x1, x0 - x1, x2 - x0
                         I, Q = (
-                              dx2*dmu2*Intensity[e1][d1] + 
-                              dx2*dmu1*Intensity[e1][d2] +
-                              dx1*dmu2*Intensity[e2][d1] +
-                              dx1*dmu1*Intensity[e2][d2]
+                              dx2*dmu2*Intensity[e1,d1] + 
+                              dx2*dmu1*Intensity[e1,d2] +
+                              dx1*dmu2*Intensity[e2,d1] +
+                              dx1*dmu1*Intensity[e2,d2]
                         )/dx/dmu * shift**3 * Omega
                         if I<0: ############
                               e_max=min(e_max,e)
                         F=array([I, Q*cos_2chi, Q*sin_2chi])
-                        Flux[t2][e] += F*di1
-                        Flux[t1][e] += F*di2
-
-
-
-       
+                        Flux[t2,e] += F*di1
+                        Flux[t1,e] += F*di2
 
 
       s,gn=pr(s,gn,'curves done ')
 
 if plotPulse:
-      outF = open(PulsName+'F.bin','w')
-      outf = open(PulsName+'f.bin','w')
+      outF = open(PulsName + 'F.bin','w')
+      outf = open(PulsName + 'f.bin','w')
       Flux.tofile(outF,format="%e")
       phi.tofile(outf,format="%e")
 
       labelsize=20
       fontsize=25
       
-      for e in range(0,e_max,2): # too many pictures
+      for e in range(0,e_max,10): # too many pictures
             phase=list(phi/2/pi)+[1.]
             I=zeros(NPhase+1)
             Q=zeros(NPhase+1)
             U=zeros(NPhase+1)
             for t in range(NPhase+1):
-                  I[t],Q[t],U[t]=Flux[t-1][e]*x[e]
+                  I[t],Q[t],U[t]=Flux[t-1,e]*x[e]
 
             p=sqrt(Q**2+U**2)/I*100
             PA=arctan2(-U,-Q)*90/pi+90
             
-            figA=figure(2,figsize=(16,18))
+            figA=figure(2,figsize=(10,14))
             figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
                           r'$,\,R_e={:5.1f}km$'.format(R_e)+
                           r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
