@@ -765,7 +765,7 @@ if computePulse:
                   psi_max, lag_max= Schwarzschild(closest_approach,pi/2.)
                   psi_min, lag_min= Schwarzschild(R,pi-alpha)
                   psi=2*psi_max - psi_min    
-                  lag=2*lag_max - lag_min + 2*(R - closest_approach + R_g*log((R - R_g)/(closest_approach - R_g)))/c
+                  lag=2*lag_max - lag_min # + 2*(R - closest_approach + R_g*log((R - R_g)/(closest_approach - R_g)))/c 
                   if psi>pi:
                         return pi+eps,lag
             else:
@@ -776,10 +776,10 @@ if computePulse:
                         q=(2. - ex*ex - u*(1 - ex*ex)**2/(1 - u))*sin(alpha)**2
                         sr=sqrt(cos(alpha)**2+ex*ex*q)
                         if  2*alpha>pi-eps:
-                              dpsi=b/R/sqrt(q)*wx[i]
+                              dpsi=b/R/sqrt(q)*wx[i] #*2/2
                         else:
-                              dpsi=ex*b/R/sr*wx[i]
-                        dlag=dpsi*b/c/(1+sr)*wx[i]
+                              dpsi=ex*b/R/sr*wx[i] #*2/2
+                        dlag=dpsi*b/c/(1+sr)*wx[i] #*2/2
                         psi+= dpsi
                         lag+= dlag
             return psi,lag
@@ -840,16 +840,16 @@ if computePulse:
                         sin_psi=sqrt(1. - cos_psi**2)
                         
 
-                        psi0=arccos(cos_psi)
+                        psi0=arccos(cos_psi) 
                         a2=bisect(psi,psi0)
                         a1=a2 - 1 
                         psi1=psi[a1]
                         psi2=psi[a2]
                         alpha1=alpha[a1]
                         alpha2=alpha[a2]
-                        dpsi=psi2 - psi1
+                        dpsi=psi2 - psi1 
                         
-                        cos_alpha = cos( (alpha2*(psi0 - psi1) + (psi2 - psi0)*alpha1)/dpsi )
+                        cos_alpha = cos( (alpha2*(psi0 - psi1) + (psi2 - psi0)*alpha1)/dpsi ) # linear interpolation of alpha(psi)
                         sin_alpha = sqrt(1. - cos_alpha**2)
                         sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
                         dcos_alpha=sin_alpha_over_sin_psi *(alpha2 - alpha1)/dpsi # d cos\alpha \over d \cos \psi
@@ -858,11 +858,11 @@ if computePulse:
                         # sin_alpha = sqrt(1. - cos_alpha**2)
                         # sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
                         
-                        dphi=(dt[a2]*(psi0 - psi1) + (psi2 - psi0)*dt[a1])*2*pi*nu/dpsi # \delta\phi = \phi_{obs} - \phi
+                        dphi=(dt[a2]*(psi0 - psi1) + (psi2 - psi0)*dt[a1])*2*pi*nu/dpsi # \delta\phi = \phi_{obs} - \phi 
                         
                         # dphi=0
 
-                        i0=dphi/phi_weight
+                        i0=dphi/phi_weight 
                         di1=i0 - floor(i0)
                         di2=floor(i0) + 1 - i0
                         t2=int((t + i0)%NPhase)
@@ -921,13 +921,13 @@ if computePulse:
                               dx2*dmu2*Intensity[e1,d1] + 
                               dx2*dmu1*Intensity[e1,d2] +
                               dx1*dmu2*Intensity[e2,d1] +
-                              dx1*dmu1*Intensity[e2,d2]
-                        )/dx/dmu * shift**3 * Omega
+                              dx1*dmu1*Intensity[e2,d2] # bilinear interpolation of the Stokes parameters
+                        )/dx/dmu * shift**3 * Omega # 
                         if I<0: ############
                               e_max=min(e_max,e)
                         F=array([I, Q*cos_2chi, Q*sin_2chi])
-                        Flux[t2,e] += F*di1
-                        Flux[t1,e] += F*di2
+                        Flux[t2,e] += F*di1 # phase linear interpotalion
+                        Flux[t1,e] += F*di2 
 
 
       s,gn=pr(s,gn,'curves done ')
