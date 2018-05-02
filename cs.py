@@ -721,11 +721,12 @@ if computePulse:
       
       if oblateness=='AlGendy': # from AlGendy et. al. (2014)
             Omega_bar=2*pi*nu*sqrt(2*R_e**3/R_g)/c
-            flattering=(0.778-0.515*R_g/R_e)*Omega_bar**2 
+            flattening=(0.788-0.515*R_g/R_e)*Omega_bar**2 
       elif oblateness=='Sphere':
-            flattering=0.0
+            flattening=0.0
       else:
-            flattering=oblateness
+            flattening=oblateness
+      # exit()
 
       outParams = open(PulsName+'.dat','w')
       outParams.write(AtmName+'.dat is the name of file with some corresponding atmosphere model\n')
@@ -760,7 +761,7 @@ if computePulse:
                   cos_3eta=sqrt(27)*R_g/2/b
                   if cos_3eta > 1:
                         return pi+2*eps,0 # the timelag 
-                  closest_approach=-2*b/sqrt(3)*cos(arccos(cos_3eta)/3+2*pi/3)
+                  closest_approach=-2*b/sqrt(3)*cos(arccos(cos_3eta)/3 + 2*pi/3)
                   psi_max, lag_max= Schwarzschild(closest_approach,pi/2.)
                   psi_min, lag_min= Schwarzschild(R,pi-alpha)
                   psi=2*psi_max - psi_min    
@@ -810,9 +811,9 @@ if computePulse:
       for p in [0,1]:# range(NSpots):
             sin_theta=sin(theta[p])
             cos_theta=cos(theta[p])
-            print(flattering)
-            R=R_e*(1 - flattering*cos_theta**2) 
-            dR=R_e*flattering*cos_theta*sin_theta # dR / d\theta
+            print(flattening)
+            R=R_e*(1 - flattening*cos_theta**2) 
+            dR=R_e*flattening*cos_theta*sin_theta # dR / d\theta
 
             redshift=1.0/sqrt(1.0 - R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
             f=redshift/R*dR
@@ -873,7 +874,7 @@ if computePulse:
 
                         sin_sigma = sqrt(1. - cos_sigma)
                         mu0=delta*cos_sigma # cos(sigma')
-                        Omega=dS[p]*mu0*redshift**2*dcos_alpha/9*16   
+                        Omega=dS[p]*mu0*redshift**2*dcos_alpha #/9*16   
                         # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi,cos_alpha,cos_psi,Omega)
                         if mu0<0: # this only for speeding up. the backwards intensity is usually zero
                               continue 
