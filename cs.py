@@ -487,6 +487,7 @@ if Spectrum=='Compton' : # Initializing Stokes vectors arrays, computiong scatte
 
 
 
+
 if Spectrum=='Thomson':
       Iin=Planck # Delta # initial photon distribution                  
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
@@ -498,6 +499,7 @@ if Spectrum=='Thomson':
       B=zeros(NDepth)
       C=zeros(NDepth)
       x_factor=ones(NEnergy)
+      x_shifted=x.copy()
       print('Thart')
 
 
@@ -509,7 +511,13 @@ if Spectrum=='Thomson':
                         Stokes_out[0,e,d,0]=Iin(x[e])*(I_l[t,d] + I_r[t,d])
                         Stokes_out[0,e,d,1]=0
       for k in range(ScatterNum): # do ScatterNum scattering iterations
-            x_factor *= 1 + 4*Theta - x 
+            for e in range(NEnergy):
+                # print(k,e,.25 + 2*Theta + 4*Theta**2 - x_shifted[e])
+                D=max(0,.25 + 2*Theta + 4*Theta**2 - x_shifted[e])
+                #D=1 if x[e]> 4*Theta else 1+4*Theta
+                x_shifted[e]=0.5+2*Theta-sqrt(D)
+                x_factor[e] = 0 if x[e]> 4*Theta else x[e]/x_shifted[e] #cut off the high energies
+            
             A[:]=0.
             B[:]=0.
             C[:]=0.
@@ -540,8 +548,8 @@ if Spectrum=='Thomson':
 
                         
                         for e in range(NEnergy):
-                              Stokes[k,t,e,d,0]=Iin(x[e]/x_factor[e])*(I_l[t,d] + I_r[t,d])*x_factor[e]
-                              Stokes[k,t,e,d,1]=Iin(x[e]/x_factor[e])*(I_l[t,d] - I_r[t,d])*x_factor[e]
+                              Stokes[k,t,e,d,0]=Iin(x_shifted[e])*(I_l[t,d] + I_r[t,d])*x_factor[e]
+                              Stokes[k,t,e,d,1]=Iin(x_shifted[e])*(I_l[t,d] - I_r[t,d])*x_factor[e]
             s,gn=pr(s,gn,'I'+str(k+1))
 
 
@@ -552,7 +560,6 @@ if Spectrum=='Thomson':
             
 
       s,gn=pr(s,gn,'I0')
-
 
 
 # In[ ]:
