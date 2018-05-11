@@ -750,7 +750,6 @@ if plotAtm: # plot Everything and save All pics and tabs
 # In[30]:
 
 
-
 if computePulse:
 
 
@@ -758,6 +757,7 @@ if computePulse:
       NBend= 20 # Number of knots in light bending integrations
       NAlpha= 1000 # 10000 # Number of psi/aplha grid points 
       IntBend = leggauss(NBend)
+      NZenithBig=100
 
       phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
       nu=600 # star rotation frequency in Hz
@@ -860,7 +860,6 @@ if computePulse:
       dS=[1]*NSpots
       l=[0,0,little,little,pi,pi,pi+little,pi+little]
       theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
-
       outParams.write(str(i)+' = sight colatitude i\n')
       outParams.write(str(theta)+' = spot colatitudes theta\n')
       outParams.write(str(l)+' = spot longitudes l\n')
@@ -869,9 +868,14 @@ if computePulse:
       cos_i=cos(i)
 
       BoloFlux=zeros((NPhase,3))
-      logIntensity=zeros((NEnergy,NZenith,4))
-      logIntensity[:,:,:2] = log(absolute(Intensity))
-      logIntensity[:,:,2:] = sign(Intensity)
+      z=cos(linspace(-pi/2,pi/2,num=NZenithBig))
+      logIntensity=zeros((NEnergy,NZenithBig,3))
+      for e in range(NEnergy):
+            IntInt=CubicSpline(mu,Intensity[e,:,0],extrapolate=True) # interpolate intensity
+            IQ=CubicSpline(mu,Intensity[e,:,1],extrapolate=True) #
+            for d in range(NZenithBig):
+                  logIntensity[e,d] = log(max(0,IntInt(z[d]))),log(absolute(IQ(z[d]))),sign(IQ(z[d]))
+      mu=z.copy()            
 
 
       s,gn=pr(s,gn,'second precomp')
@@ -887,24 +891,13 @@ if computePulse:
             r2=r1 + 1
             dr1=(R - r[r1])/dr
             dr2=(r[r2] - R)/dr
-            # dr1,dr2=.5,.5
-
 
             redshift=1.0/sqrt(1.0 - R_g/R) # 1/sqrt(1-R_g/R) = 1+ z = redshift
             f=redshift/R*dR
             sin_gamma=f/sqrt(1 + f**2) # angle gamma is positive towards the north pole 
             cos_gamma=1.0/sqrt(1 + f**2)
             beta=2*pi*nu*R*redshift*sin_theta/c
-            # beta=0
-            # print(beta,nu,R,redshift,sin_theta)
             Gamma=1.0/sqrt(1.0 - beta**2)
-            # exit()
-
-            # alpha=linspace(0,arccos(-1/sqrt(2*R/R_g/3)),NAlpha)
-            # psi=zeros(NAlpha)
-            # dt=zeros(NAlpha)
-            # for a in range(NAlpha):
-            #       psi[a],dt[a]=Schwarzschild(R,alpha[a])
                   
             for t in range(NPhase):
                   if True: # find mu
@@ -1007,16 +1000,9 @@ if computePulse:
                               dx1*dmu2*logIntensity[e2, d1] +
                               dx1*dmu1*logIntensity[e2, d2] # bilinear interpolation of the Stokes parameters
                         )/dx/dmu 
-                        I,Q=exp(logIQ[:2])* shift**3 * Omega* logIQ[2:]
-                        # if any(absolute(logIQ[2:])<.9) :
-                        #       I,Q = (
-                        #       dx2*dmu2*Intensity[e1, d1] + 
-                        #       dx2*dmu1*Intensity[e1, d2] +
-                        #       dx1*dmu2*Intensity[e2, d1] +
-                        #       dx1*dmu1*Intensity[e2, d2] # bilinear interpolation of the Stokes parameters
-                        #       )/dx/dmu * shift**3 * Omega
-                              
-                        # print(dx,x_weight)
+                        I,Q=exp(logIQ[:2])* shift**3 * Omega
+                        Q*=logIQ[2]
+                        
                         if I<0: ############
                               print('never')
                               # e_max=min(e_max,e)
