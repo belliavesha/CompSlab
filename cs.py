@@ -22,24 +22,26 @@ Spectrum={
 
 oblateness='AlGendy'
 
-AtmName='res/C/C3' # the prefix for all result files related to the set of parameters
-PulsName=AtmName+'P12'
+AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
+PulsName=AtmName+'P2'
 computePulse= True
 plotAtm=True
 plotPulse=True
 
 
-# In[18]:
-
+# In[18]:exit()
 
 
 #import:
 from numpy import linspace, logspace, empty, zeros, ones, array, fromfile
+# m=fromfile(AtmName+'m.bin')
+# print(m)
+# exit()
 from numpy import pi, exp, log, sqrt, sin, cos, arccos, arctan2
-from numpy import absolute, sign, floor, ceil
+from numpy import absolute, sign, floor, ceil, argmin
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d,CubicSpline 
 from scipy.special import kn
 from matplotlib.pyplot import *
 from bisect import bisect
@@ -255,9 +257,7 @@ def Compton_redistribution_aa(x1,x2,mu1,mu2):
       We need only 2x2 matrix in the upper left corner of the general matrix,
       becouse U and V components on the Stokes vector are zero in this case.
       """
-      # this function gives not the same result as its old fortran ancestor for some reason
-      # the difference is a factor depending of x1 and x2, but the relations between different elements are alright
-
+      
       eta1 = 1. - mu1*mu1  # squared sinuses of the angles 
       eta2 = 1. - mu2*mu2  
       
@@ -487,7 +487,6 @@ if Spectrum=='Compton' : # Initializing Stokes vectors arrays, computiong scatte
 
 
 
-
 if Spectrum=='Thomson':
       Iin=Planck # Delta # initial photon distribution                  
       Stokes=zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
@@ -499,7 +498,6 @@ if Spectrum=='Thomson':
       B=zeros(NDepth)
       C=zeros(NDepth)
       x_factor=ones(NEnergy)
-      x_shifted=x.copy()
       print('Thart')
 
 
@@ -511,13 +509,7 @@ if Spectrum=='Thomson':
                         Stokes_out[0,e,d,0]=Iin(x[e])*(I_l[t,d] + I_r[t,d])
                         Stokes_out[0,e,d,1]=0
       for k in range(ScatterNum): # do ScatterNum scattering iterations
-            for e in range(NEnergy):
-                # print(k,e,.25 + 2*Theta + 4*Theta**2 - x_shifted[e])
-                D=max(0,.25 + 2*Theta + 4*Theta**2 - x_shifted[e])
-                #D=1 if x[e]> 4*Theta else 1+4*Theta
-                x_shifted[e]=0.5+2*Theta-sqrt(D)
-                x_factor[e] = 0 if x[e]> 4*Theta else x[e]/x_shifted[e] #cut off the high energies
-            
+            x_factor *= 1 + 4*Theta - x 
             A[:]=0.
             B[:]=0.
             C[:]=0.
@@ -548,8 +540,8 @@ if Spectrum=='Thomson':
 
                         
                         for e in range(NEnergy):
-                              Stokes[k,t,e,d,0]=Iin(x_shifted[e])*(I_l[t,d] + I_r[t,d])*x_factor[e]
-                              Stokes[k,t,e,d,1]=Iin(x_shifted[e])*(I_l[t,d] - I_r[t,d])*x_factor[e]
+                              Stokes[k,t,e,d,0]=Iin(x[e]/x_factor[e])*(I_l[t,d] + I_r[t,d])*x_factor[e]
+                              Stokes[k,t,e,d,1]=Iin(x[e]/x_factor[e])*(I_l[t,d] - I_r[t,d])*x_factor[e]
             s,gn=pr(s,gn,'I'+str(k+1))
 
 
@@ -560,6 +552,7 @@ if Spectrum=='Thomson':
             
 
       s,gn=pr(s,gn,'I0')
+
 
 
 # In[ ]:
@@ -591,6 +584,7 @@ if Spectrum=='FromFile' :
       mu=fromfile(inm)
       NEnergy=len(x)
       NZenith=len(mu)
+      NMu=NZenith//2
       Intensity=fromfile(inI).reshape((NEnergy,NZenith,2))
       s,gn=pr(s,gn,'I is read')
 else: 
@@ -750,16 +744,20 @@ if plotAtm: # plot Everything and save All pics and tabs
 # In[30]:
 
 
+
 if computePulse:
 
 
-      NPhase = 120 # Number of equidistant phase points
+      NPhi = 120 # Number of equidistant phase points
+      NPhase = 150 # Number of observation phases
       NBend= 20 # Number of knots in light bending integrations
       NAlpha= 1000 # 10000 # Number of psi/aplha grid points 
       IntBend = leggauss(NBend)
       NZenithBig=100
 
-      phi,phi_weight=linspace(0,2*pi,num=NPhase,endpoint=False,retstep=True)
+      phi=linspace(0,2*pi,num=NPhi,endpoint=False,retstep=False)
+      phase =linspace(0,1,num=NPhase,endpoint=True,retstep=False)
+      phase_obs=zeros(NPhi)
       nu=600 # star rotation frequency in Hz
       M=1.4 # star mass in solar masses
       R_g=M*2.95 # gravitational Schwarzschild radius
@@ -782,7 +780,7 @@ if computePulse:
       outParams.write(str(R_e)+' = equatorial radius R_e\n')
       outParams.write(str(M)+' = star mass M in solar masses\n')
       outParams.write(str(nu)+' = star rotation frequency nu in Hz\n')
-      outParams.write(str(NPhase)+' '+str(NBend)+' '+str(NAlpha)+' = NPhase NBend NAlpha parameters\n')
+      outParams.write(str(NPhi)+' '+str(NBend)+' '+str(NAlpha)+' = NPhi NBend NAlpha parameters\n')
 
       
 
@@ -828,7 +826,7 @@ if computePulse:
                               dpsi=b/R/sqrt(q)*wx[i] #*2/2
                         else:
                               dpsi=ex*b/R/sr*wx[i] #*2/2
-                        dlag=dpsi*b/c/(1+sr)*wx[i] #*2/2
+                        dlag=dpsi*b/c/(1+sr) #*2/2
                         psi+= dpsi
                         lag+= dlag
             return psi,lag
@@ -849,8 +847,9 @@ if computePulse:
    
 
       Flux=zeros((NPhase,NEnergy,3))
-
-      i=pi*4/18    # line of sight colatitude
+      Flux_obs=zeros((NPhi,NEnergy,3))
+      
+      i=pi*7/18    # line of sight colatitude
 
       NSpots= 2*4 # * somewhat
       # theta = [pi/3,2*pi/3] # spot colatitude
@@ -859,7 +858,9 @@ if computePulse:
       little=1e-2
       dS=[1]*NSpots
       l=[0,0,little,little,pi,pi,pi+little,pi+little]
+      # pi*=2/3
       theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
+      # pi*=3/2
       outParams.write(str(i)+' = sight colatitude i\n')
       outParams.write(str(theta)+' = spot colatitudes theta\n')
       outParams.write(str(l)+' = spot longitudes l\n')
@@ -882,10 +883,9 @@ if computePulse:
       for p in range(NSpots):
             sin_theta=sin(theta[p])
             cos_theta=cos(theta[p])
-            print(flattening)
-            R=R_e*(1 - flattening*cos_theta**2) 
-            dR=R_e*flattening*cos_theta*sin_theta # dR / d\theta
 
+            R=R_e*(1 - flattening*cos_theta**2) 
+            dR=2*R_e*flattening*cos_theta*sin_theta # dR / d\theta
 
             r1=bisect(r[1:-1],R) 
             r2=r1 + 1
@@ -899,10 +899,11 @@ if computePulse:
             beta=2*pi*nu*R*redshift*sin_theta/c
             Gamma=1.0/sqrt(1.0 - beta**2)
                   
-            for t in range(NPhase):
+            for t in range(NPhi):
                   if True: # find mu
-                        sin_phi=sin(phi[t]+l[p])
-                        cos_phi=cos(phi[t]+l[p])
+                        phi0=phi[t]+l[p]
+                        sin_phi=sin(phi0)
+                        cos_phi=cos(phi0)
                         cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
                         sin_psi=sqrt(1. - cos_psi**2)
                         
@@ -928,20 +929,14 @@ if computePulse:
                         # cos_alpha, dcos_alpha=Beloborodov(cos_psi) # insert exact formula here
                         # sin_alpha = sqrt(1. - cos_alpha**2)
                         # sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
+                        
                         dt1=dt[r1,a1 - 1]*dalpha1/dalpha + dt[r1,a1]*(1. - dalpha1/dalpha)
                         dt2=dt[r2,a2 - 1]*dalpha2/dalpha + dt[r2,a2]*(1. - dalpha2/dalpha)
                         
-                        dphi=(dt1*dr2 + dt2*dr1)*2*pi*nu # \delta\phi = \phi_{obs} - \phi 
-                        # print(psi0,cos_alpha,dcos_alpha,dphi)
+                        dphase=(dt1*dr2 + dt2*dr1)*nu # \delta\phi = \phi_{obs} - \phi 
+                        # dphase = 0
+                        phase_obs[t]=( phi[t]/2/pi+dphase)%1.
                         
-                        # dphi=0
-
-                        i0=dphi/phi_weight 
-                        di1=i0 - floor(i0)
-                        di2=floor(i0) + 1 - i0
-                        t2=int((t + i0)%NPhase)
-                        t1=t2 - 1
-
                         cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
                         delta = 1./Gamma/(1.-beta*cos_xi)
                         cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
@@ -952,6 +947,7 @@ if computePulse:
                         # Omegaarray[t]=max(Omega,0)
                         # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi,cos_alpha,cos_psi,Omega)
                         if mu0<0: # this only for speeding up. the backwards intensity is usually zero
+                              Flux_obs[t]=0
                               continue 
 
 
@@ -1005,15 +1001,31 @@ if computePulse:
                         
                         if I<0: ############
                               print('never')
-                              # e_max=min(e_max,e)
-                        F=array([I, Q*cos_2chi, Q*sin_2chi])
-                        Flux[t2,e] += F*di1 # phase linear interpotalion
-                        Flux[t1,e] += F*di2 
+                        Flux_obs[t,e]=[I, Q*cos_2chi, Q*sin_2chi]
+            
+            for t in range(NPhase):
+                  phase0=phase[t]
+                  for t2 in range(NPhi):
+                        t1=t2-1
+                        phase2=phase_obs[t2]
+                        phase1=phase_obs[t1]
+                        if phase0>phase1 and phase0<phase2:
+                              break
+                  else :
+                        phase0=0
+                        t2=argmin(phase_obs)
+                        t1=t2-1
+                        phase2=phase_obs[t2]
+                        phase1=phase_obs[t1]-1
+                        
+                  dphase1=phase0-phase1
+                  dphase2=phase2-phase0
+                  dphase=phase2-phase1
+                  Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase
+                  
 
       s,gn=pr(s,gn,'curves done ')
-      # print('trtrt',e_max)
-
-
+    
 # In[31]:
 
 
@@ -1022,18 +1034,22 @@ if plotPulse :
       outF = open(PulsName + 'F.bin','w')
       outf = open(PulsName + 'f.bin','w')
       Flux.tofile(outF,format="%e")
-      phi.tofile(outf,format="%e")
+      phase.tofile(outf,format="%e")
 
       labelsize=20
       fontsize=25
       
-      for e in range(0,NEnergy,2): # too many pictures
-            phase=list(phi/2/pi)+[1.]
-            I=zeros(NPhase+1)
-            Q=zeros(NPhase+1)
-            U=zeros(NPhase+1)
-            for t in range(NPhase+1):
-                  I[t],Q[t],U[t]=Flux[t-1,e]*x[e]
+      for e in range(0,NEnergy,20): # too many pictures
+            I=zeros(NPhase)
+            I1=zeros(NPhase)
+            I2=zeros(NPhase)
+            Q=zeros(NPhase)
+            U=zeros(NPhase)
+            for t in range(NPhase):
+                  I1[t],Q[t],U[t]=Flux1[t,e]
+                  I2[t],Q[t],U[t]=Flux2[t,e]
+                  I[t],Q[t],U[t]=Flux[t,e]
+
 
             p=sqrt(Q**2+U**2)/I*100
             PA=arctan2(-U,-Q)*90/pi+90
@@ -1071,6 +1087,8 @@ if plotPulse :
             
             col=colors[(e*NColors)//NEnergy]
             plotAF.plot(phase,I/I.max(),color=col)
+            plotAF.plot(phase,I1/I.max(),color=col)
+            plotAF.plot(phase,I2/I.max(),color=col)
             plotAp.plot(phase,p,color=col)
             plotAc.plot(phase,PA,color=col)
 
