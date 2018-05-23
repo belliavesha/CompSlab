@@ -1041,13 +1041,9 @@ if plotPulse :
       
       for e in range(0,NEnergy,20): # too many pictures
             I=zeros(NPhase)
-            I1=zeros(NPhase)
-            I2=zeros(NPhase)
             Q=zeros(NPhase)
             U=zeros(NPhase)
             for t in range(NPhase):
-                  I1[t],Q[t],U[t]=Flux1[t,e]
-                  I2[t],Q[t],U[t]=Flux2[t,e]
                   I[t],Q[t],U[t]=Flux[t,e]
 
 
@@ -1087,8 +1083,6 @@ if plotPulse :
             
             col=colors[(e*NColors)//NEnergy]
             plotAF.plot(phase,I/I.max(),color=col)
-            plotAF.plot(phase,I1/I.max(),color=col)
-            plotAF.plot(phase,I2/I.max(),color=col)
             plotAp.plot(phase,p,color=col)
             plotAc.plot(phase,PA,color=col)
 
