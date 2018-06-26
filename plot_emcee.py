@@ -80,7 +80,7 @@ for ispa in range(0,ndfiles-1):
 	lines = input.readlines()
 	input.close()
 
-	c_lines = Nchain_size/2#2000#2500 #burn-in not read
+	c_lines = 20#Nchain_size/2#2000#2500 #burn-in not read
 	print("Lines commented:", c_lines)
 
 	nsamples = Nchain_size-c_lines
@@ -140,7 +140,7 @@ if not(only_wmoves):
 
 
 
-quit()
+#quit()
 #Copy pastes from somewhere else, not checked yet:
 print("Plotting next also walker movements:")
 
@@ -159,28 +159,17 @@ for ispa in range(0,ndfiles-1):
 	plt.suptitle("Param values as function of moves for separate walkers")
 
 	param_names = [
-		 "$R_{\\mathrm{eq}}$ (km)",
-		 "$M$ ($M_{\\odot}$)",
-		 "$i$ (deg)",
-		 "$\\theta$ (deg)",
-		 "$\\rho$ (deg)",
-		 "$D$ (10 kpc)",#$^{-2}$",
-		 "$a_{\\mathrm{bb}}$",
-		 "$\\Gamma$",
-		 "$X_{\\mathrm{sc}}$",
-		 "$T$ (keV)",
-		 "$\\log(\\sigma_{\\mathrm{i}}$)",
-		 "$N_{\\mathrm{H}}$ \n ($10^{22} \\mathrm{cm}^{-2}$)",
-		 "$i$+$\\theta$ (deg)",
-		 "$i$-$\\theta$ (deg)",
-		 "$M$/$R_{\\mathrm{eq}}$ ($M_{\\odot}$/km)",
+		 "$R_{\\mathrm{eq}}$ \n (km)",
+		 "$M$ \n ($M_{\\odot}$)",
+		 "$i$ \n (deg)",
+		 "$\\theta$ \n (deg)",
 		 ]
 
 	if(iweights):
 		wsamples = np.append(wsamples,[weights],axis=0)
 		npars = npars+1
-		low_limit.append(-3000.0)
-		high_limit.append(-2300.0)
+		low_limit.append(-400000.0)
+		high_limit.append(0.0)
 		param_names.append("W")
 
 
@@ -188,7 +177,7 @@ for ispa in range(0,ndfiles-1):
 	
 		gs = GridSpec(1, 1)
 		#ax = subplot(gs[0,0])
-		ax = plt.subplot(4,4,i+1)
+		ax = plt.subplot(3,3,i+1)
 		frame1 = plt.gca()
 		#plt.gca().set_color_cycle(['red', 'blue'])#, 'green'])
 		for j in range(0,nwalk):
@@ -221,7 +210,8 @@ for ispa in range(0,ndfiles-1):
 		#savefig("test"+ str(i) + ".png")
 		#plt.close()
 	#svname = "test_all2_"+ str(iembl) + ".png"
-	svname = spath + "wmoves.png"
+	#svname = spath + "wmoves.png"
+	svname = spath + "wmoves.pdf"
 	savefig(svname)
 	print "Wmoves saved to " + svname
 	plt.close()
