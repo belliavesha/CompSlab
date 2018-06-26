@@ -80,7 +80,7 @@ for ispa in range(0,ndfiles-1):
 	lines = input.readlines()
 	input.close()
 
-	c_lines = 20#Nchain_size/2#2000#2500 #burn-in not read
+	c_lines = Nchain_size/2#2000#2500 #burn-in not read
 	print("Lines commented:", c_lines)
 
 	nsamples = Nchain_size-c_lines

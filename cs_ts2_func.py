@@ -54,7 +54,7 @@ from bisect import bisect
 #import matplotlib.pyplot as plt
 #s,gn=pr(s,gn, 'importing')
 
-def compf(mass,eqrad,incl_deg,theta_deg):
+def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 
 
 
@@ -220,6 +220,10 @@ def compf(mass,eqrad,incl_deg,theta_deg):
 			flattening=oblateness
 		# exit()
 		#print(flattening)
+		if(spherical):#TS: from input param, 0.0 not working in this code
+			print("spherical star")
+			flattening = 1e-8
+
 
 		outParams = open(PulsName+'.dat','w')
 		outParams.write(AtmName+'.dat is the name of file with some corresponding atmosphere model\n')
