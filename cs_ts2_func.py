@@ -221,7 +221,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 		# exit()
 		#print(flattening)
 		if(spherical):#TS: from input param, 0.0 not working in this code
-			print("spherical star")
+			#print("spherical star")
 			flattening = 1e-8
 
 
@@ -404,7 +404,15 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 					psi0=arccos(cos_psi) 
 					a1=bisect(psi[r1], psi0)
 					a2=bisect(psi[r2], psi0)
-					psi1=psi[r1, a1]
+					#print(psi0)
+					#print(len(psi[r1]),a1,a2)
+					#TS: bug correction ....#####
+					if(a1 >= len(psi[r1])):
+						a1=len(psi[r1])-1
+					if(a2 >= len(psi[r2])):
+						a2=len(psi[r2])-1
+					########
+					psi1=psi[r1,a1]					
 					psi2=psi[r2, a2]
 					dpsi1=psi1 - psi[r1, a1 - 1]
 					dpsi2=psi2 - psi[r2, a2 - 1]

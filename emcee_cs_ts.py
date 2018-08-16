@@ -24,7 +24,7 @@ import math, os
 #import pymultinest
 import time
 from cs_ts2_func import compf
-from multiprocessing import Pool
+#from multiprocessing import Pool
 
 
 #spath = "res/B/"#str(sys.argv[1])
@@ -51,8 +51,9 @@ stlow_limit = [1.3, 11.0, 30.0, 50.0]
 sthigh_limit = [1.5, 13.0, 50.0, 70.0]
 #stlow_limit = np.copy(low_limit)
 #sthigh_limit = np.copy(high_limit)
-restart = False
-restart_file = "res/B/test_emcee.dat"
+restart = True#False
+#restart_file = "res/B/oblsph_emcee.dat"
+restart_file = "res/B/oblobl_emcee.dat"
 
 
 def readdata():
@@ -86,7 +87,7 @@ def lnprob(modelpar, low_limit, high_limit):
 	if(mass/rad > 0.96*1.0/(2.95*1.52)): #checking causality                
 		return -np.inf
 
-	Flux = compf(mass,rad,incl,theta,spherical=False)
+	Flux = compf(mass,rad,incl,theta,spherical=False)#True)
 	#print(Flux)
 	phi,Flux_obs = readdata()
 
@@ -135,6 +136,8 @@ p0 = np.zeros((nwalkers,ndim))
 
 #test call to lnprob:
 start = time.time()
+#Originally a crash with these parameters:
+#params_true = [1.19815732, 16.3795289, 50.49372377, 63.26109383]
 cloglik = lnprob(params_true,low_limit,high_limit)
 print(cloglik)
 print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase-nparams))
@@ -200,9 +203,10 @@ print("walkers initialized succesfully")
 start = time.time()
 print("Initializing the sampler")
 
-with Pool() as pool:
+for abc in range(0,1):
+#with Pool() as pool:
 
-	sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=[low_limit,high_limit],pool=pool)#, args=[means, icov])
+	sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=[low_limit,high_limit],threads=2)#pool=pool)#, args=[means, icov])
 	#note: threads ignored when pool used for parallelization
 	#set pool to None if want to use multiprocessing parallelization
 	end = time.time()
