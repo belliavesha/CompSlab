@@ -26,7 +26,9 @@ Spectrum={
 oblateness='AlGendy'
 
 AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
-PulsName=AtmName+'P2'
+#PulsName=AtmName+'P2'
+#PulsName='res/B/B0P1'
+PulsName='res/B/B0Ptest'
 computePulse= True
 plotAtm=False#True
 plotPulse=True
@@ -318,11 +320,12 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 		thettta = pi/180.0*theta_deg#60.0
 		theta=[thettta,thettta+little,thettta,thettta+little,2*thettta,2*thettta+little,2*thettta,2*thettta+little]
 
-		###i=pi*4/18#1.5    # line of sight colatitude #in radians
-		##i=pi/180.0*40.0
+		#In case of 1 spot:
+		####i=pi*4/18#1.5    # line of sight colatitude #in radians
+		###i=pi/180.0*40.0
 		#NSpots= 1 #2 # * somewhat
-		##theta = [pi/3,pi-pi/3] # spot colatitude
-		#theta = [pi/180.0*60.0,pi-pi/180.0*60.0] # spot colatitude
+		###theta = [pi/3,pi-pi/3] # spot colatitude
+		#theta = [thettta,pi-thettta] # spot colatitude
 		#l=[0,pi] # spot longitude
 		#dS=[1,1] # some arbitrary units
 		###############################

@@ -47,9 +47,10 @@ IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample 
 x,x_weight=IntEnergy
 
 
-shapes = ["Sphere","AlGendy"]
+#shapes = ["Sphere","AlGendy"]
 
-colors = ["green","blue"]
+colors = ["green"]#,"blue","black"]
+shapes = np.copy(colors)
 
 figA=figure(2,figsize=(10,14))
 figA.clear()
@@ -64,21 +65,29 @@ else:
 	plotAp=figA.add_subplot(3,1,2)      #
 	plotAc=figA.add_subplot(3,1,3)      #
 
-for ish in range(1,len(shapes)):
+for ish in range(0,len(shapes)):
 
 	#oblateness='AlGendy'#'Sphere'#'AlGendy'
 	oblateness=shapes[ish]
-
+	print(ish)
 	#AtmName='res/B/C1obl' # the prefix for all result files related to the set of parameters
 	#AtmName='res/B/B0P2' # the prefix for all result files related to the set of parameters
 	if(ish == 0):
 		#AtmName='res/C2/C1sph'
 		#PulsName='res/C2/sph2test'
-		PulsName='res/B/B0P2'
-	else:
+		#PulsName='res/B/lcpol_sph_r2'
+		#PulsName='res/B/lcpol_sph_sp2_11km'
+		PulsName='res/B/B0Ptest'
+	if(ish == 1):
+		#AtmName='res/C2/C1sph'
+		#PulsName='res/C2/sph2test'
+		#PulsName='res/B/lcpol_sph_sp1'
+		PulsName='res/B/lcpol_sph_sp2_12km'
+	if(ish == 2):
 		#AtmName='res/C2/C1obl'  
 		#PulsName='res/C2/obl2test'
-		PulsName='res/B/B0P2'
+		#PulsName='res/B/lcpol_sph_r3'
+		PulsName='res/B/lcpol_sph_sp2_14km'
 	#PulsName=AtmName+'P1'
 	computePulse= True
 	plotAtm=not True
@@ -89,7 +98,7 @@ for ish in range(1,len(shapes)):
 	#outf = open(PulsName + 'f.bin','w')
 	#Flux.tofile(outF,format="%e")
 	#phi.tofile(outf,format="%e")
-
+	print(PulsName)
 
 	inFlux = open(PulsName+'FF.bin')
 	inphi = open(PulsName+'ff.bin')
@@ -102,7 +111,8 @@ for ish in range(1,len(shapes)):
 	#print(" ")
 	#print(fluxspec0)
 
-	ene = 166#140#166#140 #The chosen energy index
+	ene = 118#166#140#166#140 #The chosen energy index
+	print("The chosen energy (keV): ", x[ene]*evere/1e3)
 	fluxlcurve_Iene = Flux1[0+ene*3:len(Flux1):3*NEnergy]
 	fluxlcurve_Qene = Flux1[1+ene*3:len(Flux1):3*NEnergy]
 	fluxlcurve_Uene = Flux1[2+ene*3:len(Flux1):3*NEnergy]
@@ -135,7 +145,8 @@ for ish in range(1,len(shapes)):
 	#	break	           	
 
 	figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
-	              r'$,\,R_e={:5.1f}km$'.format(R_e)+
+	              #r'$,\,R_e={:5.1f}km$'.format(R_e)+
+	              r'$,\,R_e=11,12,14km$'.format(R_e)+
 	              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
 	              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+
 	              r'$,\,i={:5.1f}\degree$'.format(i*180/pi)+',\n'+
@@ -174,14 +185,19 @@ for ish in range(1,len(shapes)):
 
 compare_to_tslc = False#True
 if(compare_to_tslc):
-	colors = ["orange","red"]
-	for ic in range(1,2):
+	colors = ["yellow", "orange", "red"]#"red"]
+	for ic in range(0,3):
 
 		datafile=""
 		if(ic == 0):
-			datafile = "../../MCMC/results_sph_test.txt"
+			#datafile = "../../MCMC/results_sph_test.txt"
+			datafile = "../../MCMC/results_sph_11kmsp2.txt"
 		if(ic == 1):
-			datafile = "../../MCMC/results_obl2_test.txt"
+			#datafile = "../../MCMC/results_obl2_test.txt"
+			#datafile = "../../MCMC/results_obl2_simpl.txt"
+			datafile = "../../MCMC/results_sph_12kmsp2.txt"
+		if(ic == 2):
+			datafile = "../../MCMC/results_sph_14kmsp2.txt"
 		input = file(datafile, 'r')
 		lines = input.readlines()
 		input.close()
@@ -214,7 +230,8 @@ if(compare_to_tslc):
 
 
 		#for i in range(0,egrid):
-		ene = 14#38##14
+		#print energy_keV
+		ene = 5#14#38##14
 		print("energy_keV = ", energy_keV[ene])
 
 		phshift = 0.0#-0.005#0.025

@@ -35,6 +35,7 @@ spath = str(sys.argv[1])
 
 NEnergy = 281
 NPhase = 150
+NPhase_extp = 10
 x_l, x_u = -3.7 , .3 # lower and upper bounds of the log_10 energy span
 evere=.5109989e6 # electron volts in elecron rest energy 
 IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) 
@@ -45,19 +46,21 @@ energy_keV = x*evere/1e3 #energies in keV
 print("The energy chosen = ", energy_keV[ene_index], " keV")
 param_names = ["mass","rad","incl","theta"]
 params_true = [1.4,12.0,40.0,60.0]
+#params_true = [1.4,12.0,89.8,60.0]
 low_limit = [1.0, 4.0, 0.0, 0.0]
 high_limit = [2.0, 18.0, 90.0, 90.0]
 stlow_limit = [1.3, 11.0, 30.0, 50.0]
 sthigh_limit = [1.5, 13.0, 50.0, 70.0]
 #stlow_limit = np.copy(low_limit)
 #sthigh_limit = np.copy(high_limit)
-restart = True#False
+restart = False
 #restart_file = "res/B/oblsph_emcee.dat"
 restart_file = "res/B/oblobl_emcee.dat"
 
 
 def readdata():
 	PulsName='res/B/B0P2'
+	#PulsName='res/B/B0P1'
 	inFlux = open(PulsName+'FF.bin')
 	inphi = open(PulsName+'ff.bin')
 	Flux1 = fromfile(inFlux)
@@ -115,11 +118,14 @@ def lnprob(modelpar, low_limit, high_limit):
 	#}
 	loglik = 0.0
 	insigma = 0.0
-	for t in range(NPhase):
-		sigma_tot2 = 225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2
+	#for t in range(NPhase):
+	phase_factor = NPhase/NPhase_extp
+	for t in range(NPhase_extp):
+		sigma_tot2 = 4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
 		norm = 0.0#0.5*log(sigma_tot2)
 		#if(sigma_tot2 > 1e-8):
-		loglik = loglik - (PA[t]-PA_obs[t])**2/(2.0*sigma_tot2)-norm
+		#loglik = loglik - (PA[t]-PA_obs[t])**2/(2.0*sigma_tot2)-norm
+		loglik = loglik - (PA[t*phase_factor]-PA_obs[t*phase_factor])**2/(2.0*sigma_tot2)-norm
 	#print("loglikelihood = ",loglik)
 	#print(PA[0],PA_obs[0])
 	return loglik
@@ -140,7 +146,8 @@ start = time.time()
 #params_true = [1.19815732, 16.3795289, 50.49372377, 63.26109383]
 cloglik = lnprob(params_true,low_limit,high_limit)
 print(cloglik)
-print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase-nparams))
+#print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase-nparams))
+print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase_extp-nparams))
 end = time.time()
 print ("Time spend for one fit: ")
 print(end - start)

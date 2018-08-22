@@ -62,7 +62,7 @@ params_true = [12.0,1.4,40.0,60.0]
 params = params_true
 low_limit = [4.0, 1.0, 0.0, 0.0]
 high_limit = [18.0, 2.0, 90.0, 90.0]
-
+ignore_walkers = []#[3,5,8]
 
 
 ndim = len(params)
@@ -101,7 +101,14 @@ for ispa in range(0,ndfiles-1):
 	full_chain = full_chain[1:,:]
 	samples = full_chain.T#reshape([nsamples, ndim])
 
-
+	#print(samples[0::nwalk,:])
+	llen = len(samples[:,0])/nwalk
+	for igwa in range(0,llen):
+		ignorable = np.array(ignore_walkers)+(nwalk-len(ignore_walkers))*igwa
+		#print(ignorable)
+		samples = np.delete(samples,ignorable,0)
+	#print(samples[17::nwalk,:])
+	#print(samples[0::nwalk-3,:])
 	samples_all.append(samples)
 	weights_all.append(weights)
 
@@ -113,7 +120,7 @@ for ii in range(1,ndfiles-1):
 
 if(swapmr):
 	samples_temp = np.copy(samples)
-	print(samples[:,0])
+	#print(samples[:,0])
 	samples[:,0] = np.copy(samples_temp[:,1])
 	samples[:,1] = np.copy(samples_temp[:,0])
 
@@ -168,7 +175,7 @@ for ispa in range(0,ndfiles-1):
 	if(iweights):
 		wsamples = np.append(wsamples,[weights],axis=0)
 		npars = npars+1
-		low_limit.append(-400000.0)
+		low_limit.append(-4.0)
 		high_limit.append(0.0)
 		param_names.append("W")
 
