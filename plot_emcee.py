@@ -34,7 +34,7 @@ if(ndfiles >= 2):
 		print (str(sys.argv[ii]))
 		spaths.append(str(sys.argv[ii]))
 
-print spaths
+print (spaths)
 
 
 
@@ -62,7 +62,7 @@ params_true = [12.0,1.4,40.0,60.0]
 params = params_true
 low_limit = [4.0, 1.0, 0.0, 0.0]
 high_limit = [18.0, 2.0, 90.0, 90.0]
-ignore_walkers = []#[3,5,8]
+ignore_walkers = [8,19]#[6,7,19]#[8,19]#[3,5,8]
 
 
 ndim = len(params)
@@ -72,15 +72,19 @@ for ispa in range(0,ndfiles-1):
 	spath = spaths[ispa]
 	datafile = spath + "emcee.dat"
 	#datafile = spath + "kmb.dat
-	full_chain= [[] for x in xrange(npars+1)]
+	#full_chain= [[] for x in xrange(npars+1)]
+	full_chain= [[] for x in range(npars+1)]
 	weights = []
 	Nchain_size = sum(1 for line in open(datafile))#50000
 	print ("This file have ", Nchain_size, " lines")
-	input = file(datafile, 'r')
+	#input = file(datafile, 'r')
+	input = open(datafile, 'r')
 	lines = input.readlines()
 	input.close()
 
-	c_lines = Nchain_size/2#2000#2500 #burn-in not read
+	c_lines = int(Nchain_size/2)#2000#2500 #burn-in not read
+	while(c_lines % nwalk != 0):
+		c_lines = c_lines+1 
 	print("Lines commented:", c_lines)
 
 	nsamples = Nchain_size-c_lines
@@ -102,7 +106,8 @@ for ispa in range(0,ndfiles-1):
 	samples = full_chain.T#reshape([nsamples, ndim])
 
 	#print(samples[0::nwalk,:])
-	llen = len(samples[:,0])/nwalk
+	llen = int(len(samples[:,0])/nwalk)
+	print("llen=",llen)
 	for igwa in range(0,llen):
 		ignorable = np.array(ignore_walkers)+(nwalk-len(ignore_walkers))*igwa
 		#print(ignorable)
@@ -125,9 +130,14 @@ if(swapmr):
 	samples[:,1] = np.copy(samples_temp[:,0])
 
 if not(only_wmoves):
-	limits =  zip(low_limit,high_limit)
+	limits =  list(zip(low_limit,high_limit))
 	if(plot_cpoint):
-		fig = corner.corner(samples,labels=param_names[0:npars],truths=params[0:npars],range=limits[0:npars])#,color="darkorange")
+		print("quantiles=",)
+		for ipar in range(0,len(samples[0,:])):
+			qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
+			print(qtls)
+		fig = corner.corner(samples,labels=param_names[0:npars],truths=params[0:npars],range=limits[0:npars], levels=(0.68,0.95,), 
+quantiles=(0.025,0.16,0.84,0.975),smooth=1.0,smooth1d=1.0)#,color="darkorange")
 	else:
 		fig = corner.corner(samples,labels=param_names[0:npars],range=limits[0:npars])#,color="darkorange")
 
@@ -220,7 +230,7 @@ for ispa in range(0,ndfiles-1):
 	#svname = spath + "wmoves.png"
 	svname = spath + "wmoves.pdf"
 	savefig(svname)
-	print "Wmoves saved to " + svname
+	print ("Wmoves saved to " + svname)
 	plt.close()
 
 
