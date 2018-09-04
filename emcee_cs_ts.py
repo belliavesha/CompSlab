@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from numpy import logspace, zeros, fromfile
 from numpy import pi, exp, log, sqrt, sin, cos, arccos, arctan2
+from scipy.interpolate import interp1d
 #print (np.__file__)
 #import numpy.random as random
 #import scipy
@@ -46,6 +47,7 @@ energy_keV = x*evere/1e3 #energies in keV
 print("The energy chosen = ", energy_keV[ene_index], " keV")
 param_names = ["mass","rad","incl","theta"]
 params_true = [1.4,12.0,40.0,60.0]
+#params_true = [2.0,12.0,40.0,60.0]
 #params_true = [1.4,12.0,89.8,60.0]
 low_limit = [1.0, 4.0, 0.0, 0.0]
 high_limit = [2.0, 18.0, 90.0, 90.0]
@@ -57,6 +59,19 @@ restart = False
 #restart_file = "res/B/oblsph_emcee.dat"
 restart_file = "res/B/oblobl_emcee.dat"
 
+
+def shift_phase(phi,shift):
+	phi = phi+shift
+	for t in range(len(phi)):
+		if(phi[t] > 1.0):
+			phi[t] = phi[t]-1.0
+		if(phi[t] < 0.0):
+			phi[t] = phi[t]+1.0
+	return phi
+
+
+def shift(l, n):
+	return l[n:] + l[:n]
 
 def readdata():
 	PulsName='res/B/B0P2'
@@ -70,6 +85,80 @@ def readdata():
 	fluxlcurve_Uene = Flux1[2+ene_index*3:len(Flux1):3*NEnergy]
 	Flux2 = np.array([fluxlcurve_Iene, fluxlcurve_Qene, fluxlcurve_Uene])
 	return phi, Flux2
+
+
+def compute_logl(phi,PA,PA_obs,phaseshift):
+
+	sigma_tot2 = 225.0#4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
+	norm = 0.0#0.5*log(sigma_tot2)
+	phi_new = shift_phase(phi,phaseshift)
+	PA_interp = interp1d(phi_new,PA,fill_value = 'extrapolate')
+	PA_new = PA_interp(phi)
+	loglik = 0.0
+	insigma = 0.0
+	phase_factor = NPhase/NPhase_extp
+	for t in range(NPhase_extp):
+		loglik = loglik - (PA_new[t*phase_factor]-PA_obs[t*phase_factor])**2/(2.0*sigma_tot2)-norm
+	return loglik
+
+
+def find_best_phshift(phi,PA,PA_obs):
+	#use bisection:
+
+	phgrid = 50
+	phaseshift = 0.0
+	ph_min = 0.1
+	ph_mid = 0.35
+	ph_max = 0.5
+	gf_min = compute_logl(phi,PA,PA_obs,ph_min)
+	gf_mid = compute_logl(phi,PA,PA_obs,ph_mid)
+	gf_max = compute_logl(phi,PA,PA_obs,ph_max)
+
+	ph_grid = np.zeros((phgrid+3))
+	gf_grid = np.zeros((phgrid+3))
+	#update grids
+	ph_grid[0] = ph_min
+	gf_grid[0] = gf_min
+	ph_grid[1] = ph_mid
+	gf_grid[1] = gf_mid
+	ph_grid[2] = ph_max
+	gf_grid[2] = gf_max
+
+	for ishift in range(0,phgrid):
+		if (ishift%2 == 0):
+			phaseshift = 0.5*(ph_min + ph_mid)
+			gf =  compute_logl(phi,PA,PA_obs,phaseshift)
+			ph_grid[ishift+3] = phaseshift
+			gf_grid[ishift+3] = gf
+
+			if (gf < gf_mid):
+				ph_min = phaseshift
+				gf_min = gf
+			else:
+				ph_max = ph_mid
+				gf_max = gf_mid
+				ph_mid = phaseshift
+				gf_mid = gf
+		else:
+			phaseshift = 0.5*(ph_mid + ph_max)
+			gf = compute_logl(phi,PA,PA_obs,phaseshift)                  
+			ph_grid[ishift+3] = phaseshift
+			gf_grid[ishift+3] = gf
+
+			if (gf < gf_mid):
+				ph_max = phaseshift
+				gf_max = gf
+			else:
+				ph_min = ph_mid
+				gf_min = gf_mid
+				ph_mid = phaseshift
+				gf_mid = gf
+		#print(phaseshift,gf)
+
+	best_phaseshift = ph_mid
+
+	return best_phaseshift, gf
+	#return 0.1
 
 
 #likelyhoods for emcee:
@@ -94,41 +183,40 @@ def lnprob(modelpar, low_limit, high_limit):
 	#print(Flux)
 	phi,Flux_obs = readdata()
 
+	#remove the last element (that appears twice in the list)
+	Flux = Flux[:,0:NPhase-1]
+	Flux_obs = Flux_obs[:,0:NPhase-1]
+	phi = phi[0:len(phi)-1]
+
 	ene = ene_index #the chosen energy
-	I=zeros(NPhase)
-	Q=zeros(NPhase)
-	U=zeros(NPhase)
-	for t in range(NPhase):
+	I=zeros(NPhase-1)
+	Q=zeros(NPhase-1)
+	U=zeros(NPhase-1)
+	for t in range(NPhase-1):
 		I[t],Q[t],U[t]=Flux[t,ene]
 	#p=sqrt(Q**2+U**2)/I*100
 	PA=arctan2(-U,-Q)*90/pi+90
-	for t in range(NPhase):
+
+	for t in range(NPhase-1):
 		I[t],Q[t],U[t]=Flux_obs[0,t], Flux_obs[1,t], Flux_obs[2,t]
 	PA_obs=arctan2(-U,-Q)*90/pi+90
-	
-	#print(PA)
-	#print(PA_obs)
-	#quit()
 
-	#sigma_tot2 = modchan[idat][iene]*expo[idat]+pow(insigma,2)+std::pow(modchan[idat][iene]*expo[idat]*0.005,2); //pearson (model error) 
-	#//norm = 0.5*log(2.0*pi*sigma_tot2); //when comparing to normalized poisson
-	#norm = 0.5*log(sigma_tot2);
-	#if(cnts[idat][iene] > 20){
-	#    logprobsum = logprobsum-smbeta*pow((cnts[idat][iene]-modchan[idat][iene]*expo[idat]),2)/(2.0*sigma_tot2)-norm;
-	#}
-	loglik = 0.0
-	insigma = 0.0
-	#for t in range(NPhase):
-	phase_factor = NPhase/NPhase_extp
-	for t in range(NPhase_extp):
-		sigma_tot2 = 4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
-		norm = 0.0#0.5*log(sigma_tot2)
-		#if(sigma_tot2 > 1e-8):
-		#loglik = loglik - (PA[t]-PA_obs[t])**2/(2.0*sigma_tot2)-norm
-		loglik = loglik - (PA[t*phase_factor]-PA_obs[t*phase_factor])**2/(2.0*sigma_tot2)-norm
-	#print("loglikelihood = ",loglik)
-	#print(PA[0],PA_obs[0])
-	return loglik
+	#apply a phase shift
+	#################################################
+	phi_obs_new = shift_phase(phi,0.2) #artificial phaseshift set by hand
+	PA_obs_interp = interp1d(phi_obs_new,PA_obs,fill_value = 'extrapolate')
+	PA_obs_new = PA_obs_interp(phi)
+
+	#find the best phaseshift and corresponding log-likelyhood:
+	phshift, loglikk = find_best_phshift(phi,PA,PA_obs_new)
+	if(phshift < 0.05 or phshift > 0.35):#print when phshift is clearly wrong
+		print("Phshift: ",phshift)
+		print("With these parameters: ",modelpar)
+	##############################################
+	#loglik = compute_logl(phi,PA,PA_obs,0.0) #last argument is phase shift
+	#print(loglik, loglikk)
+	#quit()
+	return loglikk
 
 
 #Flux = compf(1.0,1.0,1.0,1.0)

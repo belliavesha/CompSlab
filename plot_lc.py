@@ -49,7 +49,7 @@ x,x_weight=IntEnergy
 
 #shapes = ["Sphere","AlGendy"]
 
-colors = ["green"]#,"blue","black"]
+colors = ["green","blue","black"]
 shapes = np.copy(colors)
 
 figA=figure(2,figsize=(10,14))
@@ -77,17 +77,18 @@ for ish in range(0,len(shapes)):
 		#PulsName='res/C2/sph2test'
 		#PulsName='res/B/lcpol_sph_r2'
 		#PulsName='res/B/lcpol_sph_sp2_11km'
-		PulsName='res/B/B0Ptest'
+		#PulsName='res/B/B0Ptest'
+		PulsName='res/B/lcpol_obl_sp1_10msun'
 	if(ish == 1):
 		#AtmName='res/C2/C1sph'
 		#PulsName='res/C2/sph2test'
 		#PulsName='res/B/lcpol_sph_sp1'
-		PulsName='res/B/lcpol_sph_sp2_12km'
+		PulsName='res/B/lcpol_obl_sp1_15msun'
 	if(ish == 2):
 		#AtmName='res/C2/C1obl'  
 		#PulsName='res/C2/obl2test'
 		#PulsName='res/B/lcpol_sph_r3'
-		PulsName='res/B/lcpol_sph_sp2_14km'
+		PulsName='res/B/lcpol_obl_sp1_20msun'
 	#PulsName=AtmName+'P1'
 	computePulse= True
 	plotAtm=not True
@@ -145,9 +146,10 @@ for ish in range(0,len(shapes)):
 	#	break	           	
 
 	figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
-	              #r'$,\,R_e={:5.1f}km$'.format(R_e)+
-	              r'$,\,R_e=11,12,14km$'.format(R_e)+
-	              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
+	              r'$,\,R_e={:5.1f}km$'.format(R_e)+
+	              #r'$,\,R_e=11,12,14km$'.format(R_e)+
+	              r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
+	              #r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
 	              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+
 	              r'$,\,i={:5.1f}\degree$'.format(i*180/pi)+',\n'+
 	              r'$\,x[keV]={:6.2f}$'.format(x[ene]*evere/1e3),fontsize=fontsize)  
