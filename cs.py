@@ -850,20 +850,50 @@ if computePulse:
       Flux_obs=zeros((NPhi,NEnergy,3))
       
       i=pi*7/18    # line of sight colatitude
+      
+      rho=pi/5 #pi*5/180 # radius of the spot
+      Nrho = 4
+      drho=rho/Nrho
 
-      NSpots= 2*4 # * somewhat
+      antipodal = True
+      l=[0]
+      theta=[pi/4.1]
+      NSpots=1
+      if antipodal :
+            l.append(pi)
+            theta.append(pi- theta[0])
+            NSpots+=1
+      for tr in range(Nrho):
+            for tph in range(8*tr):
+                  varphi=(2*tph+1)*pi/8/tr
+                  cos_theta=cos(theta[0])*cos(drho*tr)+sin(theta[0])*sin(drho*tr)*cos(varphi)
+                  sin_l=sin(drho*tr)*sin(varphi)/sqrt(1- cos_theta**2)
+                  cos_l=sqrt(1- sin_l**2)
+                  if cos_theta*cos(theta[0])> cos(drho*tr) : 
+                        cos_l=-cos_l
+                        # print(tr,(2*tph+1)*pi/8/tr,l[-1])
+                  l.append(arctan2(-sin_l,-cos_l) + pi)
+                  theta.append(arccos(cos_theta))  
+                  NSpots+=1
+                  if antipodal :
+                        l.append(arctan2(sin_l,cos_l) + pi)
+                        theta.append(pi- theta[-1])
+                        NSpots+=1
+
+      # NSpots= 2*4 # * somewhat
       # theta = [pi/3,2*pi/3] # spot colatitude
       # l=[0,pi] # spot longitude
       # dS=[1,1] # some arbitrary units
-      little=1e-2
+      # little=1e-2
+
+
       dS=[1]*NSpots
-      l=[0,0,little,little,pi,pi,pi+little,pi+little]
-      # pi*=2/3
-      theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
-      # pi*=3/2
+      print(NSpots)
+
       outParams.write(str(i)+' = sight colatitude i\n')
       outParams.write(str(theta)+' = spot colatitudes theta\n')
       outParams.write(str(l)+' = spot longitudes l\n')
+      outParams.write(str(pho)+' = angular radius of the spot rho\n')
       
       sin_i=sin(i)
       cos_i=cos(i)
