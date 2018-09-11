@@ -973,7 +973,7 @@ if computePulse:
 
                         sin_sigma = sqrt(1. - cos_sigma)
                         mu0=delta*cos_sigma # cos(sigma')
-                        Omega=dS[p]*mu0*redshift**2*dcos_alpha #/9*16   
+                        Omega=dS[p]*mu0*redshift**2*dcos_alpha *Gamma*R*R/cos_gamma # 
                         # Omegaarray[t]=max(Omega,0)
                         # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi,cos_alpha,cos_psi,Omega)
                         if mu0<0: # this only for speeding up. the backwards intensity is usually zero
