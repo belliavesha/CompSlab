@@ -22,13 +22,15 @@ Spectrum={
       4:'Bbody',
       0:'FromFile'
 }[0]
-
+#}[4]
+#}[2]
 oblateness='AlGendy'
 
 AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
 #PulsName=AtmName+'P2'
 #PulsName='res/B/B0P1'
 PulsName='res/B/B0Ptest'
+#PulsName='res/B/B0Prho10'
 computePulse= True
 plotAtm=False#True
 plotPulse=True
@@ -56,7 +58,20 @@ from bisect import bisect
 #import matplotlib.pyplot as plt
 #s,gn=pr(s,gn, 'importing')
 
-def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
+def Planck(x,T):
+      """   Planck function for Intensity of black body radiation 
+      The only argument x is the energy of a photon in units of electron rest energy ( h \\nu / m_e c^2 ) 
+      The photon temperature is given by T also in units of electron rest mass
+      Planck returns the intensity of  BB radiation
+      """
+      e=x/T
+      C=1.  # some dimension constant.
+      R=C*e*e # Rayleigh Jeans law'
+      I=.0 if e>5e2 else R*e/(exp(e)-1.) if e > 1e-5 else R
+      return I
+
+
+def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 
 
 
@@ -156,7 +171,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 		for e in range(NEnergy):
 			# print(e,log(Planck(x[e-1])/Planck(x[e]))/log(x[e]/x[e-1]),'           ',log(x[e])/log(10),'  ')
 			for d in range(NZenith):
-				Intensity[e,d,0]=Planck(x[e])*(1 + 2.06*mu[d])
+				Intensity[e,d,0]=Planck(x[e],T)#*(1 + 2.06*mu[d])#TS TESTING BLACKBODY energy spectrum with burst-beaming only in polarization
 				Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
 		#s,gn=pr(s,gn,'I0')
 		# exit()
@@ -302,23 +317,53 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 		Flux=zeros((NPhase,NEnergy,3))
 		Flux_obs=zeros((NPhi,NEnergy,3))
 
-		i=pi*7/18    # line of sight colatitude
+		i=pi/180.0*incl_deg#pi*7/18    # line of sight colatitude
 
-		NSpots= 2*4 # * somewhat
-		# theta = [pi/3,2*pi/3] # spot colatitude
-		# l=[0,pi] # spot longitude
-		# dS=[1,1] # some arbitrary units
-		little=1e-8#1e-2 #TS: made this smaller to match better infitesimal spot
+		#New version for integration over spot from Vlad:
+		rho=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
+		Nrho = 4#10#4
+		drho=rho/Nrho
+		antipodal = False#True
+		l=[0]
+		theta=[pi/180.0*theta_deg]#[pi/4.1]
+		NSpots=1
+		if antipodal :
+			l.append(pi)
+			theta.append(pi- theta[0])
+			NSpots+=1
+		for tr in range(Nrho):
+			for tph in range(8*tr):
+				varphi=(2*tph+1)*pi/8/tr
+				cos_theta=cos(theta[0])*cos(drho*tr)+sin(theta[0])*sin(drho*tr)*cos(varphi)
+				sin_l=sin(drho*tr)*sin(varphi)/sqrt(1- cos_theta**2)
+				cos_l=sqrt(1- sin_l**2)
+				if cos_theta*cos(theta[0])> cos(drho*tr) : 
+					cos_l=-cos_l
+					# print(tr,(2*tph+1)*pi/8/tr,l[-1])
+				l.append(arctan2(-sin_l,-cos_l) + pi)
+				theta.append(arccos(cos_theta))  
+				NSpots+=1
+				if antipodal :
+					l.append(arctan2(sin_l,cos_l) + pi)
+					theta.append(pi- theta[-1])
+					NSpots+=1
+		###############################
+
+		#NSpots= 2*4 # * somewhat
+		## theta = [pi/3,2*pi/3] # spot colatitude
+		## l=[0,pi] # spot longitude
+		## dS=[1,1] # some arbitrary units
+		#little=10.0*pi/180.0#1e-8#1e-2 #TS: made this smaller to match better infitesimal spot
 		dS=[1]*NSpots
-		l=[0,0,little,little,pi,pi,pi+little,pi+little]
-		# pi*=2/3
-		theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
-		# pi*=3/2
+		#l=[0,0,little,little,pi,pi,pi+little,pi+little]
+		## pi*=2/3
+		#theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
+		## pi*=3/2
 
 		###############################
-		i=pi/180.0*incl_deg#40.0
-		thettta = pi/180.0*theta_deg#60.0
-		theta=[thettta,thettta+little,thettta,thettta+little,2*thettta,2*thettta+little,2*thettta,2*thettta+little]
+		#i=pi/180.0*incl_deg#40.0
+		#thettta = pi/180.0*theta_deg#60.0
+		#theta=[thettta,thettta+little,thettta,thettta+little,2*thettta,2*thettta+little,2*thettta,2*thettta+little]
 
 		#In case of 1 spot:
 		####i=pi*4/18#1.5    # line of sight colatitude #in radians
@@ -447,7 +492,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 
 					sin_sigma = sqrt(1. - cos_sigma)
 					mu0=delta*cos_sigma # cos(sigma')
-					Omega=dS[p]*mu0*redshift**2*dcos_alpha #/9*16   
+					Omega=dS[p]*mu0*redshift**2*dcos_alpha*Gamma*R*R/cos_gamma   
 					# Omegaarray[t]=max(Omega,0)
 					#print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',cos_alpha,cos_psi,Omega)
 					if mu0<0: # this only for speeding up. the backwards intensity is usually zero
@@ -506,6 +551,9 @@ def compf(mass,eqrad,incl_deg,theta_deg,spherical=False):
 					if I<0: ############
 						print('never')
 					Flux_obs[t,e]=[I, Q*cos_2chi, Q*sin_2chi]
+					#Flux_obs[t,e]=[I, -I*0.1171*cos_2chi*(1.0 - mu0)/(1.0 + 3.82*abs(mu0)),-0.1171*I*sin_2chi*(1.0 - mu0)/(1.0 + 3.82*abs(mu0))]
+					#Flux_obs[t,e]=[I, (1.0 - cos_alpha),(1.0 - cos_alpha)]
+				#print(t,mu0,-0.1171*(1.0 - mu0)/(1.0 + 3.82*abs(mu0)))
 					#Flux_obs[t,e]=[I, cos_2chi, sin_2chi]
 
 

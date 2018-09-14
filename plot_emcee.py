@@ -62,7 +62,7 @@ params_true = [12.0,1.4,40.0,60.0]
 params = params_true
 low_limit = [4.0, 1.0, 20.0, 40.0]
 high_limit = [18.0, 2.0, 60.0, 80.0]
-ignore_walkers = [6,7,19]#[8,19]#[3,5,8]
+ignore_walkers = [6]#[6,7,19]#[8,19]#[3,5,8]
 
 
 ndim = len(params)
