@@ -56,13 +56,16 @@ param_names = [
          "$M$ \n ($M_{\\odot}$)",
          "$i$ \n (deg)",
          "$\\theta$ \n (deg)",
+         "$\\rho$ \n (deg)"
 	 ]
 
-params_true = [12.0,1.4,40.0,60.0]
+params_true = [12.0,1.4,40.0,60.0,10.0]
 params = params_true
-low_limit = [4.0, 1.0, 20.0, 40.0]
-high_limit = [18.0, 2.0, 60.0, 80.0]
-ignore_walkers = [6]#[6,7,19]#[8,19]#[3,5,8]
+#low_limit = [4.0, 1.0, 20.0, 40.0,1.0]
+#high_limit = [18.0, 2.0, 60.0, 80.0,40.0]
+low_limit = [4.0, 1.0, 00.0, 0.0,1.0]
+high_limit = [18.0, 2.0, 90.0, 90.0,40.0]
+ignore_walkers = []#[6]#[6,7,19]#[8,19]#[3,5,8]
 
 
 ndim = len(params)
@@ -136,8 +139,9 @@ if not(only_wmoves):
 		for ipar in range(0,len(samples[0,:])):
 			qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
 			print(qtls)
-		fig = corner.corner(samples,labels=param_names[0:npars],truths=params[0:npars],range=limits[0:npars], levels=(0.68,0.95,), 
-quantiles=(0.025,0.16,0.84,0.975),smooth=0.75,smooth1d=1.0)#,color="darkorange")
+		keywords = dict(fontsize = 'large')
+		fig = corner.corner(samples,labels=param_names[0:npars],label_kwargs=keywords,title_kwargs=keywords,truths=params[0:npars],range=limits[0:npars], levels=(0.68,0.95,), 
+quantiles=(0.025,0.16,0.84,0.975),smooth=0.8,smooth1d=1.0)#,color="darkorange")
 	else:
 		fig = corner.corner(samples,labels=param_names[0:npars],range=limits[0:npars])#,color="darkorange")
 
@@ -180,6 +184,7 @@ for ispa in range(0,ndfiles-1):
 		 "$M$ \n ($M_{\\odot}$)",
 		 "$i$ \n (deg)",
 		 "$\\theta$ \n (deg)",
+		 "$\\rho$ \n (deg)"
 		 ]
 
 	if(iweights):
