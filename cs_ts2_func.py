@@ -21,9 +21,10 @@ Spectrum={
       3:'Thomson',
       4:'Bbody',
       0:'FromFile'
-}[0]
+#}[0]
 #}[4]
-#}[2]
+}[2]
+
 oblateness='AlGendy'
 
 AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
@@ -172,7 +173,8 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 			# print(e,log(Planck(x[e-1])/Planck(x[e]))/log(x[e]/x[e-1]),'           ',log(x[e])/log(10),'  ')
 			for d in range(NZenith):
 				Intensity[e,d,0]=Planck(x[e],T)#*(1 + 2.06*mu[d])#TS TESTING BLACKBODY energy spectrum with burst-beaming only in polarization
-				Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
+				#Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
+				Intensity[e,d,1]=Intensity[e,d,0]#*0.1171*(mu[d] - 1.)/(1. + 3.82*abs(mu[d]))
 		#s,gn=pr(s,gn,'I0')
 		# exit()
 
@@ -208,8 +210,8 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 	if computePulse:
 
 
-		NPhi = 120 # Number of equidistant phase points
-		NPhase = 150 # Number of observation phases
+		NPhi = 120 #500 #120 # Number of equidistant phase points
+		NPhase = 150 #500# 150 # Number of observation phases
 		NBend= 20 # Number of knots in light bending integrations
 		NAlpha= 200#1000 # 10000 # Number of psi/aplha grid points 
 		IntBend = leggauss(NBend)
@@ -219,7 +221,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		phi=linspace(0,2*pi,num=NPhi,endpoint=False,retstep=False)
 		phase =linspace(0,1,num=NPhase,endpoint=True,retstep=False)
 		phase_obs=zeros(NPhi)
-		nu=600 # star rotation frequency in Hz
+		nu=600.0#1.0#100 #600 # star rotation frequency in Hz
 		#M=1.4 # star mass in solar masses
 		M=mass #input param
 		R_g=M*2.95325 # gravitational Schwarzschild radius #TS: Made this more accurate
@@ -301,7 +303,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 
 		NRadius=2 + int(flattening*R_e/1e-1)
 		#print(NRadius)
-		NRadius=4#4#
+		NRadius=4+ int(flattening*R_e/1e-1)#4#
 		r, dr = linspace(R_e*(1 - flattening),R_e,num=NRadius,retstep=True)
 		alpha, dalpha = linspace(0,arccos(-1/sqrt(2*r[0]/R_g/3)),NAlpha,retstep=True)
 		psi=zeros((NRadius,NAlpha))
@@ -321,9 +323,9 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 
 		#New version for integration over spot from Vlad:
 		rho=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
-		Nrho = 4#10#4
+		Nrho = 10#12#4#15#4#10#4
 		drho=rho/Nrho
-		antipodal = False#True
+		antipodal = True#False#True
 		l=[0]
 		theta=[pi/180.0*theta_deg]#[pi/4.1]
 		NSpots=1
@@ -483,14 +485,14 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 					dt2=dt[r2,a2 - 1]*dalpha2/dalpha + dt[r2,a2]*(1. - dalpha2/dalpha)
 
 					dphase=(dt1*dr2 + dt2*dr1)*nu # \delta\phi = \phi_{obs} - \phi 
-					# dphase = 0
+					#dphase = 0
 					phase_obs[t]=( phi[t]/2/pi+dphase)%1.
 
 					cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
 					delta = 1./Gamma/(1.-beta*cos_xi)
 					cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
 
-					sin_sigma = sqrt(1. - cos_sigma)
+					sin_sigma = sqrt(1. - cos_sigma**2)
 					mu0=delta*cos_sigma # cos(sigma')
 					Omega=dS[p]*mu0*redshift**2*dcos_alpha*Gamma*R*R/cos_gamma   
 					# Omegaarray[t]=max(Omega,0)
@@ -501,8 +503,9 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 
 
 				if True: # find chi
-					sin_chi_0= - sin_theta*sin_phi # times sin psi
-					cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
+					sin_chi_0= - sin_theta*sin_phi#/sin_psi#*delta/sin_psi# times sin psi
+					cos_chi_0=(sin_i*cos_theta - sin_theta*cos_i*cos_phi)#/sin_psi# times sin psi 
+					#cos_chi_0 = sqrt(1.0-sin_chi_0**2)
 					chi_0=arctan2(sin_chi_0,cos_chi_0)
 
 					sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin alpha sin sigma 
@@ -513,11 +516,40 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 					cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
 					cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
 					# alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-					sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-					cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
+					#sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
+					#cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi)) # times the samething
+					the_thing = 1.0/((1.0-mu0*mu0)**0.5*sin_sigma)
+					sin_chi_prime=cos_eps*mu0*Gamma*beta#*the_thing#*delta**3#*delta
+					cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi))#*the_thing
+					#cos_chi_prime = sqrt(1.0-sin_chi_prime**2)
 					chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
+					
+					#sin_chi_prime=cos_eps*mu0*Gamma*beta*the_thing*delta**100#**5#*delta
+					###cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi))*the_thing
+					#cos_chi_prime = sqrt(1.0-sin_chi_prime**2)
+					#chi_prime_new=arctan2(sin_chi_prime,cos_chi_prime)  
 
-					chi=chi_0 + chi_1 + chi_prime
+					#chi=chi_0 + chi_1 + chi_prime
+					#if(delta < 1.0):
+					#	chi=chi_0 - chi_prime
+					#	print(phi[t]/(2.0*pi))
+					#if(delta > 1.0):
+					#	chi=chi_0 + chi_prime
+					chi=chi_0 + chi_1 + chi_prime#*sin_phi#*delta**100
+					#print(chi_prime/chi_0)
+					#print(phi[t]/(2.0*pi),beta,delta)#,Gamma)#,chi_0 + chi_prime,chi)
+					#if chi < 0:
+					#	chi = chi/delta**300
+					#else:
+					#	chi = chi*delta**300
+					#print(phi[t]/(2.0*pi),delta,chi)
+
+					
+					#print(sqrt(1. - cos_alpha**2), sqrt(1. - cos_sigma**2))
+					#print(sin_alpha, sin_sigma)
+					#print((1.0-(sin_chi_1/sin_alpha/sin_sigma)**2)**0.5, cos_chi_1/sin_alpha/sin_sigma)
+					#print((1.0-(sin_chi_prime*the_thing)**2)**0.5, cos_chi_prime*the_thing)	
+					#print("1=",sin_chi_prime**2+cos_chi_prime**2)			
 
 					sin_2chi=sin(2*chi)
 					cos_2chi=cos(2*chi)
@@ -555,7 +587,6 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 					#Flux_obs[t,e]=[I, (1.0 - cos_alpha),(1.0 - cos_alpha)]
 				#print(t,mu0,-0.1171*(1.0 - mu0)/(1.0 + 3.82*abs(mu0)))
 					#Flux_obs[t,e]=[I, cos_2chi, sin_2chi]
-
 
 			for t in range(NPhase):
 				phase0=phase[t]

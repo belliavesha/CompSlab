@@ -46,7 +46,9 @@ energy_keV = x*evere/1e3 #energies in keV
 #print(energy_keV[110:160])
 print("The energy chosen = ", energy_keV[ene_index], " keV")
 param_names = ["mass","rad","incl","theta","rho"]
+#params_true = [1.4,12.0,40.0,60.0,1.0]
 params_true = [1.4,12.0,40.0,60.0,10.0]
+#params_true =  [ 1.0444313,  10.29601718, 40.52374309, 59.42754502,  5.28796299] #crashed once with these params
 #params_true = [2.0,12.0,40.0,60.0]
 #params_true = [1.6,12.0,50.0,50.0]
 low_limit = [1.0, 4.0, 0.0, 0.0,1.0]
@@ -81,7 +83,7 @@ def readdata():
 
 def compute_logl(phi,PA,PA_obs,phaseshift):
 
-	sigma_tot2 = 225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
+	sigma_tot2 = 225.0#4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
 	norm = 0.0#0.5*log(sigma_tot2)
 	phi_new = shift_phase(phi,phaseshift)
 	PA_interp = interp1d(phi_new,PA,fill_value = 'extrapolate')
@@ -172,7 +174,7 @@ def lnprob(modelpar, low_limit, high_limit):
 	if(mass/rad > 0.96*1.0/(2.95*1.52)): #checking causality                
 		return -np.inf
 
-	Flux = compf(mass,rad,incl,theta,rho,spherical=True)#False)#True)
+	Flux = compf(mass,rad,incl,theta,rho,spherical=False)#True)#False)
 	#print(Flux)
 	phi,Flux_obs = readdata()
 
@@ -232,7 +234,7 @@ print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase_extp-nparams))
 end = time.time()
 print ("Time spend for one fit: ")
 print(end - start)
-#quit()
+quit()
 
 jj = 0
 # Choose an initial set of positions for the walkers.
