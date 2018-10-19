@@ -928,7 +928,10 @@ if computePulse:
             cos_gamma=1.0/sqrt(1 + f**2)
             beta=2*pi*nu*R*redshift*sin_theta/c
             Gamma=1.0/sqrt(1.0 - beta**2)
-                  
+            Gamma1= (1.0-sqrt(1.0 - beta**2) )/ beta
+            # print(Gamma,beta,Gamma1,'\t\t\t',p/NSpots)
+             
+
             for t in range(NPhi):
                   if True: # find mu
                         phi0=phi[t]+l[p]
@@ -971,9 +974,9 @@ if computePulse:
                         delta = 1./Gamma/(1.-beta*cos_xi)
                         cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
 
-                        sin_sigma = sqrt(1. - cos_sigma)
+                        sin_sigma = sqrt(1. - cos_sigma**2)
                         mu0=delta*cos_sigma # cos(sigma')
-                        Omega=dS[p]*mu0*redshift**2*dcos_alpha *Gamma*R*R/cos_gamma # 
+                        Omega=dS[p]*mu0*redshift**2*dcos_alpha #*Gamma*R*R/cos_gamma # 
                         # Omegaarray[t]=max(Omega,0)
                         # print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',dphi,cos_alpha,cos_psi,Omega)
                         if mu0<0: # this only for speeding up. the backwards intensity is usually zero
@@ -993,12 +996,17 @@ if computePulse:
                         sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
                         cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
                         cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
+                        # this line is the longest one
                         # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-                        sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-                        cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
+                        # sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
+                        sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+                        # cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
+
+                        cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
                         chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
 
                         chi=chi_0 + chi_1 + chi_prime
+                        #  print(chi,'\t',chi_0/chi,'\t',chi_1/chi ,'\t',  chi_prime/chi )
 
                         sin_2chi=sin(2*chi)
                         cos_2chi=cos(2*chi)
@@ -1047,7 +1055,7 @@ if computePulse:
                         t1=t2-1
                         phase2=phase_obs[t2]
                         phase1=phase_obs[t1]-1
-                        
+                              
                   dphase1=phase0-phase1
                   dphase2=phase2-phase0
                   dphase=phase2-phase1
