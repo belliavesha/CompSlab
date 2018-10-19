@@ -45,6 +45,7 @@ from scipy.interpolate import interp1d,CubicSpline
 from scipy.special import kn
 from matplotlib.pyplot import *
 from bisect import bisect
+from time import time
 
 #import numpy as np
 #import matplotlib.pyplot as plt
@@ -754,6 +755,14 @@ if computePulse:
       NAlpha= 1000 # 10000 # Number of psi/aplha grid points 
       IntBend = leggauss(NBend)
       NZenithBig=100
+      
+      NRho=4#2#8
+      NVarphi=6#4
+
+      # IntVarphi = linspace(0,2*pi,num=NVarphi,endpoint=False,retstep=True)
+      IntVarphi = leggauss(NVarphi)
+      IntRho = leggauss(NRho)
+
 
       phi=linspace(0,2*pi,num=NPhi,endpoint=False,retstep=False)
       phase =linspace(0,1,num=NPhase,endpoint=True,retstep=False)
@@ -849,51 +858,51 @@ if computePulse:
       Flux=zeros((NPhase,NEnergy,3))
       Flux_obs=zeros((NPhi,NEnergy,3))
       
+     
       i=pi*7/18    # line of sight colatitude
-      
-      rho=pi/5 #pi*5/180 # radius of the spot
-      Nrho = 4
-      drho=rho/Nrho
+
+      rho_total=0.15 # pi/5 #pi*5/180 # radius of the spot
+      theta_center=pi/4.1
 
       antipodal = True
-      l=[0]
-      theta=[pi/4.1]
-      NSpots=1
-      if antipodal :
-            l.append(pi)
-            theta.append(pi- theta[0])
-            NSpots+=1
-      for tr in range(Nrho):
-            for tph in range(8*tr):
-                  varphi=(2*tph+1)*pi/8/tr
-                  cos_theta=cos(theta[0])*cos(drho*tr)+sin(theta[0])*sin(drho*tr)*cos(varphi)
-                  sin_l=sin(drho*tr)*sin(varphi)/sqrt(1- cos_theta**2)
+      
+      
+      NSpots=0
+      varphi,dvarphi=IntVarphi[0]*pi,IntVarphi[1] *pi
+      rho,drho=(IntRho[0]+1)*rho_total/2,(IntRho[1])*rho_total/2
+#       print(IntVarphi)
+#       print(rho,drho)
+
+      l=[]
+      theta=[]
+      dS=[]
+
+      for v in range(NVarphi):
+            for rh in range(NRho):
+                  NSpots+=1   
+                  cos_theta=cos(theta_center)*cos(rho[rh])+sin(theta_center)*sin(rho[rh])*cos(varphi[v])
+                  sin_l=sin(rho[rh])*sin(varphi[v])/sqrt(1- cos_theta**2)
                   cos_l=sqrt(1- sin_l**2)
-                  if cos_theta*cos(theta[0])> cos(drho*tr) : 
-                        cos_l=-cos_l
-                        # print(tr,(2*tph+1)*pi/8/tr,l[-1])
+                  if cos_theta*cos(theta_center)> cos(rho[rh]) : 
+                        cos_l=-cos_l      
                   l.append(arctan2(-sin_l,-cos_l) + pi)
                   theta.append(arccos(cos_theta))  
-                  NSpots+=1
+                  dS.append(drho[rh]*dvarphi[v]*sin(rho[rh]))
+                  print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
                   if antipodal :
+                        NSpots+=1
                         l.append(arctan2(sin_l,cos_l) + pi)
                         theta.append(pi- theta[-1])
-                        NSpots+=1
+                        dS.append(dS[-1])
 
-      # NSpots= 2*4 # * somewhat
-      # theta = [pi/3,2*pi/3] # spot colatitude
-      # l=[0,pi] # spot longitude
-      # dS=[1,1] # some arbitrary units
-      # little=1e-2
+                        print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
 
-
-      dS=[1]*NSpots
       print(NSpots)
 
       outParams.write(str(i)+' = sight colatitude i\n')
-      outParams.write(str(theta)+' = spot colatitudes theta\n')
-      outParams.write(str(l)+' = spot longitudes l\n')
-      outParams.write(str(pho)+' = angular radius of the spot rho\n')
+      outParams.write(str(theta_center)+' = spot colatitudes theta\n')
+#       outParams.write(str(l)+' = spot longitudes l\n')
+      outParams.write(str(rho_total)+' = angular radius of the spot rho\n')
       
       sin_i=sin(i)
       cos_i=cos(i)
