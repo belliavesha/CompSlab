@@ -1007,11 +1007,12 @@ if computePulse:
                         cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
                         # this line is the longest one
                         # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-                        # sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-                        sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+                        sin_chi_prime=cos_eps*cos_sigma*beta # times something
+                        # sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
                         # cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
 
-                        cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                        # cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                        cos_chi_prime=sin_sigma**2 - beta*cos_xi  # times the samething
                         chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
 
                         chi=chi_0 + chi_1 + chi_prime
