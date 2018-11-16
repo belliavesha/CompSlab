@@ -31,7 +31,7 @@ nu=600#1#100#600#700#600 # star rotation frequency in Hz
 M=1.4#1.6#1.4 # star mass in solar masses
 R_g=M*2.95 # gravitational Schwarzschild radius
 R_e=12.0 # equatorial radius of the star in kilometers      
-i=pi*4/18#50.0*pi/180.0#pi*4/18#1.5    # line of sight colatitude #in radians
+#i=pi*4/18#50.0*pi/180.0#pi*4/18#1.5    # line of sight colatitude #in radians
 #i=pi/180.0*80.0
 theta = [pi/3,pi-pi/3]#[50.0*pi/180.0]#[pi/3,pi-pi/3] # spot colatitude
 #theta = [pi/180.0*15.0,pi-pi/180.0*15.0] # spot colatitude
@@ -49,12 +49,12 @@ Theta = 0.1  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) 
 T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for integrations over the spectrum computing sorce function
 x,x_weight=IntEnergy
-
+incl = 40.0*pi/180.0
 
 #shapes = ["Sphere","AlGendy"]
 
 #colors = ["yellow","black","red"]
-colors = ["yellow","red","green"]
+colors = ["yellow","blue","green"]
 #colors = ["blue"]
 shapes = np.copy(colors)
 
@@ -64,17 +64,20 @@ figA.clear()
 plot_only_I = False#True
 plot_QU = False#True
 
+
+
 if(plot_only_I):
 	figA=figure(1,figsize=(14,14))
 	figA.clear()
 	plotAF=figA.add_subplot(1,1,1,yscale='linear') 
 else:	
-	plotAF=figA.add_subplot(4,1,1,yscale='linear') 
-	plotAp=figA.add_subplot(4,1,2)      #
-	plotAc=figA.add_subplot(4,1,3)      #
-	plotAd=figA.add_subplot(4,1,4)      #
+	matplotlib.pyplot.subplots_adjust(wspace=0, hspace=0)
+	plotAF=figA.add_subplot(3,1,1,yscale='linear') 
+	plotAp=figA.add_subplot(3,1,2)      #
+	plotAc=figA.add_subplot(3,1,3)      #
+	#plotAd=figA.add_subplot(4,1,4)      #
 
-for ish in range(1,2):#len(shapes)):
+for ish in range(1,3):#len(shapes)):
 
 	#oblateness='AlGendy'#'Sphere'#'AlGendy'
 	oblateness=shapes[ish]
@@ -99,8 +102,10 @@ for ish in range(1,2):#len(shapes)):
 		#PulsName='res/B/lbb_rhoinf_sp1_f001'
 		#PulsName='res/B/lbb_rhoinf_sp1_f100_p100_ires'
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires'#THIS one was shown to work with arcmancer
-		PulsName='res/B/lbb_rho10_sp1_f600_obl'
+		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
 		#PulsName='res/B/B0Ptest'
+		#PulsName='res/B/B0Prho10'
+		PulsName='res/B/B0Prho10oblsp2'
 		#PulsName='res/B/lbb_rhoinf_chi0'
 	if(ish == 2):
 		#AtmName='res/C2/C1obl'  
@@ -111,7 +116,8 @@ for ish in range(1,2):#len(shapes)):
 		#PulsName='res/B/lbb3_polburst_sp1_rho10_f100_'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
-		PulsName='res/B/lbb_rho10_sp1_f600_sph'
+		#PulsName='res/B/lbb_rho10_sp1_f600_sph'
+		PulsName='res/B/B0Prho10sphsp2'
 	#PulsName=AtmName+'P1'
 	computePulse= True
 	plotAtm=not True
@@ -176,9 +182,9 @@ for ish in range(1,2):#len(shapes)):
 	              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
 	              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
 	              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
-	              r'$,\,i={:5.1f}\degree$'.format(i*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
-	              r'$\rho={:5.1f}\degree$'.format(rho)+',\n'+
-	              r'$\,x[keV]={:6.2f}$'.format(x[ene]*evere/1e3),fontsize=fontsize)  
+	              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
+	              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
+	              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)   
 
 	# plotAF.set_xlim([x[0],x[-1]])
 	plotAF.set_xlim(0,1)
@@ -368,7 +374,7 @@ if(compare_to_fortran_vlad):
 
 
 
-compare_to_arcmancer = True
+compare_to_arcmancer = False#True
 if(compare_to_arcmancer): 
 	#colors = ["green","blue","black"]
 	colors = ["blue","blue"]
@@ -470,7 +476,7 @@ if(compare_to_arcmancer):
 					phase_acm = phase_new
 
 
-plot_PA_residuals = True
+plot_PA_residuals = False#True
 if(plot_QU):
 	plot_PA_residuals = False
 if(plot_PA_residuals): 
@@ -542,6 +548,12 @@ if(plot_analytic_estimates2):
 	chi0 = np.arctan(tanchi0)*180/pi+90
 	#print(chi0)
 	plotAc.plot(phase_VP04,chi0,color="yellow")
+
+
+plotAF.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+plotAp.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+plotAc.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+#plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
 figA.savefig('res/B/plot.pdf')#.format(e))

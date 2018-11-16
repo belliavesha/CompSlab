@@ -21,13 +21,13 @@ Spectrum={
       3:'Thomson',
       4:'Bbody',
       0:'FromFile'
-#}[0]
+}[0]
 #}[4]
-}[2]
+#}[2]
 
 oblateness='AlGendy'
 
-AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
+AtmName='res/B/B0_new' # the prefix for all result files related to the set of parameters
 #PulsName=AtmName+'P2'
 #PulsName='res/B/B0P1'
 PulsName='res/B/B0Ptest'
@@ -196,13 +196,14 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		NMu=NZenith//2
 		Intensity=fromfile(inI).reshape((NEnergy,NZenith,2))
 		#s,gn=pr(s,gn,'I is read')
-	else: 
-		outI = open(AtmName+'I.bin','w')
-		outx = open(AtmName+'x.bin','w')
-		outm = open(AtmName+'m.bin','w')
-		Intensity.tofile(outI,format="%e")
-		x.tofile(outx,format="%e")
-		mu.tofile(outm,format="%e")
+	else: #Make sure this save wont overwrite your old tables!
+		print("Not saving the spectrum")
+		#outI = open(AtmName+'I.bin','w')
+		#outx = open(AtmName+'x.bin','w')
+		#outm = open(AtmName+'m.bin','w')
+		#Intensity.tofile(outI,format="%e")
+		#x.tofile(outx,format="%e")
+		#mu.tofile(outm,format="%e")
 
 
 
@@ -227,6 +228,13 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		R_g=M*2.95325 # gravitational Schwarzschild radius #TS: Made this more accurate
 		#R_e=12.0 # equatorial radius of the star in kilometers
 		R_e=eqrad #input param
+      
+		NRho=40#20#4#2#8
+		NVarphi=40#20#6#4
+
+		# IntVarphi = linspace(0,2*pi,num=NVarphi,endpoint=False,retstep=True)
+		IntVarphi = leggauss(NVarphi)
+		IntRho = leggauss(NRho)
 	      
 		if oblateness=='AlGendy': # from AlGendy et. al. (2014)
 			Omega_bar=2*pi*nu*sqrt(2*R_e**3/R_g)/c
@@ -321,61 +329,105 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 
 		i=pi/180.0*incl_deg#pi*7/18    # line of sight colatitude
 
+		intgspot_version = "new"
+		#Even newer version for integration over spot from Vlad:
+		if(intgspot_version=="new"):
+			#i=pi*7/18    # line of sight colatitude
+
+			#rho_total=0.15 # pi/5 #pi*5/180 # radius of the spot
+			rho_total=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
+			theta_center=pi/180.0*theta_deg#pi/4.1
+
+			antipodal = True
+
+			NSpots=0
+			varphi,dvarphi=IntVarphi[0]*pi,IntVarphi[1] *pi
+			rho,drho=(IntRho[0]+1)*rho_total/2,(IntRho[1])*rho_total/2
+			#       print(IntVarphi)
+			#       print(rho,drho)
+
+			l=[]
+			theta=[]
+			dS=[]
+
+			for v in range(NVarphi):
+				for rh in range(NRho):
+					NSpots+=1   
+					cos_theta=cos(theta_center)*cos(rho[rh])+sin(theta_center)*sin(rho[rh])*cos(varphi[v])
+					sin_l=sin(rho[rh])*sin(varphi[v])/sqrt(1- cos_theta**2)
+					cos_l=sqrt(1- sin_l**2)
+					if cos_theta*cos(theta_center)> cos(rho[rh]) : 
+						cos_l=-cos_l      
+					l.append(arctan2(-sin_l,-cos_l) + pi)
+					theta.append(arccos(cos_theta))  
+					dS.append(drho[rh]*dvarphi[v]*sin(rho[rh]))
+					print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
+					if antipodal :
+						NSpots+=1
+						l.append(arctan2(sin_l,cos_l) + pi)
+						theta.append(pi- theta[-1])
+						dS.append(dS[-1])
+					print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
+
+			print(NSpots)
+
+
 		#New version for integration over spot from Vlad:
-		rho=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
-		Nrho = 10#12#4#15#4#10#4
-		drho=rho/Nrho
-		antipodal = True#False#True
-		l=[0]
-		theta=[pi/180.0*theta_deg]#[pi/4.1]
-		NSpots=1
-		if antipodal :
-			l.append(pi)
-			theta.append(pi- theta[0])
-			NSpots+=1
-		for tr in range(Nrho):
-			for tph in range(8*tr):
-				varphi=(2*tph+1)*pi/8/tr
-				cos_theta=cos(theta[0])*cos(drho*tr)+sin(theta[0])*sin(drho*tr)*cos(varphi)
-				sin_l=sin(drho*tr)*sin(varphi)/sqrt(1- cos_theta**2)
-				cos_l=sqrt(1- sin_l**2)
-				if cos_theta*cos(theta[0])> cos(drho*tr) : 
-					cos_l=-cos_l
-					# print(tr,(2*tph+1)*pi/8/tr,l[-1])
-				l.append(arctan2(-sin_l,-cos_l) + pi)
-				theta.append(arccos(cos_theta))  
+		if(intgspot_version=="old"):
+			rho=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
+			Nrho = 10#12#4#15#4#10#4
+			drho=rho/Nrho
+			antipodal = True#False#True
+			l=[0]
+			theta=[pi/180.0*theta_deg]#[pi/4.1]
+			NSpots=1
+			if antipodal :
+				l.append(pi)
+				theta.append(pi- theta[0])
 				NSpots+=1
-				if antipodal :
-					l.append(arctan2(sin_l,cos_l) + pi)
-					theta.append(pi- theta[-1])
+			for tr in range(Nrho):
+				for tph in range(8*tr):
+					varphi=(2*tph+1)*pi/8/tr
+					cos_theta=cos(theta[0])*cos(drho*tr)+sin(theta[0])*sin(drho*tr)*cos(varphi)
+					sin_l=sin(drho*tr)*sin(varphi)/sqrt(1- cos_theta**2)
+					cos_l=sqrt(1- sin_l**2)
+					if cos_theta*cos(theta[0])> cos(drho*tr) : 
+						cos_l=-cos_l
+						# print(tr,(2*tph+1)*pi/8/tr,l[-1])
+					l.append(arctan2(-sin_l,-cos_l) + pi)
+					theta.append(arccos(cos_theta))  
 					NSpots+=1
-		###############################
+					if antipodal :
+						l.append(arctan2(sin_l,cos_l) + pi)
+						theta.append(pi- theta[-1])
+						NSpots+=1
+			###############################
 
-		#NSpots= 2*4 # * somewhat
-		## theta = [pi/3,2*pi/3] # spot colatitude
-		## l=[0,pi] # spot longitude
-		## dS=[1,1] # some arbitrary units
-		#little=10.0*pi/180.0#1e-8#1e-2 #TS: made this smaller to match better infitesimal spot
-		dS=[1]*NSpots
-		#l=[0,0,little,little,pi,pi,pi+little,pi+little]
-		## pi*=2/3
-		#theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
-		## pi*=3/2
+			#NSpots= 2*4 # * somewhat
+			## theta = [pi/3,2*pi/3] # spot colatitude
+			## l=[0,pi] # spot longitude
+			## dS=[1,1] # some arbitrary units
+			#little=10.0*pi/180.0#1e-8#1e-2 #TS: made this smaller to match better infitesimal spot
+			dS=[1]*NSpots
+			#l=[0,0,little,little,pi,pi,pi+little,pi+little]
+			## pi*=2/3
+			#theta=[pi/3,pi/3+little,pi/3,pi/3+little,2*pi/3,2*pi/3+little,2*pi/3,2*pi/3+little]
+			## pi*=3/2
 
-		###############################
-		#i=pi/180.0*incl_deg#40.0
-		#thettta = pi/180.0*theta_deg#60.0
-		#theta=[thettta,thettta+little,thettta,thettta+little,2*thettta,2*thettta+little,2*thettta,2*thettta+little]
+			###############################
+			#i=pi/180.0*incl_deg#40.0
+			#thettta = pi/180.0*theta_deg#60.0
+			#theta=[thettta,thettta+little,thettta,thettta+little,2*thettta,2*thettta+little,2*thettta,2*thettta+little]
 
-		#In case of 1 spot:
-		####i=pi*4/18#1.5    # line of sight colatitude #in radians
-		###i=pi/180.0*40.0
-		#NSpots= 1 #2 # * somewhat
-		###theta = [pi/3,pi-pi/3] # spot colatitude
-		#theta = [thettta,pi-thettta] # spot colatitude
-		#l=[0,pi] # spot longitude
-		#dS=[1,1] # some arbitrary units
-		###############################
+			#In case of 1 spot:
+			####i=pi*4/18#1.5    # line of sight colatitude #in radians
+			###i=pi/180.0*40.0
+			#NSpots= 1 #2 # * somewhat
+			###theta = [pi/3,pi-pi/3] # spot colatitude
+			#theta = [thettta,pi-thettta] # spot colatitude
+			#l=[0,pi] # spot longitude
+			#dS=[1,1] # some arbitrary units
+			###############################
 
 
 		outParams.write(str(i)+' = sight colatitude i\n')
@@ -441,6 +493,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 			cos_gamma=1.0/sqrt(1 + f**2)
 			beta=2*pi*nu*R*redshift*sin_theta/c
 			Gamma=1.0/sqrt(1.0 - beta**2)
+			Gamma1= (1.0-sqrt(1.0 - beta**2) )/ beta
 		          
 			for t in range(NPhi):
 				if True: # find mu
@@ -502,58 +555,37 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 						continue 
 
 
-				if True: # find chi
-					sin_chi_0= - sin_theta*sin_phi#/sin_psi#*delta/sin_psi# times sin psi
-					cos_chi_0=(sin_i*cos_theta - sin_theta*cos_i*cos_phi)#/sin_psi# times sin psi 
-					#cos_chi_0 = sqrt(1.0-sin_chi_0**2)
-					chi_0=arctan2(sin_chi_0,cos_chi_0)
+					if True: # find chi
+						sin_chi_0= - sin_theta*sin_phi # times sin psi
+						cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
+						chi_0=arctan2(sin_chi_0,cos_chi_0)
 
-					sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin alpha sin sigma 
-					cos_chi_1=cos_gamma - cos_alpha*cos_sigma  #times sin alpha sin sigma 
-					chi_1=arctan2(sin_chi_1,cos_chi_1)
+						sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin alpha sin sigma 
+						cos_chi_1=cos_gamma - cos_alpha*cos_sigma  #times sin alpha sin sigma 
+						chi_1=arctan2(sin_chi_1,cos_chi_1)
 
-					sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
-					cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
-					cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
-					# alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-					#sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-					#cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi)) # times the samething
-					the_thing = 1.0/((1.0-mu0*mu0)**0.5*sin_sigma)
-					sin_chi_prime=cos_eps*mu0*Gamma*beta#*the_thing#*delta**3#*delta
-					cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi))#*the_thing
-					#cos_chi_prime = sqrt(1.0-sin_chi_prime**2)
-					chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
-					
-					#sin_chi_prime=cos_eps*mu0*Gamma*beta*the_thing*delta**100#**5#*delta
-					###cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi))*the_thing
-					#cos_chi_prime = sqrt(1.0-sin_chi_prime**2)
-					#chi_prime_new=arctan2(sin_chi_prime,cos_chi_prime)  
+						sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
+						cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
+						cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
+						# this line is the longest one
+						# alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
+						# sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
+						#sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+						# cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
+						#cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+							
+						#OR THE ORIGINAL VERSION:
+						sin_chi_prime=cos_eps*mu0*Gamma*beta#*the_thing#*delta**3#*delta
+						cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi))#*the_thing
 
-					#chi=chi_0 + chi_1 + chi_prime
-					#if(delta < 1.0):
-					#	chi=chi_0 - chi_prime
-					#	print(phi[t]/(2.0*pi))
-					#if(delta > 1.0):
-					#	chi=chi_0 + chi_prime
-					chi=chi_0 + chi_1 + chi_prime#*sin_phi#*delta**100
-					#print(chi_prime/chi_0)
-					#print(phi[t]/(2.0*pi),beta,delta)#,Gamma)#,chi_0 + chi_prime,chi)
-					#if chi < 0:
-					#	chi = chi/delta**300
-					#else:
-					#	chi = chi*delta**300
-					#print(phi[t]/(2.0*pi),delta,chi)
+						chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
 
-					
-					#print(sqrt(1. - cos_alpha**2), sqrt(1. - cos_sigma**2))
-					#print(sin_alpha, sin_sigma)
-					#print((1.0-(sin_chi_1/sin_alpha/sin_sigma)**2)**0.5, cos_chi_1/sin_alpha/sin_sigma)
-					#print((1.0-(sin_chi_prime*the_thing)**2)**0.5, cos_chi_prime*the_thing)	
-					#print("1=",sin_chi_prime**2+cos_chi_prime**2)			
+						chi=chi_0 + chi_1 + chi_prime
+						#  print(chi,'\t',chi_0/chi,'\t',chi_1/chi ,'\t',  chi_prime/chi )
 
-					sin_2chi=sin(2*chi)
-					cos_2chi=cos(2*chi)
-					# print(chi_prime,' \t',cos_chi_prime )
+						sin_2chi=sin(2*chi)
+						cos_2chi=cos(2*chi)
+						# print(chi_prime,' \t',cos_chi_prime )
 
 
 				d2=bisect(mu[:-1],mu0)
@@ -612,7 +644,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		#s,gn=pr(s,gn,'curves done ')
 	    
 	# In[31]:
-	savePulse = False#True
+	savePulse = True
 	if savePulse:
 		outF = open(PulsName + 'FF.bin','w')
 		outf = open(PulsName + 'ff.bin','w')

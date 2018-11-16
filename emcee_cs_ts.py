@@ -174,7 +174,7 @@ def lnprob(modelpar, low_limit, high_limit):
 	if(mass/rad > 0.96*1.0/(2.95*1.52)): #checking causality                
 		return -np.inf
 
-	Flux = compf(mass,rad,incl,theta,rho,spherical=False)#True)#False)
+	Flux = compf(mass,rad,incl,theta,rho,spherical=True)#False)
 	#print(Flux)
 	phi,Flux_obs = readdata()
 
