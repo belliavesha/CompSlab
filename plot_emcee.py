@@ -155,21 +155,92 @@ if(save_to_hdf5):
 
 
 if not(only_wmoves):
-	limits =  list(zip(low_limit,high_limit))
-	if(plot_cpoint):
-		print("quantiles=",)
-		for ipar in range(0,len(samples[0,:])):
-			qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
-			print(qtls)
-		keywords = dict(fontsize = 21)#'xx-large')
-		fig = corner.corner(samples,labels=param_names[0:npars],label_kwargs=keywords,title_kwargs=keywords,truths=params[0:npars],range=limits[0:npars], levels=(0.68,0.95,), 
-quantiles=(0.025,0.16,0.84,0.975),smooth=0.8,smooth1d=1.0)#,color="darkorange")
-	else:
-		fig = corner.corner(samples,labels=param_names[0:npars],range=limits[0:npars])#,color="darkorange")
+	#limits =  list(zip(low_limit,high_limit))
+	#if(plot_cpoint):
+	#	print("quantiles=",)
+	#	for ipar in range(0,len(samples[0,:])):
+	#		qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
+	#		print(qtls)
+	#	keywords = dict(fontsize = 21)#'xx-large')
+	#	fig = corner.corner(samples,labels=param_names[0:npars],label_kwargs=keywords,title_kwargs=keywords,truths=params[0:npars],range=limits[0:npars], levels=(0.68,0.95,), quantiles=(0.025,0.16,0.84,0.975),smooth=0.8,smooth1d=1.0)#,color="darkorange")
+	#else:
+	#	fig = corner.corner(samples,labels=param_names[0:npars],range=limits[0:npars])#,color="darkorange")
 
-	for ax in fig.get_axes():   
-		ax.tick_params(axis='both', labelsize=21)#14)
-		#ax.tick_params(axis='both', which='major', pad=45)
+
+	lbfontsz = 25
+	lwidth= 2.0#1.5 
+	iphi = npars#5
+	limits =  zip(low_limit[0:iphi],high_limit[0:iphi])
+	plt.rcParams.update({'font.size': lbfontsz})
+	plt.rcParams.update({'axes.linewidth': lwidth})
+	plt.rcParams.update({'axes.labelsize': lbfontsz})
+	plt.rcParams.update({'axes.titlesize': lbfontsz})
+	plt.rcParams.update({'figure.figsize': [8.0, 6.0]}) #[8, 6] [8, 8] [10, 10] [6.4, 4.8]
+	plt.rcParams.update({'font.family': 'serif'})
+	#plt.rcParams.update({'font.serif': 'Times'})
+
+	plt.rcParams.update({'xtick.labelsize': lbfontsz})
+	plt.rcParams.update({'ytick.labelsize': lbfontsz})
+
+	plt.rcParams.update({'lines.linewidth': lwidth})
+
+
+	#plt.rcParams.update({'axes.labelpad': 20})
+	#plt.rcParams.update({'axes.titlepad': 20})
+
+	print(rcParams.keys())
+	#exit()
+
+	fig = corner.corner(samples[:,0:iphi], verbose=True, labels=param_names, truths=params_true[0:iphi], range=limits, smooth=0.8, smooth1d=1.0,levels=(0.68,0.95,),max_n_ticks=3,top_ticks=False,fill_contours=True,plot_datapoints=False)#,color="darkorange")
+
+	#fig = corner.corner(samples[:,0:iphi], verbose=True, labels=param_names, truths=params_true[0:iphi], range=limits, smooth=1.3, smooth1d=1.0,levels=(0.68,0.95,),max_n_ticks=3,top_ticks=False,fill_contours=True,plot_datapoints=False)#,color="darkorange")#,truth_color="blue")#,contour_kwargs=ckwa) #color="red"
+	#,quantiles=[0.025,0.16,0.84,0.975]
+
+	plot_quantiles_my_self=True
+
+	fig.subplots_adjust(hspace=0)
+	fig.subplots_adjust(wspace=0)
+
+	ic = 0
+	ipar = 0
+	xlbpar = 0
+	#qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
+
+	for ax in fig.get_axes():
+		ax.tick_params(axis='both', direction="in",length=6, width=lwidth,top=True,right=False)#,pad=14
+		
+		#if(ic>19):
+		#	ax.set_xlabel(param_names[xlbpar],labelpad=50)
+		#	xlbpar=xlbpar+1
+
+		if(ic%5!=0):
+			ax.tick_params(axis='y',left=False)
+		if(ic==0 or ic==6 or ic==12 or ic==18 or ic==24):
+			ax.tick_params(axis='y',right=True)
+
+		if(plot_quantiles_my_self):
+			if(ic==0 or ic==6 or ic==12 or ic==18 or ic==24):
+				print(ipar)
+				qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.84,0.975))
+				#ax.axvline(qtls[0],linestyle="dashed",color="magenta",linewidth=lwidth)
+				ax.axvline(qtls[0],linestyle="dashed",color="darkorange",linewidth=lwidth)
+				ax.axvline(qtls[1],linestyle="dashed",color="red",linewidth=lwidth)
+				ax.axvline(qtls[2],linestyle="dashed",color="red",linewidth=lwidth)
+				ax.axvline(qtls[3],linestyle="dashed",color="darkorange",linewidth=lwidth)
+				#ax.axvline(qtls[3],linestyle="dashed",color="magenta",linewidth=lwidth)
+				#print(qtls)
+				ipar = ipar+1
+
+				
+		ic = ic+1
+
+
+
+
+
+	#for ax in fig.get_axes():   
+	#	ax.tick_params(axis='both', labelsize=21)#14)
+	#	#ax.tick_params(axis='both', which='major', pad=45)
 	#fig.tight_layout()
 	#plot = fig.add_subplot(111)
 	#plot.tick_params(axis='both', which='major', labelsize=20)
