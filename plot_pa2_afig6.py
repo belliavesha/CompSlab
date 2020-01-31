@@ -426,8 +426,8 @@ for ish in range(1,2):#len(shapes)):
 				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",markersize="1.0")
 				if(plot_all):
 					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
-					plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkblue")
-					plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightblue")
+					plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="red")#"darkblue")
+					plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="darkorange")#"lightblue")
 					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col)
 					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col)
 		PA0_VP04 = PA
@@ -596,8 +596,8 @@ if(plot_PA_residuals):
 	res_Q = abs((Q_acm0-Q0_VP04_interp(phase_acm0))/Q_acm0)
 	res_U = abs((U_acm0-U0_VP04_interp(phase_acm0))/U_acm0)
 	plotAp.plot(phase_acm0,res_F,"-",markersize=5,color="blue")
-	plotAp.plot(phase_acm0[res_Q < 0.02],res_Q[res_Q < 0.02],"-",markersize=5,color="darkblue")
-	plotAp.plot(phase_acm0[res_U < 0.02],res_U[res_U < 0.02],"-",markersize=5,color="lightblue")
+	plotAp.plot(phase_acm0[res_Q < 0.02],res_Q[res_Q < 0.02],"-",markersize=5,color="red")#"darkblue")
+	plotAp.plot(phase_acm0[res_U < 0.02],res_U[res_U < 0.02],"-",markersize=5,color="darkorange")#"lightblue")
 
 	#F0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),F0_VP04_2,fill_value='extrapolate')# workd with newer scipy
 	#Q0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),Q0_VP04_2,fill_value='extrapolate')# workd with newer scipy

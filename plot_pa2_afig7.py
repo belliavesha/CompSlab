@@ -87,7 +87,8 @@ if(compare_to_arcmancer):
 	for ic in range(0,1):
 		if(ic == 0):
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
-			datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_obl_img1000.csv"# (copy).csv"
+			datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
+			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_obl_img1000.csv"# (copy).csv"
 			#datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# (copy).csv"
 		if(ic == 1):
 			datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d40_i60_x01_sph.csv"
@@ -267,7 +268,7 @@ colors = ["yellow","blue","green"]
 shapes = np.copy(colors)
 
 
-for ish in range(1,2):#len(shapes)):
+for ish in range(1,3):#len(shapes)):
 
 	#oblateness='AlGendy'#'Sphere'#'AlGendy'
 	oblateness=shapes[ish]
@@ -280,7 +281,8 @@ for ish in range(1,2):#len(shapes)):
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires'#THIS one was the first shown to work with arcmancer
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
-		PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
+		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
+		PulsName='res/B/lbb_rho10_sp1_f600_obl'#_accspot'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_chi0'
 	if(ish == 2):
@@ -395,7 +397,7 @@ for ish in range(1,2):#len(shapes)):
 		print(phshift1)
 		#quit()
 		#in the end, setting the shift by hand seems still to produce better results		
-		phshift1 = 0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		#phshift1 = 0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
