@@ -55,9 +55,32 @@ x,x_weight=IntEnergy
 
 
 
-#figA=figure(2,figsize=(10,14))
-figA=figure(2,figsize=(14,18))
-figA.clear()
+##figA=figure(2,figsize=(10,14))
+#figA=figure(2,figsize=(14,18))
+#figA.clear()
+
+
+#rc("text", usetex=True)
+figA = figure(figsize=(14,18), dpi=300) #8,6
+#rc("font", family="serif")
+#rc("font",serif="Times")
+matplotlib.pyplot.figure(1)
+lbfontsz = 25 
+lwidth= 2.5#2.0#1.5 
+rc("xtick", labelsize=lbfontsz)
+rc("ytick", labelsize=lbfontsz)
+rc("axes", linewidth=lwidth)
+#figA.clear()
+matplotlib.pyplot.rcParams.update({'axes.titlesize': lbfontsz})
+matplotlib.pyplot.rcParams.update({'font.size': lbfontsz})
+matplotlib.pyplot.rcParams.update({'lines.linewidth': lwidth})
+matplotlib.pyplot.rcParams.update({'ytick.major.width': lwidth})
+matplotlib.pyplot.rcParams.update({'xtick.major.width': lwidth})
+matplotlib.pyplot.rcParams.update({'ytick.major.size': 10.0})
+matplotlib.pyplot.rcParams.update({'xtick.major.size': 10.0})
+matplotlib.pyplot.rcParams.update({'font.family': 'serif'})
+#matplotlib.pyplot.rcParams.update({'font.serif': 'Times'})
+
 
 plot_only_I = False
 plot_all = True
@@ -343,15 +366,15 @@ for ish in range(1,3):#len(shapes)):
 	PA=arctan2(U,Q)*90/pi+90
        	
 
-	figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
-	              r'$,\,R_e={:5.1f}km$'.format(R_e)+
-	              #r'$,\,R_e=11,12,14km$'.format(R_e)+
-	              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
-	              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
-	              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
-	              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
-	              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
-	              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)  
+	#figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
+	#              r'$,\,R_e={:5.1f}km$'.format(R_e)+
+	#              #r'$,\,R_e=11,12,14km$'.format(R_e)+
+	#              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
+	#              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
+	#              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
+	#              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
+	#              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
+	#              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)  
 
 
 	if not(plot_only_I):
