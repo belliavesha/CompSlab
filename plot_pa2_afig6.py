@@ -400,7 +400,7 @@ for ish in range(1,2):#len(shapes)):
 				##plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAF.set_xlim(0,1)
 				## plotAF.locator_params(axis='y', nbins=10)
-				plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
+				plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)/F_{\mathrm{x}}^{\mathrm{max}}$",fontsize=fontsize)
 				##plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
 				##plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')

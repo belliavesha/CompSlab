@@ -65,8 +65,14 @@ figA = figure(figsize=(14,18), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
-lbfontsz = 25 
-lwidth= 2.5#2.0#1.5 
+lbfontsz = 30#25 
+lwidth= 3.0#2.5#2.0#1.5 
+lpad = 12 
+
+labelsize=lbfontsz#40#30#20
+fontsize=lbfontsz#35#25
+ticksize=lbfontsz#25
+
 rc("xtick", labelsize=lbfontsz)
 rc("ytick", labelsize=lbfontsz)
 rc("axes", linewidth=lwidth)
@@ -228,7 +234,9 @@ if(compare_to_arcmancer):
 				for ipha in range(0,len(phase_new)-1):
 					if(phase_new[ipha+1] > phase_new[ipha]):
 						#plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-o",color=col,markersize="1.0")
-						plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,markersize="1.0")
+						#plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,markersize="1.0")
+						plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
+						
 				if(ic == 0):
 					PA_acm0 = PA#norm_obsF[:,ene]#PA
 					F_acm0 = norm_obsF[:,ene]
@@ -278,11 +286,11 @@ if(compare_to_arcmancer):
 					if(phase_new[ipha+1] > phase_new[ipha]):
 						#plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],marker="o",markersize="1.0")
 						if(i == 0):
-							plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],markersize="1.0")
+							plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],linewidth=lwidth)
 						if(i == 1):
-							plotAp.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],markersize="1.0")
+							plotAp.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],linewidth=lwidth)
 						if(i == 2):
-							plotAd.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],markersize="1.0")
+							plotAd.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],linewidth=lwidth)
 #shapes = ["Sphere","AlGendy"]
 
 #colors = ["yellow","black","red"]
@@ -346,10 +354,6 @@ for ish in range(1,3):#len(shapes)):
 	#print(fluxlcurve_Iene)
 	#print(fluxlcurve_Qene)
 	#print(fluxlcurve_Uene)
-	
-	labelsize=40#30#20
-	fontsize=35#25
-	ticksize=25
 
 
 	#phase=list(phi/2/pi)+[1.]
@@ -389,13 +393,13 @@ for ish in range(1,3):#len(shapes)):
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
 			#plotAc.set_ylim(-180,180)
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
-			plotAc.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+			plotAc.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 			plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
 			#plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
 			if(plot_all):
 				plotAp.set_xlim(0,1)
-				plotAp.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+				plotAp.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 				#plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
 				#plotAp.set_ylabel(r'$|\frac{F_{\mathrm{vp}}-F_{\mathrm{acm}}}{F_{\mathrm{vp}}}|$',fontsize=fontsize)
 				plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
@@ -404,9 +408,9 @@ for ish in range(1,3):#len(shapes)):
 				#plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
 				plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
-				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 				plotAd.set_xlim(0,1)
-				plotAF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+				plotAF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 
 	#col=colors[(e*NColors)//NEnergy]
 	col = colors[ish]
@@ -424,13 +428,13 @@ for ish in range(1,3):#len(shapes)):
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
-				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",markersize="1.0")
+				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",linewidth=lwidth)
 				if(plot_all):
 					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
 					#plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkblue")
 					#plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightblue")
-					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col)
-					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col)
+					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)
 		PA0_VP04 = PA
 		F0_VP04 = I/I.max()
 		Q0_VP04 = Q/Q.max()
@@ -449,13 +453,13 @@ for ish in range(1,3):#len(shapes)):
 		print(len(phase_new))
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
-				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,markersize="1.0")
+				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
 				if(plot_all):
-					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
+					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col,linewidth=lwidth)
 					#plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
 					#plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
-					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col)
-					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col)
+					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
 		PA0_VP04_2 = PA
 		F0_VP04_2 = I/I.max()
 		Q0_VP04_2 = Q/Q.max()

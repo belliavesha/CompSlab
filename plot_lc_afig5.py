@@ -58,8 +58,32 @@ colors = ["yellow","blue","green"]
 #colors = ["blue"]
 shapes = np.copy(colors)
 
-figA=figure(2,figsize=(10,14))
-figA.clear()
+#figA=figure(2,figsize=(10,14))
+#figA.clear()
+
+
+#rc("text", usetex=True)
+figA = figure(figsize=(14,18), dpi=300) #8,6
+#rc("font", family="serif")
+#rc("font",serif="Times")
+matplotlib.pyplot.figure(1)
+lbfontsz = 30#25 
+lwidth= 3.0#2.5#2.0#1.5 
+lpad = 12 
+
+rc("xtick", labelsize=lbfontsz)
+rc("ytick", labelsize=lbfontsz)
+rc("axes", linewidth=lwidth)
+#figA.clear()
+matplotlib.pyplot.rcParams.update({'axes.titlesize': lbfontsz})
+matplotlib.pyplot.rcParams.update({'font.size': lbfontsz})
+matplotlib.pyplot.rcParams.update({'lines.linewidth': lwidth})
+matplotlib.pyplot.rcParams.update({'ytick.major.width': lwidth})
+matplotlib.pyplot.rcParams.update({'xtick.major.width': lwidth})
+matplotlib.pyplot.rcParams.update({'ytick.major.size': 10.0})
+matplotlib.pyplot.rcParams.update({'xtick.major.size': 10.0})
+matplotlib.pyplot.rcParams.update({'font.family': 'serif'})
+#matplotlib.pyplot.rcParams.update({'font.serif': 'Times'})
 
 plot_only_I = False#True
 plot_QU = False#True
@@ -152,8 +176,8 @@ for ish in range(1,3):#len(shapes)):
 	#print(fluxlcurve_Qene)
 	#print(fluxlcurve_Uene)
 	
-	labelsize=20
-	fontsize=25
+	labelsize=lbfontsz#20
+	fontsize=lbfontsz#25
 
 	if(ish == 2):
 		NPhase = 150#500
@@ -176,36 +200,36 @@ for ish in range(1,3):#len(shapes)):
 	#	plotAc.plot(phase,PA)#,color=col)	 
 	#	break	           	
 
-	figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
-	              r'$,\,R_e={:5.1f}km$'.format(R_e)+
-	              #r'$,\,R_e=11,12,14km$'.format(R_e)+
-	              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
-	              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
-	              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
-	              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
-	              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
-	              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)   
+	#figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
+	#              r'$,\,R_e={:5.1f}km$'.format(R_e)+
+	#              #r'$,\,R_e=11,12,14km$'.format(R_e)+
+	#              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
+	#              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
+	#              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
+	#              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
+	#              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
+	#              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)   
 
 	# plotAF.set_xlim([x[0],x[-1]])
 	plotAF.set_xlim(0,1)
 
 	# plotAF.locator_params(axis='y', nbins=10)
-	plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
-	plotAF.tick_params(axis='both', which='major', labelsize=labelsize)
+	plotAF.set_ylabel(r"$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$",fontsize=fontsize)
+	plotAF.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
 	# plotAF.plot(x,xIinx,'k-.')
 
 	# plotAF.set_xlim([x[0],x[-1]])
 	if not(plot_only_I):
 		if(plot_QU):
 			plotAp.set_xlim(0,1)
-			plotAp.tick_params(axis='both', which='major', labelsize=labelsize)
+			plotAp.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
 			plotAp.set_ylabel(r'$Q/Q_{max}$',fontsize=fontsize)
-			plotAc.tick_params(axis='both', which='major', labelsize=labelsize)
+			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
 			plotAc.set_ylabel(r'$U/U_{max}$',fontsize=fontsize)
 			plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)		
 		else:
 			plotAp.set_xlim(0,1)
-			plotAp.tick_params(axis='both', which='major', labelsize=labelsize)
+			plotAp.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
 			plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
 			#plotAp.set_ylim(99.8,100.1)
 			plotAc.set_xlim(0,1)
@@ -214,14 +238,14 @@ for ish in range(1,3):#len(shapes)):
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
 			#plotAc.set_ylim(-180,180)
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
-			plotAc.tick_params(axis='both', which='major', labelsize=labelsize)
+			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
 			plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
 			plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
 	#col=colors[(e*NColors)//NEnergy]
 	col = colors[ish]
 
-	plotAF.plot(phase,I/I.max(),color=col)
+	plotAF.plot(phase,I/I.max(),color=col,linewidth=lwidth)
 	#plotAF.plot(phase,I,color=col)
 	PA_VP04 = PA
 	phase_VP04 = phase
@@ -235,8 +259,10 @@ for ish in range(1,3):#len(shapes)):
 			plotAp.plot(phase,Q/np.max(abs(Q)),color=col)
 			plotAc.plot(phase,U/np.max(abs(U)),color=col)
 		else:
-			plotAp.plot(phase,p,color=col,marker="o",markersize=1.0)
-			plotAc.plot(phase,PA,color=col,marker="o",markersize=1.0)
+			#plotAp.plot(phase,p,color=col,marker="o",markersize=1.0)
+			#plotAc.plot(phase,PA,color=col,marker="o",markersize=1.0)
+			plotAp.plot(phase,p,color=col,linewidth=lwidth)
+			plotAc.plot(phase,PA,color=col,linewidth=lwidth)
 
 compare_to_tslc = False#True
 if(compare_to_tslc):
@@ -492,8 +518,8 @@ if(plot_PA_residuals):
 	plotAd.set_ylim(0.0,0.5)
 	#plotAd.set_yticks([0,30,60,90,120,150,180])
 	#plotAd.tick_params(axis='both', which='major', labelsize=labelsize)
-	plotAd.tick_params(axis='y', which='major', labelsize=8)
-	plotAd.tick_params(axis='x', which='major', labelsize=labelsize)
+	plotAd.tick_params(axis='y', which='major', labelsize=labelsize,direction='in')
+	plotAd.tick_params(axis='x', which='major', labelsize=labelsize,direction='in')
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}/\chi_{\mathrm{vp}}$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}} [\degree]$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\frac{\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}}}{\chi_{\mathrm{max}}-\chi_{\mathrm{min}}}$',fontsize=fontsize)
