@@ -148,10 +148,15 @@ if(compare_to_arcmancer):
 		energy_keV = [4.94]
 		phase = full_chain[0,:]
 		norm_obsF = np.zeros((len(phase), egrid))
+		obsF = np.zeros((len(phase),egrid))
 		for i in range(1,egrid+1):
 			#norm_obsF[:,i-1] = full_chain[i,:]*energy_keV[i-1]/np.max(full_chain[i,:]*energy_keV[i-1])
-			norm_obsF[:,i-1] = full_chain[i,:]/np.max(full_chain[i,:])
-
+			#norm_obsF[:,i-1] = full_chain[i,:]/np.max(full_chain[i,:])
+			if(i==1):
+				norm_obsF[:,i-1] = full_chain[i,:]/np.max(full_chain[1,:])
+			else:
+                                norm_obsF[:,i-1] = full_chain[i,:]/full_chain[1,:]
+			obsF[:,i-1] = full_chain[i,:]
 
 
 		#for i in range(0,egrid):
@@ -229,9 +234,9 @@ if(compare_to_arcmancer):
 						plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,markersize="1.0")
 				if(ic == 0):
 					PA_acm0 = PA#norm_obsF[:,ene]#PA
-					F_acm0 = norm_obsF[:,ene]
-					Q_acm0 = norm_obsF[:,ene+1]
-					U_acm0 = norm_obsF[:,ene+2]
+					F_acm0 = norm_obsF[:,ene]#obsF[:,ene]
+					Q_acm0 = norm_obsF[:,ene+1]#norm_obsF[:,ene+1]
+					U_acm0 = norm_obsF[:,ene+2]#norm_obsF[:,ene+2]
 					phase_acm0 = phase_new
 					phase_acm0[len(phase_acm0)-1]=1.0
 
@@ -400,7 +405,8 @@ for ish in range(1,2):#len(shapes)):
 				##plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAF.set_xlim(0,1)
 				## plotAF.locator_params(axis='y', nbins=10)
-				plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)/F_{\mathrm{x}}^{\mathrm{max}}$",fontsize=fontsize)
+				#plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)/F_{\mathrm{x}}^{\mathrm{max}}$",fontsize=fontsize)
+				plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)$",fontsize=fontsize)
 				##plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
 				##plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
@@ -426,14 +432,14 @@ for ish in range(1,2):#len(shapes)):
 				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",markersize="1.0")
 				if(plot_all):
 					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
-					plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="red")#"darkblue")
-					plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="darkorange")#"lightblue")
+					plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color="red")#"darkblue")
+					plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color="darkorange")#"lightblue")
 					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col)
 					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col)
 		PA0_VP04 = PA
 		F0_VP04 = I/I.max()
-		Q0_VP04 = Q/Q.max()
-		U0_VP04 = U/U.max()
+		Q0_VP04 = Q/I
+		U0_VP04 = U/I
 		phase0_VP04 = phase
 
 	if(ish == 2): 
@@ -549,7 +555,7 @@ if(plot_PA_residuals):
 	#plotAd.set_ylim(-1.0,1.0)
 	plotAd.set_ylim(-0.3,0.3)
 	#plotAd.set_ylim(-10.0,10.0)
-
+	#plotAF.set_ylim(-1.2,1.2)
 
 
 
@@ -585,7 +591,7 @@ if(plot_PA_residuals):
 	#		#plotAd.plot(phase_acm0[ipha:ipha+2],(PA_acm0[ipha:ipha+2]-PA_VP04_interp(phase_acm0[ipha:ipha+2]))/norm,color="green")
 
 
-	plotAp.set_ylim(0.0,0.02)
+	plotAp.set_ylim(0.0,0.025)
 
 	#plotAp.set_ylim(0.0,0.5)
 
@@ -595,6 +601,9 @@ if(plot_PA_residuals):
 	res_F = abs((F_acm0-F0_VP04_interp(phase_acm0))/F_acm0)
 	res_Q = abs((Q_acm0-Q0_VP04_interp(phase_acm0))/Q_acm0)
 	res_U = abs((U_acm0-U0_VP04_interp(phase_acm0))/U_acm0)
+	#print(res_F)
+	#print(res_Q)
+	#print(res_U)
 	plotAp.plot(phase_acm0,res_F,"-",markersize=5,color="blue")
 	plotAp.plot(phase_acm0[res_Q < 0.02],res_Q[res_Q < 0.02],"-",markersize=5,color="red")#"darkblue")
 	plotAp.plot(phase_acm0[res_U < 0.02],res_U[res_U < 0.02],"-",markersize=5,color="darkorange")#"lightblue")

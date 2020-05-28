@@ -87,6 +87,7 @@ matplotlib.pyplot.rcParams.update({'xtick.major.size': 10.0})
 matplotlib.pyplot.rcParams.update({'font.family': 'serif'})
 #matplotlib.pyplot.rcParams.update({'font.serif': 'Times'})
 
+matplotlib.pyplot.tight_layout()
 
 plot_only_I = False
 plot_all = True
@@ -156,10 +157,11 @@ if(compare_to_arcmancer):
 		energy_keV = [4.94]
 		phase = full_chain[0,:]
 		norm_obsF = np.zeros((len(phase), egrid))
-		for i in range(1,egrid+1):
+		for i in range(2,egrid+1): #(1,egrid+1):
 			#norm_obsF[:,i-1] = full_chain[i,:]*energy_keV[i-1]/np.max(full_chain[i,:]*energy_keV[i-1])
-			norm_obsF[:,i-1] = full_chain[i,:]/np.max(full_chain[i,:])
-
+			#norm_obsF[:,i-1] = full_chain[i,:]/np.max(full_chain[i,:])
+			norm_obsF[:,i-1] = full_chain[i,:]/full_chain[1,:]
+		norm_obsF[:,0] = full_chain[1,:]/np.max(full_chain[i,:])
 
 
 		#for i in range(0,egrid):
@@ -402,16 +404,29 @@ for ish in range(1,3):#len(shapes)):
 				plotAp.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 				#plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
 				#plotAp.set_ylabel(r'$|\frac{F_{\mathrm{vp}}-F_{\mathrm{acm}}}{F_{\mathrm{vp}}}|$',fontsize=fontsize)
-				plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
+				#plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAF.set_xlim(0,1)
 				# plotAF.locator_params(axis='y', nbins=10)
 				#plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
 				plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
-				plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
+				#plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
+				plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{I}}(\varphi)$',fontsize=fontsize)
+				plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{I}}(\varphi)$',fontsize=fontsize) 
 				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 				plotAd.set_xlim(0,1)
 				plotAF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 
+				plotAp.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+				plotAp.set_yticks([-0.9,0.0,0.9])
+				plotAp.set_yticklabels(["-0.9","0.0","0.9"],fontstyle="normal")
+
+				plotAF.set_ylim(0.1,1.1)
+				plotAF.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+				plotAF.set_yticks([0.25,0.5,0.75,1.0])
+				plotAF.set_yticklabels(["0.25","0.50","0.75","1.00"],fontstyle="normal")
+
+
+                                
 	#col=colors[(e*NColors)//NEnergy]
 	col = colors[ish]
 
@@ -431,10 +446,13 @@ for ish in range(1,3):#len(shapes)):
 				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",linewidth=lwidth)
 				if(plot_all):
 					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
-					#plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkblue")
-					#plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightblue")
-					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
-					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)
+					##plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkblue")
+					##plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightblue")
+					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)
+
+					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
+					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
 		PA0_VP04 = PA
 		F0_VP04 = I/I.max()
 		Q0_VP04 = Q/Q.max()
@@ -456,10 +474,15 @@ for ish in range(1,3):#len(shapes)):
 				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
 				if(plot_all):
 					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col,linewidth=lwidth)
-					#plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
-					#plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
-					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
-					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
+					##plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
+					##plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
+					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
+
+					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
+					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
+                                        
+                                        
 		PA0_VP04_2 = PA
 		F0_VP04_2 = I/I.max()
 		Q0_VP04_2 = Q/Q.max()
