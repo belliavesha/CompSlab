@@ -13,14 +13,15 @@ from numpy import absolute, sign, floor, ceil
 # from scipy.special import kn
 # from bisect import bisect
 
-colors=['xkcd:brownish red',
+colors=[
+        # 'xkcd:brownish red',
         'xkcd:red',
         # 'xkcd:orange',
         # 'xkcd:dark yellow',
         # 'xkcd:dark yellow green',
         'xkcd:deep green',
         # 'xkcd:dark cyan',
-        # 'xkcd:blue',
+        'xkcd:blue',
         'xkcd:purple'   
 ]
 
@@ -29,23 +30,33 @@ evere=.5109989e6 # electron volts in elecron rest energy
 G=13275412528e1 # G*M_sol in km^3/s^2 
 c=299792458e-3 # speed of light in km/s
 
-NPhi = 150#500#150#128*2#120#128#120 # Number of equidistant phase points
-phi, phi_weight=linspace(0,360,num=NPhi,endpoint=False,retstep=True) #Size of spacing between samples = phi_weight
+NPhi = 550#500#150#128*2#120#128#120 # Number of equidistant phase points
+phi, phi_weight=linspace(0,360,num=NPhi,endpoint=True,retstep=True) #Size of spacing between samples = phi_weight
 chi = zeros(NPhi)
 chi_sph = zeros(NPhi)
+chi_old = zeros(NPhi)
+diffchi_old = zeros(NPhi)
+diffchi = zeros(NPhi)
+mu_0 = zeros(NPhi)
 
-nu=600#1#100#600#700#600 # star rotation frequency in Hz
+# nu=[600]*4 # star rotation frequency in Hz
+nu=[1,200,400,600] # star rotation frequency in Hz
 M=1.4#1.6#1.4 # star mass in solar masses
-R_g=M*2.95 # gravitational Schwarzschild radius
-R_e=12.0 # equatorial radius of the star in kilometers      
-incl = 5*pi/18 #pi*4/18#1.5    # line of sight colatitude #in radians
-theta = [pi/2,3*pi/18,6*pi/18,pi/18]
+# R_g=M*2.95 # gravitational Schwarzschild radius
+R_0=12.0 # equatorial radius of the star in kilometers      
+# incl = [40*pi/180]*4 # [20*pi/180,40*pi/180,60*pi/180,80*pi/180] #pi*4/18#1.5    # line of sight colatitude #in radians
+incl = [50*pi/180]*4 # [20*pi/180,40*pi/180,60*pi/180,80*pi/180] #pi*4/18#1.5    # line of sight colatitude #in radians
+# incl = [20*pi/180,40*pi/180,60*pi/180,80*pi/180] #pi*4/18#1.5    # line of sight colatitude #in radians
+# theta =  [15*pi/180,30*pi/180,45*pi/180,60*pi/180]# [pi/4]
+# theta =  [3*pi/18]*4 #[15*pi/180,30*pi/180,45*pi/180,60*pi/180]# [pi/4]
+theta =  [40*pi/180]*4 #[15*pi/180,30*pi/180,45*pi/180,60*pi/180]# [pi/4]
+#,3*pi/18,6*pi/18,pi/18]
 NSpots = len(theta)
 
 
 
 #rc("text", usetex=True)
-figA = figure(figsize=(14,18), dpi=300) #8,6
+figA = figure(figsize=(14,12), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
@@ -69,13 +80,9 @@ matplotlib.pyplot.rcParams.update({'font.family': 'serif'})
 matplotlib.pyplot.subplots_adjust(wspace=0, hspace=0)
 
 plotAc=figA.add_subplot(2,1,1,yscale='linear') 
-plotAd=figA.add_subplot(2,1,2)      #
+plotAd=figA.add_subplot(2,1,2,)      #
 	
 
-Omega_bar=2*pi*nu*sqrt(2*R_e**3/R_g)/c
-print('_O_^2',Omega_bar**2,'_O_',Omega_bar)
-flattening=(0.788-0.515*R_g/R_e)*Omega_bar**2 
-print(R_e*(1-flattening))
 
 
 def Beloborodov(cos_psi):
@@ -129,84 +136,239 @@ def Schwarzschild(R,alpha):
     return psi,lag
 # flattening=0
 
-
-sin_i=sin(incl)
-cos_i=cos(incl)
+def foldchi(c):
+    return (c*180/pi+90)%180-90
 
 
 for p in range(NSpots):
+
+    sin_i=sin(incl[p])
+    cos_i=cos(incl[p])
+
     sin_theta=sin(theta[p])
     cos_theta=cos(theta[p])
 
-    R=R_e*(1 - flattening*cos_theta**2) 
-    dR=2*R_e*flattening*cos_theta*sin_theta # dR / d\theta
+    if True:  # sphere case
 
-    u = R_g/R
-    redshift=1.0/sqrt(1.0 - u) # 1/sqrt(1-R_g/R) = 1+ z = redshift
-    f=redshift/R*dR
-    sin_gamma=f/sqrt(1 + f**2) # angle gamma is positive towards the north pole 
-    cos_gamma=1.0/sqrt(1 + f**2)
-    beta=2*pi*nu*R*redshift*sin_theta/c
-    Gamma=1.0/sqrt(1.0 - beta**2)
-    Gamma1= (1.0-sqrt(1.0 - beta**2) )/ beta
-    print('theta: ',theta[p],'gamma: ',arctan2(f,1.0))
-     
-
-    for t in range(NPhi):
-          # if True: # find mu
-                phi0 = phi[t]*pi/180
-                sin_phi=sin(phi0)
-                cos_phi=cos(phi0)
-                cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
-                sin_psi=sqrt(1. - cos_psi**2)
-               
-                cos_alpha = 1.0 - Poutanen(u, 1.0 - cos_psi) # insert exact formula here
-                sin_alpha = sqrt(1. - cos_alpha**2)
-                sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
-                
-                cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
-                delta = 1./Gamma/(1.-beta*cos_xi)
-                cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
-
-                sin_sigma = sqrt(1. - cos_sigma**2)
-                mu0=delta*cos_sigma # cos(sigma')
-                # Omega=dS[p]*mu0*redshift**2*dcos_alpha #*Gamma*R*R/cos_gamma # 
+        R=R_0
+        dR=0.0
+        R_g=M*2.95
+        u = R_g/R
+        redshift=1.0/sqrt(1.0 - u) # 1/sqrt(1-R_g/R) = 1+ z = redshift
+        f=0
+        sin_gamma=0.0
+        cos_gamma=1.0
+        beta=2*pi*nu[p]*R*redshift*sin_theta/c
+        Gamma=1.0/sqrt(1.0 - beta**2)
+        Gamma1= (1.0-sqrt(1.0 - beta**2) )/ beta
+        print('theta: ',theta[p],'gamma: ',arctan2(f,1.0)*180/pi)
          
-                sin_chi_0= - sin_theta*sin_phi # times sin psi
-                cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
-                chi_0=arctan2(sin_chi_0,cos_chi_0)
-                #  chi_0 = 0
-                
-                sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin alpha sin sigma 
-                cos_chi_1=cos_gamma - cos_alpha*cos_sigma  #times sin alpha sin sigma 
-                chi_1=arctan2(sin_chi_1,cos_chi_1)
-                
-                sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
-                cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
-                cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
-                # this line is the longest one
-                # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-                # sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-                sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
-                # cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
 
-                cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
-                chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
+        for t in range(NPhi):
+              # if True: # find mu
+                    phi0 = phi[t]*pi/180+pi
+                    sin_phi=sin(phi0)
+                    cos_phi=cos(phi0)
+                    cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
+                    sin_psi=sqrt(1. - cos_psi**2)
+                   
+                    cos_alpha = 1.0 - Poutanen(u, 1.0 - cos_psi) # insert exact formula here
+                    sin_alpha = sqrt(1. - cos_alpha**2)
+                    sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
+                    
+                    cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
+                    delta = 1./Gamma/(1.-beta*cos_xi)
+                    cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
 
-                chi[t] = (chi_0+chi_prime+ chi_1)*180/pi#%(2*pi)
-
-                cos_eps_sph = sin_alpha_over_sin_psi*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
-                sin_chi_prime_sph=cos_eps_sph*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
-                cos_chi_prime_sph=sin_alpha**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
-                chi_prime_sph= arctan2(sin_chi_prime_sph,cos_chi_prime_sph)   
-
-                chi_sph[t] = (chi_0+ chi_prime_sph)*180/pi#%(2*pi)
+                    sin_sigma = sqrt(1. - cos_sigma**2)
+                    mu0=delta*cos_sigma # cos(sigma')
+                    # Omega=dS[p]*mu0*redshift**2*dcos_alpha #*Gamma*R*R/cos_gamma # 
+             
+                    sin_chi_0= - sin_theta*sin_phi # times sin psi
+                    cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
+                    chi_0=arctan2(sin_chi_0,cos_chi_0)
 
 
+                    cos_eps_sph = sin_alpha_over_sin_psi*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
+                    sin_chi_prime_sph=cos_eps_sph*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+                    cos_chi_prime_sph=sin_alpha**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                    chi_prime_sph= arctan2(sin_chi_prime_sph,cos_chi_prime_sph)   
 
-    plotAc.plot(phi,chi,"-",markersize=5,color=colors[p] )
-    plotAc.plot(phi,chi_sph,"--",markersize=4,color=colors[p])
-    plotAd.plot(phi,chi-chi_sph,"-",markersize=4,color=colors[p])
+                    chi_sph[t] = (chi_0+ chi_prime_sph)
+
+    if True:  # rotating case
+
+        nup = nu[p]
+        M_bar = M/1.4
+        nu_cr = 1278*sqrt(M_bar)*(10/R)**1.5
+        nu_bar = nup/nu_cr  
+        R_e = R_0*(0.9766 + 0.025/(1.07- nu_bar)+0.07*M_bar**1.5*nu_bar**2)
+
+        a1 = 0.001*M_bar**1.5
+        a0 = 1.0 - a1/1.1
+        a2 = 10*a1
+        M_prime = M*(a0 + a1/(1.1-nu_bar)+ a2*nu_bar**2)
+        print(M_prime/M)
+        print(R_e/R_0)
+        R_g=M_prime*2.95
+
+
+
+        Omega_bar=2*pi*nu[p]*sqrt(2*R_e**3/R_g)/c
+        # print('_O_^2',Omega_bar**2,'_O_',Omega_bar)
+        flattening=(0.788-0.515*R_g/R_e)*Omega_bar**2 
+        # print(R_e*(1-flattening))
+
+
+        R=R_e*(1 - flattening*cos_theta**2) 
+        dR=2*R_e*flattening*cos_theta*sin_theta # dR / d\theta
+
+        u = R_g/R
+        redshift=1.0/sqrt(1.0 - u) # 1/sqrt(1-R_g/R) = 1+ z = redshift
+        f=redshift/R*dR
+        sin_gamma=f/sqrt(1 + f**2) # angle gamma is positive towards the north pole 
+        cos_gamma=1.0/sqrt(1 + f**2)
+        beta=2*pi*nu[p]*R*redshift*sin_theta/c
+        Gamma=1.0/sqrt(1.0 - beta**2)
+        Gamma1= (1.0-sqrt(1.0 - beta**2) )/ beta
+        print('theta: ',theta[p]*180/pi,'gamma: ',arctan2(f,1.0)*180/pi)
+         
+
+        for t in range(NPhi):
+              # if True: # find mu
+                    phi0 = phi[t]*pi/180+pi
+                    sin_phi=sin(phi0)
+                    cos_phi=cos(phi0)
+                    cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
+                    sin_psi=sqrt(1. - cos_psi**2)
+                   
+                    cos_alpha = 1.0 - Poutanen(u, 1.0 - cos_psi) # insert exact formula here
+                    sin_alpha = sqrt(1. - cos_alpha**2)
+                    sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
+                    
+                    cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
+                    delta = 1./Gamma/(1.-beta*cos_xi)
+                    cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
+
+                    sin_sigma = sqrt(1. - cos_sigma**2)
+                    mu0=delta*cos_sigma # cos(sigma')
+                    mu_0[t]=(1-mu0)/(1+3.582*mu0)*117
+                    # Omega=dS[p]*mu0*redshift**2*dcos_alpha #*Gamma*R*R/cos_gamma # 
+             
+                    sin_chi_0= - sin_theta*sin_phi # times sin psi
+                    cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
+                    chi_0=arctan2(sin_chi_0,cos_chi_0)
+                    #  chi_0 = 0
+                    
+                    sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin alpha sin sigma 
+                    cos_chi_1=cos_gamma - cos_alpha*cos_sigma  #times sin alpha sin sigma 
+                    chi_1=arctan2(sin_chi_1,cos_chi_1)
+                    
+                    sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
+                    cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
+                    cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
+                    # this line is the longest one
+                    # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
+                    # sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
+                    sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+                    # cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
+
+                    cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                    chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
+
+                    chi[t] = (chi_0+chi_prime+ chi_1)
+
+    if True : # old oblate comparison, same R_e and M 
+        nup = nu[p]
+        R_e = R_0#*(0.9766 + 0.025/(1.07- nu_bar)+0.07*M_bar**1.5*nu_bar**2)
+        M_prime = M#*(a0 + a1/(1.1-nu_bar)+ a2*nu_bar**2)
+        R_g=M_prime*2.95
+
+
+
+        Omega_bar=2*pi*nu[p]*sqrt(2*R_e**3/R_g)/c
+        # print('_O_^2',Omega_bar**2,'_O_',Omega_bar)
+        flattening=(0.788-0.515*R_g/R_e)*Omega_bar**2 
+        # print(R_e*(1-flattening))
+
+        sin_theta=sin(theta[p])
+        cos_theta=cos(theta[p])
+
+        R=R_e*(1 - flattening*cos_theta**2) 
+        dR=2*R_e*flattening*cos_theta*sin_theta # dR / d\theta
+
+        u = R_g/R
+        redshift=1.0/sqrt(1.0 - u) # 1/sqrt(1-R_g/R) = 1+ z = redshift
+        f=redshift/R*dR
+        sin_gamma=f/sqrt(1 + f**2) # angle gamma is positive towards the north pole 
+        cos_gamma=1.0/sqrt(1 + f**2)
+        beta=2*pi*nu[p]*R*redshift*sin_theta/c
+        Gamma=1.0/sqrt(1.0 - beta**2)
+        Gamma1= (1.0-sqrt(1.0 - beta**2) )/ beta
+        print('theta: ',theta[p],'gamma: ',arctan2(f,1.0)*180/pi)
+         
+
+        for t in range(NPhi):
+              # if True: # find mu
+                    phi0 = phi[t]*pi/180+pi
+                    sin_phi=sin(phi0)
+                    cos_phi=cos(phi0)
+                    cos_psi=cos_i*cos_theta + sin_i*sin_theta*cos_phi
+                    sin_psi=sqrt(1. - cos_psi**2)
+                   
+                    cos_alpha = 1.0 - Poutanen(u, 1.0 - cos_psi) # insert exact formula here
+                    sin_alpha = sqrt(1. - cos_alpha**2)
+                    sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
+                    
+                    cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
+                    delta = 1./Gamma/(1.-beta*cos_xi)
+                    cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
+
+                    sin_sigma = sqrt(1. - cos_sigma**2)
+                    mu0=delta*cos_sigma # cos(sigma')
+                    # Omega=dS[p]*mu0*redshift**2*dcos_alpha #*Gamma*R*R/cos_gamma # 
+             
+                    sin_chi_0= - sin_theta*sin_phi # times sin psi
+                    cos_chi_0=sin_i*cos_theta - sin_theta*cos_i*cos_phi # times sin psi 
+                    chi_0=arctan2(sin_chi_0,cos_chi_0)
+                    #  chi_0 = 0
+                    
+                    sin_chi_1=sin_gamma*sin_i*sin_phi*sin_alpha_over_sin_psi #times sin alpha sin sigma 
+                    cos_chi_1=cos_gamma - cos_alpha*cos_sigma  #times sin alpha sin sigma 
+                    chi_1=arctan2(sin_chi_1,cos_chi_1)
+                    
+                    sin_lambda=sin_theta*cos_gamma - sin_gamma*cos_theta
+                    cos_lambda=cos_theta*cos_gamma + sin_theta*sin_gamma
+                    cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
+                    # this line is the longest one
+                    # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
+                    # sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
+                    sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+                    # cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
+
+                    cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                    chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
+
+                    chi_old[t] = (chi_0+chi_prime+ chi_1)
+
+
+    diffchi = chi - chi_sph
+    diffchi_old = chi_old - chi_sph
+    # print(diffchi*180/pi)
+    plotAc.plot(phi,foldchi(chi),"-",linewidth=3,color=colors[p] )
+    plotAc.plot(phi,foldchi(chi_sph),"-.",linewidth=2,color=colors[p])
+    plotAd.plot(phi,diffchi*180/pi,"-",linewidth=3,color=colors[p])
+
+    if p==3:
+        plotAc.plot(phi,mu_0,"--",linewidth=1.5,color='orange')
+        plotAd.plot(phi,mu_0,"--",linewidth=1.5,color='orange')
+        plotAc.plot(phi,foldchi(chi_old),"--",linewidth=1.5,color='black')
+        plotAd.plot(phi,diffchi_old*180/pi,"--",linewidth=1.5,color='black')
+        plotAd.plot(phi,(chi - chi_old)*180/pi,"--",linewidth=1.5,color='purple')
+        plotAc.plot(phi,[0]*NPhi,"--",linewidth=1,color="brown")
+        plotAd.plot(phi,[0]*NPhi,"--",linewidth=1,color="brown")
+        # print((chi - chi_old)*180/pi)
+
 
 
 fontsize = 30
@@ -214,17 +376,28 @@ fontsize = 30
 # plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 plotAd.set_xlabel(r'$\varphi\,[\degree]$',fontsize=fontsize)
 plotAd.set_xticks([0,60,120,180,240,300,360])
-plotAc.set_yticks([0,-90,-180,90,180])
+plotAc.set_xticks([0,60,120,180,240,300,360])
+plotAd.set_xticklabels(["180","240","300","360,0","60","120","180"])
+plotAc.set_yticks([0,-45,-90,45,90])
+# plotAd.set_yticks([0,-10,-20,20,10])
+plotAd.set_yticks([0,-10,-20,20,10])
 
-plotAc.tick_params(axis='both', which='major', labelsize=fontsize)
-plotAd.tick_params(axis='both', which='major', labelsize=fontsize)
+plotAd.margins(x =0)
+plotAd.set_ylim((-27,27))
+plotAc.margins(x =0)
+
+plotAc.tick_params(axis="both", which="both", pad=10,top=True,right = True)#
+plotAd.tick_params(axis="both", which="both", pad=10,top=True,right = True)#
+plotAc.tick_params(axis='x', which='major', bottom = True, labelbottom=False)
+plotAc.tick_params(axis='both', which='major', labelsize=fontsize,direction='in')
+plotAd.tick_params(axis='both', which='major', labelsize=fontsize,direction='in')
 # plotAd.set_ylabel(r'$\chi_{\mathrm{obl}}-\chi_{\mathrm{sph}}$',fontsize=fontsize)
-plotAd.set_ylabel(r'$\chi_{{obl}}-\chi_{{sph}},\,[\degree]$',fontsize=fontsize)
-plotAc.set_ylabel(r"$\chi_1 + \chi{'},\,[\degree]$",fontsize=fontsize)
+plotAd.set_ylabel(r'$\chi_{\mathrm{obl}}-\chi_{\mathrm{sph}},\,[\degree]$',fontsize=fontsize)
+plotAc.set_ylabel(r"$\chi,\,[\degree]$",fontsize=fontsize)
 
 # figA.tight_layout()
 
 figA.subplots_adjust(left=0.15)
 
-figA.savefig('fig2.pdf')#.format(e))
+figA.savefig('figc.pdf')#.format(e))
 figA.clf()
