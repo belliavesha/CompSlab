@@ -2,6 +2,7 @@
 #This program can be used to calculate polarized pulse profiles from accreting millisecond pulsars
 ###############################
 
+<<<<<<< HEAD
 #from cs_ts2_comp_pa import compf
 
 mass = 1.4 # 1.4
@@ -27,6 +28,25 @@ if(loop):
 	thetas = [90.0]#[10.0,30.0,60.0,90.0]#[10.0,20.0,40.0,60.0]
 	freqs = [600.0]#[1.0,100.0,300.0,600.0]
 	sph = [True]#[False,True]
+=======
+from cs_ts2_comp_pa import compf
+
+mass = 1.4 # 1.4
+rad = 12.0 # 12.0
+incl = 60.0 #60.0 #40.0 # 40.0
+theta = 20.0 #20.0 #60.0 #-120.0#60.0 # 60.0
+rho = 1.0 #1.0 # 10.0
+freq = 600.0
+
+#Flux = compf(mass,rad,incl,theta,rho,freq,spherical=False)
+loop = True
+if(loop):
+
+	incls = [40.0,60.0,80.0]
+	thetas = [10.0,20.0,40.0,60.0]
+	freqs = [1.0,100.0,300.0,600.0]
+	sph = [False,True]
+>>>>>>> 8396ea969cf96e78354ff847d3eae8b8bbf87d06
 	for ifr in range(len(freqs)):
 		for i in range(len(incls)):
 			for it in range(len(thetas)):
