@@ -65,8 +65,8 @@ figA = figure(figsize=(14,18), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
-lbfontsz = 30#25 
-lwidth= 3.0#2.5#2.0#1.5 
+lbfontsz = 35 #25 #30#25 
+lwidth= 3.0 #2.5 #3.0#2.5#2.0#1.5 
 lpad = 12 
 
 labelsize=lbfontsz#40#30#20
@@ -87,7 +87,7 @@ matplotlib.pyplot.rcParams.update({'xtick.major.size': 10.0})
 matplotlib.pyplot.rcParams.update({'font.family': 'serif'})
 #matplotlib.pyplot.rcParams.update({'font.serif': 'Times'})
 
-matplotlib.pyplot.tight_layout()
+#matplotlib.pyplot.tight_layout()
 
 plot_only_I = False
 plot_all = True
@@ -117,7 +117,7 @@ if(compare_to_arcmancer):
 	for ic in range(0,1):
 		if(ic == 0):
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
-			datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
+			datafile = "arcman_res/polar_f600_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_obl_img1000.csv"# (copy).csv"
 			#datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# (copy).csv"
 		if(ic == 1):
@@ -135,7 +135,7 @@ if(compare_to_arcmancer):
 		#egrid = 3
 		egrid = 6#5#3
 		#full_chain= [[] for x in xrange(egrid+1)]
-		full_chain= [[] for x in range(egrid+1)]
+		full_chain= [[] for ix in range(egrid+1)]
 
 		#input = file(datafile, 'r')
 		input = open(datafile, 'r')
@@ -197,7 +197,7 @@ if(compare_to_arcmancer):
 					Nchain_size = sum(1 for line in open(datafile))
 					print(Nchain_size)
 					egrid = 6#5#3
-					full_chain= [[] for x in range(egrid+1)]
+					full_chain= [[] for ix in range(egrid+1)]
 					for j in range(0,len(full_chain)):
 						for i in range(c_lines,Nchain_size): #not reading comment lines
 							parts = lines[i].split(",")
@@ -264,7 +264,7 @@ if(compare_to_arcmancer):
 				Nchain_size = sum(1 for line in open(datafile))
 				print(Nchain_size)
 				egrid = 6#5#3
-				full_chain= [[] for x in range(egrid+1)]
+				full_chain= [[] for ix in range(egrid+1)]
 				for j in range(0,len(full_chain)):
 					for i in range(c_lines,Nchain_size): #not reading comment lines
 						parts = lines[i].split(",")
@@ -321,7 +321,7 @@ for ish in range(1,3):#len(shapes)):
 	if(ish == 2):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
-		PulsName='res/B/lbb_rho10_sp1_f600_sph'#_accspot'
+		PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2'#_accspot'
 		#PulsName='res/B/B0Ptest'
 	#PulsName=AtmName+'P1'
 	computePulse= True
@@ -347,6 +347,8 @@ for ish in range(1,3):#len(shapes)):
 	#print(fluxspec0)
 
 	ene = 118#166#140#166#140 #The chosen energy index
+	#print(x)
+	#print(evere)
 	print("The chosen energy (keV): ", x[ene]*evere/1e3)
 	fluxlcurve_Iene = Flux1[0+ene*3:len(Flux1):3*NEnergy]
 	fluxlcurve_Qene = Flux1[1+ene*3:len(Flux1):3*NEnergy]
@@ -359,19 +361,26 @@ for ish in range(1,3):#len(shapes)):
 
 
 	#phase=list(phi/2/pi)+[1.]
-	phase=list(phi)+[1.]
-	I=zeros(NPhase+1)
-	Q=zeros(NPhase+1)
-	U=zeros(NPhase+1)
-	for t in range(NPhase+1):
+	#phase=list(phi)#+[1.]
+	phil = list(phi)
+	phase=zeros(NPhase)
+	I=zeros(NPhase)#+1)
+	Q=zeros(NPhase)#+1)
+	U=zeros(NPhase)#+1)
+	for t in range(NPhase):#+1):
 		#I[t],Q[t],U[t]=Flux[t-1,e]*x[e] 
-		I[t],Q[t],U[t]=fluxlcurve_Iene[t-1]*x[ene] ,fluxlcurve_Qene[t-1]*x[ene] ,fluxlcurve_Uene[t-1]*x[ene] 
+		I[t],Q[t],U[t]=fluxlcurve_Iene[t-1]*x[ene] ,fluxlcurve_Qene[t-1]*x[ene] ,fluxlcurve_Uene[t-1]*x[ene]
+		phase[t] = phil[t]
+		#I[t],Q[t],U[t]=fluxlcurve_Iene[t]*x[ene] ,fluxlcurve_Qene[t]*x[ene] ,fluxlcurve_Uene[t]*x[ene]
 
 	p=sqrt(Q**2+U**2)/I*100
 	#PA=arctan2(-U,-Q)*90/pi+90
 	PA=arctan2(U,Q)*90/pi+90
        	
-
+	#print("ish=",ish)
+	#for t in range(NPhase):
+	#	print(phase[t], I[t])
+        
 	#figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
 	#              r'$,\,R_e={:5.1f}km$'.format(R_e)+
 	#              #r'$,\,R_e=11,12,14km$'.format(R_e)+
@@ -396,7 +405,7 @@ for ish in range(1,3):#len(shapes)):
 			#plotAc.set_ylim(-180,180)
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
 			plotAc.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
-			plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
+			plotAc.set_ylabel(r'$\chi\,[\mathrm{deg}]$',fontsize=fontsize)
 			#plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
 			if(plot_all):
@@ -408,10 +417,10 @@ for ish in range(1,3):#len(shapes)):
 				plotAF.set_xlim(0,1)
 				# plotAF.locator_params(axis='y', nbins=10)
 				#plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
-				plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
+				plotAF.set_ylabel(r'$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
 				#plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
-				plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{I}}(\varphi)$',fontsize=fontsize)
-				plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{I}}(\varphi)$',fontsize=fontsize) 
+				plotAp.set_ylabel(r'$F_{\mathrm{Q}}/F_{\mathrm{I}}$',fontsize=fontsize)
+				plotAd.set_ylabel(r'$F_{\mathrm{U}}/F_{\mathrm{I}}$',fontsize=fontsize) 
 				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 				plotAd.set_xlim(0,1)
 				plotAF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
@@ -436,10 +445,10 @@ for ish in range(1,3):#len(shapes)):
 		#find best-phasehift:
 		phshift1, gf1 = find_best_phshift.find_best_phshift(np.array(phase),PA,phase_acm0,PA_acm0)
 		phshift1 = phshift1 -1.0
-		print(phshift1)
+		print("Phaseshift for oblate star: ",phshift1)
 		#quit()
 		#in the end, setting the shift by hand seems still to produce better results		
-		#phshift1 = 0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		#phshift1 = 0.0 #0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
@@ -465,8 +474,8 @@ for ish in range(1,3):#len(shapes)):
 		#find best-phasehift:
 		phshift2, gf2 = find_best_phshift.find_best_phshift(np.array(phase),PA,phase_acm0,PA_acm0)
 		phshift2 = phshift2 -1.0
-		print(phshift2)
-		#phshift2 = -0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		print("phaseshift for spherical star: ",phshift2)
+		#phshift2 = 0.0 #0.1 #-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
 		phase_new = shift_phase(np.array(phase),phshift2)
 		print(len(phase_new))
 		for ipha in range(0,len(phase_new)-1):
@@ -652,8 +661,12 @@ plotAF.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 plotAp.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAc.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
-plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
+#plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
+plotAc.set_xlabel(r'$\varphi / (2\pi)$',fontsize=fontsize)
 
+
+figA.tight_layout()
+figA.subplots_adjust(wspace=0, hspace=0)
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
 figA.savefig('res/B/plot.pdf')#.format(e))

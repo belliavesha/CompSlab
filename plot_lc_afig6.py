@@ -63,11 +63,11 @@ shapes = np.copy(colors)
 
 
 #rc("text", usetex=True)
-figA = figure(figsize=(14,18), dpi=300) #8,6
+figA = figure(figsize=(15,16), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
-lbfontsz = 30#25 
+lbfontsz = 35#30#25 
 lwidth= 3.0#2.5#2.0#1.5 
 lpad = 12 
 
@@ -141,7 +141,8 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
 		#PulsName='res/B/lbb_rho10_sp1_f600_sph'
-		PulsName='res/B/B0Prho10sphsp2'
+		#PulsName='res/B/B0Prho10sphsp2'
+		PulsName='res/B/B0Prho10sphsp2_dmr'
 	#PulsName=AtmName+'P1'
 	computePulse= True
 	plotAtm=not True
@@ -214,7 +215,7 @@ for ish in range(1,3):#len(shapes)):
 	plotAF.set_xlim(0,1)
 
 	# plotAF.locator_params(axis='y', nbins=10)
-	plotAF.set_ylabel(r"$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$",fontsize=fontsize)
+	plotAF.set_ylabel(r"$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$",fontsize=fontsize)
 	plotAF.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
 	# plotAF.plot(x,xIinx,'k-.')
 
@@ -239,8 +240,8 @@ for ish in range(1,3):#len(shapes)):
 			#plotAc.set_ylim(-180,180)
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
 			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
-			plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
-			plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
+			plotAc.set_ylabel(r'$\chi\,[\mathrm{deg}]$',fontsize=fontsize)
+			plotAc.set_xlabel(r'$\varphi/(2\pi)$',fontsize=fontsize)
 
 	#col=colors[(e*NColors)//NEnergy]
 	col = colors[ish]
@@ -580,6 +581,10 @@ plotAF.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 plotAp.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAc.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+
+
+figA.tight_layout()
+figA.subplots_adjust(wspace=0, hspace=0)
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
 figA.savefig('res/B/plot.pdf')#.format(e))

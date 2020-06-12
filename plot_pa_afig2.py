@@ -61,6 +61,7 @@ x,x_weight=IntEnergy
 
 #rc("text", usetex=True)
 figA = figure(figsize=(14,18), dpi=300) #8,6
+#figA = figure(figsize=(14,16), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
@@ -393,7 +394,7 @@ for ish in range(1,2):#len(shapes)):
 			#plotAc.set_ylim(-180,180)
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
 			plotAc.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
-			plotAc.set_ylabel(r'$\chi\,[\degree]$',fontsize=fontsize)
+			plotAc.set_ylabel(r'$\chi\,[\mathrm{deg}]$',fontsize=fontsize)
 			#plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
 			if(plot_all):
@@ -406,7 +407,7 @@ for ish in range(1,2):#len(shapes)):
 				plotAF.set_xlim(0,1)
 				## plotAF.locator_params(axis='y', nbins=10)
 				#plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)/F_{\mathrm{x}}^{\mathrm{max}}$",fontsize=fontsize)
-				plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)$",fontsize=fontsize)
+				plotAF.set_ylabel(r"$F_{\mathrm{x}}$",fontsize=fontsize)
 				##plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
 				##plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
@@ -564,7 +565,7 @@ if(plot_PA_residuals):
 	#plotAd.tick_params(axis='y', which='major', labelsize=8)
 	plotAd.tick_params(axis='x', which='major', labelsize=labelsize)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}/\chi_{\mathrm{vp}}$',fontsize=fontsize)
-	plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}} [\degree]$',fontsize=fontsize)
+	plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}} \ [\mathrm{deg}]$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\frac{\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}}}{\chi_{\mathrm{max}}-\chi_{\mathrm{min}}}$',fontsize=fontsize)
 	#plotAd.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
@@ -634,14 +635,15 @@ plotAp.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 plotAc.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
-plotAd.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
+plotAd.set_xlabel(r'$\varphi / (2\pi)$',fontsize=fontsize)
 
 plotAF.tick_params(axis='both', which='major', labelsize=fontsize)
 plotAp.tick_params(axis='both', which='major', labelsize=fontsize)
 plotAc.tick_params(axis='both', which='major', labelsize=fontsize)
 plotAd.tick_params(axis='both', which='major', labelsize=fontsize)
 
-#figA.tight_layout()
+figA.tight_layout()
+figA.subplots_adjust(wspace=0, hspace=0)
 
 figA.subplots_adjust(left=0.15)
 
