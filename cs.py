@@ -1057,27 +1057,23 @@ if computePulse:
                         if I<0: ############
                               print('never')
                         Flux_obs[t,e]=[I, Q*cos_2chi, Q*sin_2chi]
-            
+                        
             for t in range(NPhase):
                   phase0=phase[t]
                   for t2 in range(NPhi):
                         t1=t2-1
                         phase2=phase_obs[t2]
                         phase1=phase_obs[t1]
-                        if phase0>phase1 and phase0<phase2:
+                        dphase10 = (phase1-phase0+0.5)%1-0.5
+                        dphase20 = (phase2-phase0+0.5)%1-0.5
+                        if dphase10<0.0<dphase20 :
                               break
-                  else :
-                        phase0=0
-                        t2=argmin(phase_obs)
-                        t1=t2-1
-                        phase2=phase_obs[t2]
-                        phase1=phase_obs[t1]-1
-                              
+
                   dphase1=phase0-phase1
                   dphase2=phase2-phase0
                   dphase=phase2-phase1
                   Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase
-                  
+                              
 
       s,gn=pr(s,gn,'curves done ')
     
