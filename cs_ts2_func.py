@@ -30,7 +30,7 @@ oblateness='AlGendy'
 AtmName='res/B/B0_new' # the prefix for all result files related to the set of parameters
 #PulsName=AtmName+'P2'
 #PulsName='res/B/B0P1'
-PulsName='res/B/B0Ptest'
+PulsName='res/B/B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
 #PulsName='res/B/B0Prho10'
 computePulse= True
 plotAtm=False#True
@@ -629,17 +629,21 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 					if phase0>phase1 and phase0<phase2:
 						break
 				else :
-					phase0=0
+					#phase0=0
+					if(phase0>max(phase_obs)):
+						phase0=phase0-1
 					t2=argmin(phase_obs)
 					t1=t2-1
 					phase2=phase_obs[t2]
 					phase1=phase_obs[t1]-1
+					#print("else happened: ",t1,t2,phase1,phase2,phase0)
+					#print(phase_obs)
 
 				dphase1=phase0-phase1
 				dphase2=phase2-phase0
 				dphase=phase2-phase1
 				Flux[t-1]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase #TS: changed here t to t-1 to match the phaseshift to my fortran results
-				#print(Flux[t,0], t, NPhi)
+				#print(Flux[t-1,0], t-1, NPhi)
 
 		#s,gn=pr(s,gn,'curves done ')
 	    
