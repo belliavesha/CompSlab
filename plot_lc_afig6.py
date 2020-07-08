@@ -129,8 +129,8 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/B0Prho10'
-		PulsName='res/B/B0Prho10oblsp2'
-		#PulsName='res/B/lbb_rhoinf_chi0'
+		#PulsName='res/B/B0Prho10oblsp2' #in the old version
+		PulsName='res/B/lbb_rho10_sp2_f600_obl_burst'
 	if(ish == 2):
 		#AtmName='res/C2/C1obl'  
 		#PulsName='res/C2/obl2test'
@@ -142,7 +142,9 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
 		#PulsName='res/B/lbb_rho10_sp1_f600_sph'
 		#PulsName='res/B/B0Prho10sphsp2'
-		PulsName='res/B/B0Prho10sphsp2_dmr'
+		#PulsName='res/B/B0Prho10sphsp2_dmr' #this used in the old version
+		PulsName='res/B/lbb_rho10_sp2_f600_sph_dmr2_burst'
+                
 	#PulsName=AtmName+'P1'
 	computePulse= True
 	plotAtm=not True

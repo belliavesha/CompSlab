@@ -93,17 +93,25 @@ plot_only_I = False
 plot_all = True
 plot_QU = False#True
 two_spots = False#True
+plot_resid = True
 
 matplotlib.pyplot.subplots_adjust(wspace=0, hspace=0)
 
 
 if(plot_all):
-	plotAF=figA.add_subplot(4,1,1,yscale='linear') 
-	plotAp=figA.add_subplot(4,1,2)      #
-	#plotAc=figA.add_subplot(4,1,3)      #
-	#plotAd=figA.add_subplot(4,1,4)      #
-	plotAd=figA.add_subplot(4,1,3)      #
-	plotAc=figA.add_subplot(4,1,4)      #
+	if not (plot_resid):
+	        plotAF=figA.add_subplot(4,1,1,yscale='linear') 
+	        plotAp=figA.add_subplot(4,1,2)      #
+	        #plotAc=figA.add_subplot(4,1,3)      #
+	        #plotAd=figA.add_subplot(4,1,4)      #
+	        plotAd=figA.add_subplot(4,1,3)      #
+	        plotAc=figA.add_subplot(4,1,4)      #
+	else:
+		plotAF=figA.add_subplot(5,1,1,yscale='linear')
+		plotAp=figA.add_subplot(5,1,2)
+		plotAd=figA.add_subplot(5,1,3)
+		plotAc=figA.add_subplot(5,1,4)
+		plotAr=figA.add_subplot(5,1,5)
 else:	
 	plotAc=figA.add_subplot(2,1,1)      #
 	plotAd=figA.add_subplot(2,1,2)      #
@@ -117,7 +125,8 @@ if(compare_to_arcmancer):
 	for ic in range(0,1):
 		if(ic == 0):
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
-			datafile = "arcman_res/polar_f600_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
+			#datafile = "arcman_res/polar_f600_bb_r12_m1.4_d60_i40_x10_agm.csv"# used in old results
+			datafile = "../arcmancer/out3/polar_acc_f600_burst_r12_m1.4_d60_i40_x10_agm.csv"
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_obl_img1000.csv"# (copy).csv"
 			#datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# (copy).csv"
 		if(ic == 1):
@@ -161,7 +170,7 @@ if(compare_to_arcmancer):
 			#norm_obsF[:,i-1] = full_chain[i,:]*energy_keV[i-1]/np.max(full_chain[i,:]*energy_keV[i-1])
 			#norm_obsF[:,i-1] = full_chain[i,:]/np.max(full_chain[i,:])
 			norm_obsF[:,i-1] = full_chain[i,:]/full_chain[1,:]
-		norm_obsF[:,0] = full_chain[1,:]/np.max(full_chain[i,:])
+		norm_obsF[:,0] = full_chain[1,:]/np.max(full_chain[1,:])
 
 
 		#for i in range(0,egrid):
@@ -315,13 +324,15 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
 		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
-		PulsName='res/B/lbb_rho10_sp1_f600_obl'#_accspot'
+		#PulsName='res/B/lbb_rho10_sp1_f600_obl'#obl_accspot used in old results
+		PulsName='res/B/lbb_rho10_sp1_f600_obl_test'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_chi0'
 	if(ish == 2):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
-		PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2'#_accspot'
+		#PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2'#_accspot' #used in the previous results
+		PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2_test'
 		#PulsName='res/B/B0Ptest'
 	#PulsName=AtmName+'P1'
 	computePulse= True
@@ -425,9 +436,9 @@ for ish in range(1,3):#len(shapes)):
 				plotAd.set_xlim(0,1)
 				plotAF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 
-				plotAp.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
-				plotAp.set_yticks([-0.9,0.0,0.9])
-				plotAp.set_yticklabels(["-0.9","0.0","0.9"],fontstyle="normal")
+				#plotAp.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+				#plotAp.set_yticks([-0.9,0.0,0.9])
+				#plotAp.set_yticklabels(["-0.9","0.0","0.9"],fontstyle="normal")
 
 				plotAF.set_ylim(0.1,1.1)
 				plotAF.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
@@ -449,6 +460,7 @@ for ish in range(1,3):#len(shapes)):
 		#quit()
 		#in the end, setting the shift by hand seems still to produce better results		
 		#phshift1 = 0.0 #0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		#phshift1 = -0.025#-0.048315
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
@@ -483,10 +495,10 @@ for ish in range(1,3):#len(shapes)):
 				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
 				if(plot_all):
 					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col,linewidth=lwidth)
-					##plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
-					##plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
-					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
-					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
+					###plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
+					###plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
+					##plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					##plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
 
 					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
 					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
@@ -572,33 +584,31 @@ if(compare_to_fortran_vlad):
 
 
 
-plot_PA_residuals = False#True
-if(plot_QU):
-	plot_PA_residuals = False
-if(plot_PA_residuals): 
+#plot_PA_residuals = True
+#if(plot_QU):
+#	plot_PA_residuals = False
+#if(plot_PA_residuals):
+if(plot_resid):
 	col = "black"
-	plotAd.set_xlim(0,1)
-	#plotAd.set_ylim(0.97,1.06)
-	#plotAd.set_ylim(0.0,0.11)
-	#plotAd.set_ylim(-4.0,3.0)
-	#plotAd.set_ylim(-0.02,0.02)
-	#plotAd.set_ylim(-0.005,0.005)
-	#plotAd.set_ylim(-1.0,1.0)
-	#plotAd.set_ylim(-0.3,0.3)
-	plotAd.set_ylim(-10.0,10.0)
+	plotAr.set_xlim(0,1)
+	plotAr.set_ylim(-10.0,10.0)
 
-
+	plotAr.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
 
 
 	#plotAd.set_yticks([0,30,60,90,120,150,180])
-	plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+	plotAr.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
 	#plotAd.tick_params(axis='y', which='major', labelsize=8)
 	#plotAd.tick_params(axis='x', which='major', labelsize=labelsize)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}/\chi_{\mathrm{vp}}$',fontsize=fontsize)
-	plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}} [\degree]$',fontsize=fontsize)
+	plotAr.set_ylabel(r'$\Delta \chi \ [\mathrm{deg}]$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\frac{\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}}}{\chi_{\mathrm{max}}-\chi_{\mathrm{min}}}$',fontsize=fontsize)
-	plotAd.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
+	#plotAd.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
+	plotAr.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+	plotAr.set_yticks([-5.0,0.0,5.0])
+	plotAr.set_yticklabels(["-5","0","5"],fontstyle="normal")
+        
 	#print(len(phase_VP04),len(phase_acm))
 	PA_VP04_interp = interp1d(phase_VP04,PA_VP04)#,"cubic")
 	#PA0_VP04_interp = interp1d(phase0_VP04,PA0_VP04)#,"cubic")
@@ -612,9 +622,9 @@ if(plot_PA_residuals):
 
 	#print(phase_acm0)
 	res_PA = (PA_acm0-PA0_VP04_interp(phase_acm0))/norm
-	plotAd.plot(phase_acm0[abs(res_PA) < 20.0],res_PA[abs(res_PA) < 20.0],"-",markersize=5,color="red")
+	plotAr.plot(phase_acm0[abs(res_PA) < 10.0],res_PA[abs(res_PA) < 10.0],"-",markersize=5,color="red")
 	res_PA_2 = (PA_acm0-PA0_VP04_2_interp(phase_acm0))/norm
-	plotAd.plot(phase_acm0[abs(res_PA_2) < 20.0],res_PA_2[abs(res_PA_2) < 20.0],color="green")
+	plotAr.plot(phase_acm0[abs(res_PA_2) < 10.0],res_PA_2[abs(res_PA_2) < 10.0],color="darkorange")
 	#for ipha in range(0,len(phase_acm0)-1):
 	#	#if(phase_new[ipha+1] > phase_new[ipha]):
 	#	if(phase_acm0[ipha+1] > phase_acm0[ipha]):
@@ -623,30 +633,6 @@ if(plot_PA_residuals):
 
 
 	#plotAp.set_ylim(0.0,0.02)
-
-	plotAp.set_ylim(0.0,0.5)
-
-	F0_VP04_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift1),F0_VP04,fill_value='extrapolate')# workd with newer scipy
-	Q0_VP04_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift1),Q0_VP04,fill_value='extrapolate')# workd with newer scipy
-	U0_VP04_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift1),U0_VP04,fill_value='extrapolate')# workd with newer scipy
-	res_F = abs((F_acm0-F0_VP04_interp(phase_acm0))/F_acm0)
-	res_Q = abs((Q_acm0-Q0_VP04_interp(phase_acm0))/Q_acm0)
-	res_U = abs((U_acm0-U0_VP04_interp(phase_acm0))/U_acm0)
-	plotAp.plot(phase_acm0,res_F,"-",markersize=5,color="blue")
-	plotAp.plot(phase_acm0[res_Q < 0.02],res_Q[res_Q < 0.02],"-",markersize=5,color="darkblue")
-	plotAp.plot(phase_acm0[res_U < 0.02],res_U[res_U < 0.02],"-",markersize=5,color="lightblue")
-
-	F0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),F0_VP04_2,fill_value='extrapolate')# workd with newer scipy
-	Q0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),Q0_VP04_2,fill_value='extrapolate')# workd with newer scipy
-	U0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),U0_VP04_2,fill_value='extrapolate')# workd with newer scipy
-	res_F = abs((F_acm0-F0_VP04_2_interp(phase_acm0))/F_acm0)
-	res_Q = abs((Q_acm0-Q0_VP04_2_interp(phase_acm0))/Q_acm0)
-	res_U = abs((U_acm0-U0_VP04_2_interp(phase_acm0))/U_acm0)
-	plotAp.plot(phase_acm0,res_F,"-",markersize=5,color="green")
-	plotAp.plot(phase_acm0[res_Q < 0.5],res_Q[res_Q < 0.5],"-",markersize=5,color="darkgreen")
-	plotAp.plot(phase_acm0[res_U < 0.5],res_U[res_U < 0.5],"-",markersize=5,color="lightgreen")
-
-
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
 
@@ -662,8 +648,14 @@ plotAp.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAc.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
-plotAc.set_xlabel(r'$\varphi / (2\pi)$',fontsize=fontsize)
+if not (plot_resid):
+	plotAc.set_xlabel(r'$\varphi / (2\pi)$',fontsize=fontsize)
+else:
+	plotAc.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+	plotAr.set_xlabel(r'$\varphi / (2\pi)$',fontsize=fontsize)
 
+plotAc.set_yticks([0,50,100,150])
+plotAc.set_yticklabels(["0","50","100","150"],fontstyle="normal")
 
 figA.tight_layout()
 figA.subplots_adjust(wspace=0, hspace=0)

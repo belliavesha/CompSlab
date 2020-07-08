@@ -21,16 +21,16 @@ Spectrum={
       3:'Thomson',
       4:'Bbody',
       0:'FromFile'
-}[0]
+#}[0]
 #}[4]
-#}[2]
+}[2]
 
 oblateness='AlGendy'
 
 AtmName='res/B/B0_new' # the prefix for all result files related to the set of parameters
 #PulsName=AtmName+'P2'
 #PulsName='res/B/B0P1'
-PulsName='res/B/B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
+PulsName='res/B/lbb_rho10_sp2_f600_obl_burst'#B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
 #PulsName='res/B/B0Prho10'
 computePulse= True
 plotAtm=False#True
@@ -172,9 +172,11 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		for e in range(NEnergy):
 			# print(e,log(Planck(x[e-1])/Planck(x[e]))/log(x[e]/x[e-1]),'           ',log(x[e])/log(10),'  ')
 			for d in range(NZenith):
-				Intensity[e,d,0]=Planck(x[e],T)#*(1 + 2.06*mu[d])#TS TESTING BLACKBODY energy spectrum with burst-beaming only in polarization
-				#Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
-				Intensity[e,d,1]=Intensity[e,d,0]#*0.1171*(mu[d] - 1.)/(1. + 3.82*abs(mu[d]))
+				#Intensity[e,d,0]=Planck(x[e],T)#*(1 + 2.06*mu[d])#TS TESTING BLACKBODY energy spectrum with burst-beaming only in polarization
+                                #burst beaming approx normalized so that int over mus from 0 to 1 gives same as it will for istropic case (1/2):
+				Intensity[e,d,0]=Planck(x[e],T)*(3.0/7.0)*(1.0+2.0*mu[d])
+				Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
+				#Intensity[e,d,1]=Intensity[e,d,0]#*0.1171*(mu[d] - 1.)/(1. + 3.82*abs(mu[d]))
 		#s,gn=pr(s,gn,'I0')
 		# exit()
 
@@ -338,7 +340,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 			rho_total=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
 			theta_center=pi/180.0*theta_deg#pi/4.1
 
-			antipodal = True
+			antipodal = True #False #True
 
 			NSpots=0
 			varphi,dvarphi=IntVarphi[0]*pi,IntVarphi[1] *pi

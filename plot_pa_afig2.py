@@ -51,7 +51,7 @@ x_l, x_u = -3.7 , .3 # lower and upper bounds of the log_10 energy span
 Theta = 0.1  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
 T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 IntEnergy = logspace(x_l,x_u,NEnergy), log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for integrations over the spectrum computing sorce function
-x,x_weight=IntEnergy
+x_ene,x_weight=IntEnergy
 
 
 
@@ -87,16 +87,24 @@ plot_all = True
 plot_QU = False#True
 two_spots = False#True
 
+plot5 = True
+
 matplotlib.pyplot.subplots_adjust(wspace=0, hspace=0)
 
 
 if(plot_all):
-	plotAF=figA.add_subplot(4,1,1,yscale='linear') 
-	plotAp=figA.add_subplot(4,1,2)      #
-	plotAc=figA.add_subplot(4,1,3)      #
-	plotAd=figA.add_subplot(4,1,4)      #
-	#plotAd=figA.add_subplot(4,1,3)      #
-	#plotAc=figA.add_subplot(4,1,4)      #
+	if not(plot5):
+		plotAF=figA.add_subplot(4,1,1,yscale='linear') 
+		plotAp=figA.add_subplot(4,1,2)      #
+		plotAc=figA.add_subplot(4,1,3)      #
+		plotAd=figA.add_subplot(4,1,4)      #
+	if(plot5):
+		plotAFF=figA.add_subplot(5,1,1,yscale='linear')
+		plotAF=figA.add_subplot(5,1,2)
+		plotAp=figA.add_subplot(5,1,3)
+		plotAc=figA.add_subplot(5,1,4)
+		plotAd=figA.add_subplot(5,1,5)      
+        
 else:	
 	plotAc=figA.add_subplot(2,1,1)      #
 	plotAd=figA.add_subplot(2,1,2)      #
@@ -111,7 +119,8 @@ if(compare_to_arcmancer):
 		if(ic == 0):
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_obl_img1000.csv"# (copy).csv"
-			datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# (copy).csv"
+                        #datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# this was used in old results
+			datafile = "../arcmancer/out3/polar_acc_f600_burst_r12_m1.4_d60_i40_x10_obl.csv"# (copy).csv"
 		if(ic == 1):
 			datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d40_i60_x01_sph.csv"
 			#datafile = "../arcmancer/out3/polar_f700_bb_r12_m1.6_d50_i50_x05.csv"
@@ -277,10 +286,16 @@ if(compare_to_arcmancer):
 
 
 			#for i in range(ene,ene+1):
-			for i in range(0,ene+3): #this if plotting all stokes fluxes to same plot
+			sind=0
+			if(plot5):
+				sind=1
 				for ipha in range(0,len(phase_new)-1):
 					if(phase_new[ipha+1] > phase_new[ipha]):
-						plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],marker="o",markersize="1.0")
+						plotAFF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,0],color=colors[0])
+			for i in range(sind,ene+3): #sind=0 if plotting all stokes fluxes to same plot
+				for ipha in range(0,len(phase_new)-1):
+					if(phase_new[ipha+1] > phase_new[ipha]):
+						plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i])#,marker="o",markersize="1.0")
 						#if(i == 0):
 						#	plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],markersize="1.0")
 						#if(i == 1):
@@ -308,7 +323,8 @@ for ish in range(1,2):#len(shapes)):
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires'#THIS one was the first shown to work with arcmancer
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
-		PulsName='res/B/lbb_rho10_sp1_f600_obl_accspot'
+		#PulsName='res/B/lbb_rho10_sp1_f600_obl_accspot'#test'#accspot' #this was used in the first results
+	        PulsName='res/B/lbb_rho10_sp1_f600_obl_burst'
 		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_chi0'
@@ -341,7 +357,7 @@ for ish in range(1,2):#len(shapes)):
 	#print(fluxspec0)
 
 	ene = 118#166#140#166#140 #The chosen energy index
-	print("The chosen energy (keV): ", x[ene]*evere/1e3)
+	print("The chosen energy (keV): ", x_ene[ene]*evere/1e3)
 	fluxlcurve_Iene = Flux1[0+ene*3:len(Flux1):3*NEnergy]
 	fluxlcurve_Qene = Flux1[1+ene*3:len(Flux1):3*NEnergy]
 	fluxlcurve_Uene = Flux1[2+ene*3:len(Flux1):3*NEnergy]
@@ -363,7 +379,7 @@ for ish in range(1,2):#len(shapes)):
 	U=zeros(NPhase+1)
 	for t in range(NPhase+1):
 		#I[t],Q[t],U[t]=Flux[t-1,e]*x[e] 
-		I[t],Q[t],U[t]=fluxlcurve_Iene[t-1]*x[ene] ,fluxlcurve_Qene[t-1]*x[ene] ,fluxlcurve_Uene[t-1]*x[ene] 
+		I[t],Q[t],U[t]=fluxlcurve_Iene[t-1]*x_ene[ene] ,fluxlcurve_Qene[t-1]*x_ene[ene] ,fluxlcurve_Uene[t-1]*x_ene[ene] 
 
 	p=sqrt(Q**2+U**2)/I*100
 	#PA=arctan2(-U,-Q)*90/pi+90
@@ -407,7 +423,13 @@ for ish in range(1,2):#len(shapes)):
 				plotAF.set_xlim(0,1)
 				## plotAF.locator_params(axis='y', nbins=10)
 				#plotAF.set_ylabel(r"$F_{\mathrm{x}}(\varphi)/F_{\mathrm{x}}^{\mathrm{max}}$",fontsize=fontsize)
-				plotAF.set_ylabel(r"$F_{\mathrm{x}}$",fontsize=fontsize)
+				if(plot5):
+					plotAFF.set_xlim(0,1)
+					plotAFF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+					plotAF.set_ylabel(r"$F_{\mathrm{x}}/F_{\mathrm{I}}$",fontsize=fontsize)
+					plotAFF.set_ylabel(r"$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$",fontsize=fontsize)
+				else:
+					plotAF.set_ylabel(r"$F_{\mathrm{x}}$",fontsize=fontsize)
 				##plotAF.set_ylabel(r'$F_{\mathrm{I}}(\varphi)/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
 				##plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
@@ -426,15 +448,20 @@ for ish in range(1,2):#len(shapes)):
 		print(phshift1)
 		#quit()
 		#in the end, setting the shift by hand seems still to produce better results		
-		phshift1 = -0.2517#0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		#phshift1 = -0.048315#-0.2517#0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
 				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",markersize="1.0")
 				if(plot_all):
-					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
-					plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color="red")#"darkblue")
-					plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color="darkorange")#"lightblue")
+					if plot5:
+						plotAFF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
+						plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color="red") 
+						plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color="darkorange")
+					else:
+						plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
+						plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color="red")
+						plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color="darkorange")
 					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col)
 					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col)
 		PA0_VP04 = PA
@@ -565,7 +592,7 @@ if(plot_PA_residuals):
 	#plotAd.tick_params(axis='y', which='major', labelsize=8)
 	plotAd.tick_params(axis='x', which='major', labelsize=labelsize)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}/\chi_{\mathrm{vp}}$',fontsize=fontsize)
-	plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}} \ [\mathrm{deg}]$',fontsize=fontsize)
+	plotAd.set_ylabel(r'$\chi_{\mathrm{arc}}-\chi_{\mathrm{obl}} \ [\mathrm{deg}]$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\frac{\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}}}{\chi_{\mathrm{max}}-\chi_{\mathrm{min}}}$',fontsize=fontsize)
 	#plotAd.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
 
@@ -582,7 +609,7 @@ if(plot_PA_residuals):
 
 	#print(phase_acm0)
 	res_PA = (PA_acm0-PA0_VP04_interp(phase_acm0))/norm
-	plotAd.plot(phase_acm0[abs(res_PA) < 20.0],res_PA[abs(res_PA) < 20.0],"-",markersize=5,color="blue")#"red")
+	plotAd.plot(phase_acm0[abs(res_PA) < 5.0],res_PA[abs(res_PA) < 5.0],"-",markersize=5,color="black")#"red")
 	#res_PA_2 = (PA_acm0-PA0_VP04_2_interp(phase_acm0))/norm
 	#plotAd.plot(phase_acm0[abs(res_PA_2) < 20.0],res_PA_2[abs(res_PA_2) < 20.0],color="green")
 	#for ipha in range(0,len(phase_acm0)-1):
@@ -590,24 +617,24 @@ if(plot_PA_residuals):
 	#	if(phase_acm0[ipha+1] > phase_acm0[ipha]):
 	#		plotAd.plot(phase_acm0[ipha:ipha+2],(PA_acm0[ipha:ipha+2]-PA0_VP04_interp(phase_acm0[ipha:ipha+2]))/norm,color="blue")
 	#		#plotAd.plot(phase_acm0[ipha:ipha+2],(PA_acm0[ipha:ipha+2]-PA_VP04_interp(phase_acm0[ipha:ipha+2]))/norm,color="green")
+	print("sum_PA_err=",sum(res_PA[abs(res_PA)<5.0]))
 
-
-	plotAp.set_ylim(0.0,0.025)
+	plotAp.set_ylim(-0.025,0.025)
 
 	#plotAp.set_ylim(0.0,0.5)
 
 	F0_VP04_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift1),F0_VP04,fill_value='extrapolate')# workd with newer scipy
 	Q0_VP04_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift1),Q0_VP04,fill_value='extrapolate')# workd with newer scipy
 	U0_VP04_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift1),U0_VP04,fill_value='extrapolate')# workd with newer scipy
-	res_F = abs((F_acm0-F0_VP04_interp(phase_acm0))/F_acm0)
-	res_Q = abs((Q_acm0-Q0_VP04_interp(phase_acm0))/Q_acm0)
-	res_U = abs((U_acm0-U0_VP04_interp(phase_acm0))/U_acm0)
+	res_F = (F_acm0-F0_VP04_interp(phase_acm0))/F_acm0#abs((F_acm0-F0_VP04_interp(phase_acm0))/F_acm0)
+	res_Q = (Q_acm0-Q0_VP04_interp(phase_acm0))/Q_acm0
+	res_U = (U_acm0-U0_VP04_interp(phase_acm0))/U_acm0
 	#print(res_F)
 	#print(res_Q)
 	#print(res_U)
 	plotAp.plot(phase_acm0,res_F,"-",markersize=5,color="blue")
-	plotAp.plot(phase_acm0[res_Q < 0.02],res_Q[res_Q < 0.02],"-",markersize=5,color="red")#"darkblue")
-	plotAp.plot(phase_acm0[res_U < 0.02],res_U[res_U < 0.02],"-",markersize=5,color="darkorange")#"lightblue")
+	plotAp.plot(phase_acm0[abs(res_Q) < 0.02],res_Q[abs(res_Q) < 0.02],"-",markersize=5,color="red")#"darkblue")
+	plotAp.plot(phase_acm0[abs(res_U) < 0.02],res_U[abs(res_U) < 0.02],"-",markersize=5,color="darkorange")#"lightblue")
 
 	#F0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),F0_VP04_2,fill_value='extrapolate')# workd with newer scipy
 	#Q0_VP04_2_interp = interp1d(shift_phase(np.array(phase0_VP04),phshift2),Q0_VP04_2,fill_value='extrapolate')# workd with newer scipy
@@ -646,6 +673,16 @@ figA.tight_layout()
 figA.subplots_adjust(wspace=0, hspace=0)
 
 figA.subplots_adjust(left=0.15)
+
+if(plot5):
+	plotAFF.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+	plotAFF.tick_params(axis='both', which='major', labelsize=fontsize)
+	plotAc.set_yticks([0,50,100,150])
+	plotAc.set_yticklabels(["0","50","100","150"],fontstyle="normal")
+	figA.subplots_adjust(left=0.175)
+else:
+	figA.subplots_adjust(left=0.15)
+
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
 figA.savefig('res/B/plot.pdf')#.format(e))

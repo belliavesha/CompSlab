@@ -41,8 +41,8 @@ def find_best_phshift(phi,PA,phi_obs,PA_obs):
 
 	phgrid = 100#50
 	phaseshift = 0.0
-	ph_min = 0.0#0.1
-	ph_mid = 0.5#0.35
+	ph_min = 0.9#0.0#0.1 #Hacks helping to find correct point
+	ph_mid = 0.95#0.5#0.35
 	ph_max = 1.0#0.5
 	gf_min = compute_logl(phi,PA,PA_obs,ph_min)
 	gf_mid = compute_logl(phi,PA,PA_obs,ph_mid)
