@@ -44,7 +44,7 @@ from numpy import linspace, logspace, empty, zeros, ones, array, fromfile
 # m=fromfile(AtmName+'m.bin')
 # print(m)
 # exit()
-from numpy import pi, exp, log, sqrt, sin, cos, arccos, arctan2, arctan
+from numpy import pi, exp, log, sqrt, sin, cos, arccos, arctan2, arctan, tan
 from numpy import absolute, sign, floor, ceil, argmin
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
@@ -561,7 +561,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,freq,spherical=False):
 					#print(t,' : \t',mu0,' \t ',dcos_alpha,'\t',cos_alpha,cos_psi,Omega)
 					if mu0<0: # this only for speeding up. the backwards intensity is usually zero
 						Flux_obs[t]=0
-						continue 
+						#continue 
 
 
 					if True: # find chi
@@ -596,14 +596,57 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,freq,spherical=False):
 						#print(chi,'\t',chi_0/chi,'\t',chi_1/chi ,'\t',  chi_prime/chi )
 						#print(phase_obs[t], ' ', chi*rdg,' ',chi_0*rdg,' ',chi_1*rdg ,' ',  chi_prime*rdg, chi_prime_sph*rdg)
                                                 
-						params = "Sph"+str(spherical)+"_t"+str(int(theta_deg))+"i"+str(int(incl_deg))+"nu"+str(int(freq))                  
-						save_pa=open("res/B/pa_eqs_figs/pa_"+params+".txt","a+")      
-						save_pa.write(str(phase_obs[t])+', '+str(chi*rdg)+', '+str(chi_0*rdg)+', '+str(chi_1*rdg)+', '+str(chi_prime*rdg)+', '+str(chi_prime_sph*rdg)+"\n") 
-						save_pa.close()
+						#params = "Sph"+str(spherical)+"_t"+str(int(theta_deg))+"i"+str(int(incl_deg))+"nu"+str(int(freq))                  
+						#save_pa=open("res/B/pa_eqs_figs/pa_"+params+".txt","a+")      
+						#save_pa.write(str(phase_obs[t])+', '+str(chi*rdg)+', '+str(chi_0*rdg)+', '+str(chi_1*rdg)+', '+str(chi_prime*rdg)+', '+str(chi_prime_sph*rdg)+"\n") 
+						#save_pa.close()
 
 						sin_2chi=sin(2*chi)
 						cos_2chi=cos(2*chi)
 						# print(chi_prime,' \t',cos_chi_prime )
+
+						#testing my new formulas:
+						cos_lambd = cos_theta*cos_gamma+sin_theta*sin_gamma#cos(theta-gamma)
+						sin_lambd = sin_theta*cos_gamma-cos_theta*sin_gamma#sin(theta-gamma)
+						bigS = sin_alpha*(sin_i*cos_lambd*cos_phi-cos_i*sin_lambd)+sin_gamma*(sin_psi*cos_alpha-cos_psi*sin_alpha)
+						dn1 = -bigS**2-cos_sigma**2*sin_psi**2
+						dn2 = (bigS**2/sin_sigma**2)+(cos_sigma**2*sin_i**2*sin_phi**2*sin_alpha**2/sin_sigma**2)
+						nom = sin_alpha*sin_i**2*sin_phi**2-(sin_psi**2/sin_alpha)
+						nom0 = beta*(sin_alpha/sin_psi)*bigS*cos_sigma
+						cos_ksi = -(sin_alpha/sin_psi)*sin_i*sin_phi
+						dntot = beta*cos_ksi*dn1+sin_sigma**2*dn2
+						tanchi_p20 = nom0*nom/dntot
+						tanchi_vlad = tan(chi_prime)
+
+						sin_ksi = sqrt(1-cos_ksi**2)
+						tanchi_juri_app = (-beta*cos_sigma*(bigS/sin_psi)*sin_ksi**2)/((bigS/sin_psi)**2+cos_sigma**2*cos_ksi**2-beta*cos_ksi*((bigS/sin_psi)**2+cos_sigma**2))
+
+						#print(sin_ksi**2, (bigS/sin_psi)**2+cos_sigma**2)
+
+						tanchi_pmdot = ((cos_ksi-beta)/(1-beta*cos_ksi))*(cos_sigma*sin_psi/bigS)
+						tanchi_pm = sin_i*sin_phi*cos_sigma*sin_alpha/bigS
+						tanchi_cgr= (tanchi_pmdot+tanchi_pm)/(1.0-tanchi_pmdot*tanchi_pm)
+
+						tanchi_pmdot_sph = ((cos_ksi-beta)/(1-beta*cos_ksi))*(cos_alpha*sin_psi/(sin_alpha*(sin_i*cos_theta*cos_phi-cos_i*sin_theta)))
+						tanchi_pm_sph = sin_i*sin_phi*cos_alpha/(sin_i*cos_theta*cos_phi-cos_i*sin_theta)
+						tanchi_cgr_sph= (tanchi_pmdot_sph+tanchi_pm_sph)/(1.0-tanchi_pmdot_sph*tanchi_pm_sph)
+						#print("tanchi_cgr, tan_pout, tan_vlad, tan_sph =", tanchi_cgr, tanchi_p20, tanchi_vlad, tan_chi_prime_sph) #it seesm tanchi_cgr=tan_pout but it differs from tan_vlad if the star is not spherical...
+						print("tanchi_p20, tan_vlad, tan_juri_app =", tanchi_p20, tanchi_vlad, tanchi_juri_app) 
+		
+
+						#print("nom, dn1, dn2 = ", nom*sin_alpha, dn1, -1.0*dn2)
+					
+						#testing a direct formula for oblate corrected chi_0:
+						sin_chi_0_obl= - sin_lambda*sin_phi # times sin psi
+						cos_chi_0_obl=sin_i*cos_lambda - sin_lambda*cos_i*cos_phi # times sin psi 
+						chi_0_obl=arctan2(sin_chi_0_obl,cos_chi_0_obl)
+						bA = -sin_theta*sin_phi*sin_psi*(cos_gamma-cos_alpha*cos_sigma)+sin_gamma*sin_alpha*sin_i*sin_phi*(sin_i*cos_theta-cos_i*sin_theta*cos_phi)
+						bB = sin_psi*(sin_i*cos_theta-cos_i*sin_theta*cos_phi)*(cos_gamma-cos_alpha*cos_sigma)
+						bC = sin_theta*sin_phi*sin_gamma*sin_alpha*sin_i*sin_phi
+						chi_01 = arctan2(bA,bB+bC)
+						chi_0_cr = chi_0_obl-chi_0
+						#print("chi0+chi1=",chi_0+chi_1,"chi0_obl=",chi_0_obl)#, "chi_01=",chi_01)
+						#print("chi_new?=",(chi_0_obl+chi_prime)*rdg,"chi_current=",(chi_0+chi_1+chi_prime)*rdg)#, "chi_01=",chi_01)
 
 
 				d2=bisect(mu[:-1],mu0)
@@ -662,7 +705,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,freq,spherical=False):
 		#s,gn=pr(s,gn,'curves done ')
 	    
 	# In[31]:
-	savePulse = True
+	savePulse = False  #True
 	if savePulse:
 		outF = open(PulsName + 'FF.bin','w')
 		outf = open(PulsName + 'ff.bin','w')
