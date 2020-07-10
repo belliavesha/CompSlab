@@ -199,7 +199,8 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		Intensity=fromfile(inI).reshape((NEnergy,NZenith,2))
 		#s,gn=pr(s,gn,'I is read')
 	else: #Make sure this save wont overwrite your old tables!
-		print("Not saving the spectrum")
+		pass
+		#print("Not saving the spectrum")
 		#outI = open(AtmName+'I.bin','w')
 		#outx = open(AtmName+'x.bin','w')
 		#outm = open(AtmName+'m.bin','w')
@@ -231,8 +232,8 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		#R_e=12.0 # equatorial radius of the star in kilometers
 		R_e=eqrad #input param
       
-		NRho=40#20#4#2#8
-		NVarphi=40#20#6#4
+		NRho=20#40#20#4#2#8
+		NVarphi=20#40#20#6#4
 
 		# IntVarphi = linspace(0,2*pi,num=NVarphi,endpoint=False,retstep=True)
 		IntVarphi = leggauss(NVarphi)
@@ -363,15 +364,15 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 					l.append(arctan2(-sin_l,-cos_l) + pi)
 					theta.append(arccos(cos_theta))  
 					dS.append(drho[rh]*dvarphi[v]*sin(rho[rh]))
-					print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
+					#print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
 					if antipodal :
 						NSpots+=1
 						l.append(arctan2(sin_l,cos_l) + pi)
 						theta.append(pi- theta[-1])
 						dS.append(dS[-1])
-					print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
+					#print(v,rh,cos_theta,cos_l,sin_l,l[-1],theta[-1],dS[-1])
 
-			print(NSpots)
+			#print(NSpots)
 
 
 		#New version for integration over spot from Vlad:
@@ -650,7 +651,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		#s,gn=pr(s,gn,'curves done ')
 	    
 	# In[31]:
-	savePulse = True
+	savePulse = False#True
 	if savePulse:
 		outF = open(PulsName + 'FF.bin','w')
 		outf = open(PulsName + 'ff.bin','w')

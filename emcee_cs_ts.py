@@ -67,7 +67,8 @@ def shift_phase(phi,shift):
 
 
 def readdata():
-	PulsName='res/B/B0Prho10'
+	#PulsName='res/B/B0Prho10' #used in the old results
+	PulsName='res/B/lbb_rho10_sp2_f600_obl_burst'
 	#PulsName='res/B/B0P2'
 	#PulsName='res/B/B0P1'
 	inFlux = open(PulsName+'FF.bin')
@@ -83,7 +84,7 @@ def readdata():
 
 def compute_logl(phi,PA,PA_obs,phaseshift):
 
-	sigma_tot2 = 225.0#4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
+	sigma_tot2 = 4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
 	norm = 0.0#0.5*log(sigma_tot2)
 	phi_new = shift_phase(phi,phaseshift)
 	PA_interp = interp1d(phi_new,PA,fill_value = 'extrapolate')
@@ -224,17 +225,17 @@ p0 = np.zeros((nwalkers,ndim))
 
 
 #test call to lnprob:
-start = time.time()
-#Originally a crash with these parameters:
-#params_true = [1.19815732, 16.3795289, 50.49372377, 63.26109383]
-cloglik = lnprob(params_true,low_limit,high_limit)
-print(cloglik)
-#print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase-nparams))
-print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase_extp-nparams))
-end = time.time()
-print ("Time spend for one fit: ")
-print(end - start)
-quit()
+#start = time.time()
+##Originally a crash with these parameters:
+##params_true = [1.19815732, 16.3795289, 50.49372377, 63.26109383]
+#cloglik = lnprob(params_true,low_limit,high_limit)
+#print(cloglik)
+##print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase-nparams))
+#print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase_extp-nparams))
+#end = time.time()
+#print ("Time spend for one fit: ")
+#print(end - start)
+#quit()
 
 jj = 0
 # Choose an initial set of positions for the walkers.
