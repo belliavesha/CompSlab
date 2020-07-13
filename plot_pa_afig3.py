@@ -325,14 +325,14 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
 		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl'#obl_accspot used in old results
-		PulsName='res/B/lbb_rho10_sp1_f600_obl_test'
+		PulsName='res/B/lbb_rho10_sp1_f600_obl_burst2_dt'#test'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_chi0'
 	if(ish == 2):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
 		#PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2'#_accspot' #used in the previous results
-		PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2_test'
+		PulsName='res/B/lbb_rho10_sp1_f600_sph_burst2_dt'#_dmr2_test'
 		#PulsName='res/B/B0Ptest'
 	#PulsName=AtmName+'P1'
 	computePulse= True
@@ -460,7 +460,7 @@ for ish in range(1,3):#len(shapes)):
 		#quit()
 		#in the end, setting the shift by hand seems still to produce better results		
 		#phshift1 = 0.0 #0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
-		#phshift1 = -0.025#-0.048315
+		phshift1 = -0.018#695#  -0.016830883531243623#-0.025#-0.048315
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):

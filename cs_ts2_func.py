@@ -30,7 +30,7 @@ oblateness='AlGendy'
 AtmName='res/B/B0_new' # the prefix for all result files related to the set of parameters
 #PulsName=AtmName+'P2'
 #PulsName='res/B/B0P1'
-PulsName='res/B/lbb_rho10_sp2_f600_obl_burst'#B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
+PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt'#B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
 #PulsName='res/B/B0Prho10'
 computePulse= True
 plotAtm=False#True
@@ -174,8 +174,9 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 			for d in range(NZenith):
 				#Intensity[e,d,0]=Planck(x[e],T)#*(1 + 2.06*mu[d])#TS TESTING BLACKBODY energy spectrum with burst-beaming only in polarization
                                 #burst beaming approx normalized so that int over mus from 0 to 1 gives same as it will for istropic case (1/2):
-				Intensity[e,d,0]=Planck(x[e],T)*(3.0/7.0)*(1.0+2.0*mu[d])
-				Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*abs(mu[d]))
+				#Intensity[e,d,0]=Planck(x[e],T)*(3.0/7.0)*(1.0+2.0*mu[d])
+				Intensity[e,d,0]=Planck(x[e],T)*(0.421+0.868*mu[d]) #more accurate version
+				Intensity[e,d,1]=Intensity[e,d,0]*0.1171*(mu[d] - 1.)/(1. + 3.582*mu[d])#abs(mu[d]))
 				#Intensity[e,d,1]=Intensity[e,d,0]#*0.1171*(mu[d] - 1.)/(1. + 3.82*abs(mu[d]))
 		#s,gn=pr(s,gn,'I0')
 		# exit()
@@ -297,7 +298,10 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		                return pi+eps,lag
 		    else:
 		          psi=0
-		          lag=(R_e - R + R_g*log( (R_e - R_g)/(R - R_g) ) )/c
+		          R_ref=R_e*(1 - flattening*(cos(theta_deg*pi/180.0))**2)
+		          #print("R_ref, alpha, R=",R_ref, alpha, R)
+		          #exit()
+		          lag=(R_ref - R + R_g*log( (R_ref - R_g)/(R - R_g) ) )/c
 		          for i in range(NBend):
 		                ex=(kx[i]+1)/2
 		                q=(2. - ex*ex - u*(1 - ex*ex)**2/(1 - u))*sin(alpha)**2
@@ -341,7 +345,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 			rho_total=rho_deg*pi/180.0#pi/5 #pi*5/180 # radius of the spot
 			theta_center=pi/180.0*theta_deg#pi/4.1
 
-			antipodal = True #False #True
+			antipodal = True
 
 			NSpots=0
 			varphi,dvarphi=IntVarphi[0]*pi,IntVarphi[1] *pi
@@ -542,10 +546,13 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 
 					dphase=(dt1*dr2 + dt2*dr1)*nu # \delta\phi = \phi_{obs} - \phi 
 					#dphase = 0
+					#exit()
 					phase_obs[t]=( phi[t]/2/pi+dphase)%1.
 
 					cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
 					delta = 1./Gamma/(1.-beta*cos_xi)
+					#delta=1.0#print(delta)
+					#exit()
 					cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
 
 					sin_sigma = sqrt(1. - cos_sigma**2)
@@ -599,7 +606,8 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 				shift=delta/redshift
 
 
-				for e in range(NEnergy): 
+				for e in (118,119):# compute only for one observed energy (4.94 keV):
+				#for e in range(NEnergy): 
 					x0=x[e]/shift
 					e1=bisect(x[1:-1],x0) # not the fastest way? anybody cares? ## seems, that light bending is more time consuming anyways
 					e2=e1+1
@@ -651,7 +659,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		#s,gn=pr(s,gn,'curves done ')
 	    
 	# In[31]:
-	savePulse = False#True
+	savePulse = True
 	if savePulse:
 		outF = open(PulsName + 'FF.bin','w')
 		outf = open(PulsName + 'ff.bin','w')

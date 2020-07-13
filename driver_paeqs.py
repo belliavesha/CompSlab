@@ -8,11 +8,11 @@ mass = 1.4 # 1.4
 rad = 12.0 # 12.0
 incl = 40.0 #60.0 #60.0 #40.0 # 40.0
 theta = 60.0#20.0 #20.0 #60.0 #-120.0#60.0 # 60.0
-rho = 10.0 #1.0 #1.0 # 10.0
+rho = 10.0#0.01#10.0 #1.0 #1.0 # 10.0
 freq = 600.0
 
 #mass and rad for non-rotating star if req=12 and M=1.4 for the rotating one (see mr_rot_nonrot.py):
-mass, rad = 1.39404589, 11.42791781
+#mass, rad = 1.39404589, 11.42791781
 
 #values for rotating star:
 #from mr_rot_nonrot import R_eq, M_obl #these assuming now that freq=600

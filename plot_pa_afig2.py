@@ -119,7 +119,7 @@ if(compare_to_arcmancer):
 		if(ic == 0):
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_agm.csv"# (copy).csv"
 			#datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d60_i40_x10_obl_img1000.csv"# (copy).csv"
-                        #datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# this was used in old results
+			#datafile = "../arcmancer/out3/polar_f600_bb_r12_m1.4_d60_i40_x10_obl.csv"# this was used in old results
 			datafile = "../arcmancer/out3/polar_acc_f600_burst_r12_m1.4_d60_i40_x10_obl.csv"# (copy).csv"
 		if(ic == 1):
 			datafile = "../arcmancer/out3/polar_f001_bb_r12_m1.4_d40_i60_x01_sph.csv"
@@ -324,7 +324,7 @@ for ish in range(1,2):#len(shapes)):
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
 		#PulsName='res/B/lbb_rho10_sp1_f600_obl_accspot'#test'#accspot' #this was used in the first results
-	        PulsName='res/B/lbb_rho10_sp1_f600_obl_burst'
+	        PulsName='res/B/lbb_rho10_sp1_f600_obl_burst2_dt'
 		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lbb_rhoinf_chi0'
@@ -448,7 +448,7 @@ for ish in range(1,2):#len(shapes)):
 		print(phshift1)
 		#quit()
 		#in the end, setting the shift by hand seems still to produce better results		
-		#phshift1 = -0.048315#-0.2517#0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		#phshift1 = 0.0#-0.048315#-0.2517#0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
 		phase_new = shift_phase(np.array(phase),phshift1)
 		for ipha in range(0,len(phase_new)-1):
 			if(phase_new[ipha+1] > phase_new[ipha]):
