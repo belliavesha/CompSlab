@@ -54,7 +54,7 @@ incl = 40.0*pi/180.0
 #shapes = ["Sphere","AlGendy"]
 
 #colors = ["yellow","black","red"]
-colors = ["yellow","blue","green"]
+colors = ["darkorange","blue","green"]
 #colors = ["blue"]
 shapes = np.copy(colors)
 
@@ -116,7 +116,7 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/lcpol_obl_sp1_10msun'
 		#PulsName='res/B/lbb_rhoinf'
-		PulsName='res/B/lbb_rhoinf_chi-1'
+		PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt2_m1'#'res/B/lbb_rhoinf_chi-1'
 	if(ish == 1):
 		#AtmName='res/C2/C1sph'
 		#PulsName='res/C2/sph2test'
@@ -130,7 +130,7 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/B0Prho10'
 		#PulsName='res/B/B0Prho10oblsp2' #in the old version
-		PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt'
+		PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt2'
 	if(ish == 2):
 		#AtmName='res/C2/C1obl'  
 		#PulsName='res/C2/obl2test'
@@ -143,7 +143,8 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/lbb_rho10_sp1_f600_sph'
 		#PulsName='res/B/B0Prho10sphsp2'
 		#PulsName='res/B/B0Prho10sphsp2_dmr' #this used in the old version
-		PulsName='res/B/lbb_rho10_sp2_f600_sph_burst2_dt'#dmr2_burst'
+		PulsName='res/B/lbb_rho10_sp2_f600_sph_burst2_dt2'#dmr2_burst'
+		#PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt2_m2'
                 
 	#PulsName=AtmName+'P1'
 	computePulse= True

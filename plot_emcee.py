@@ -167,6 +167,25 @@ if not(only_wmoves):
 	#	fig = corner.corner(samples,labels=param_names[0:npars],range=limits[0:npars])#,color="darkorange")
 
 
+	print_quantiles=True
+	if print_quantiles:
+		for ipar in range(0,len(samples[0,:])):
+			qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
+			qt1,qt2,qt3,qt4,qt5 = "{:.3g}".format(qtls[0]),"{:.3g}".format(qtls[1]),"{:.3g}".format(qtls[2]),"{:.3g}".format(qtls[3]),"{:.3g}".format(qtls[4])
+			if(ipar==0):
+				print("$\\req$ (km) & $"+qt1+"$ & $"+qt2+"$ & $"+qt3+"$ & $"+qt4+"$ & $"+qt5+"$ \\\\")
+			if(ipar==1):
+				print("$M$ ($\\msun$) & $"+qt1+"$ & $"+qt2+"$ & $"+qt3+"$ & $"+qt4+"$ & $"+qt5+"$ \\\\")
+			if(ipar==2):
+				print("$i$ ($\\deg$) & $"+qt1+"$ & $"+qt2+"$ & $"+qt3+"$ & $"+qt4+"$ & $"+qt5+"$ \\\\")
+			if(ipar==3):
+				print("$\\theta$ ($\\deg$) & $"+qt1+"$ & $"+qt2+"$ & $"+qt3+"$ & $"+qt4+"$ & $"+qt5+"$ \\\\")
+			if(ipar==4):
+				print("$\\rho$ ($\\deg$) & $"+qt1+"$ & $"+qt2+"$ & $"+qt3+"$ & $"+qt4+"$ & $"+qt5+"$ \\\\")
+
+
+
+        
 	lbfontsz = 25
 	lwidth= 2.0#1.5 
 	iphi = npars#5
@@ -188,10 +207,10 @@ if not(only_wmoves):
 	#plt.rcParams.update({'axes.labelpad': 20})
 	#plt.rcParams.update({'axes.titlepad': 20})
 
-	print(rcParams.keys())
+	#print(rcParams.keys())
 	#exit()
 
-	fig = corner.corner(samples[:,0:iphi], verbose=True, labels=param_names, truths=params_true[0:iphi], range=limits, smooth=0.8, smooth1d=1.0,levels=(0.68,0.95,),max_n_ticks=3,top_ticks=False,fill_contours=True,plot_datapoints=False)#,color="darkorange")
+	fig = corner.corner(samples[:,0:iphi], verbose=True, labels=param_names, truths=params_true[0:iphi], range=limits, smooth=1.0, smooth1d=2.0,levels=(0.68,0.95,),max_n_ticks=3,top_ticks=False,fill_contours=True,plot_datapoints=False)#,color="darkorange")
 
 	#fig = corner.corner(samples[:,0:iphi], verbose=True, labels=param_names, truths=params_true[0:iphi], range=limits, smooth=1.3, smooth1d=1.0,levels=(0.68,0.95,),max_n_ticks=3,top_ticks=False,fill_contours=True,plot_datapoints=False)#,color="darkorange")#,truth_color="blue")#,contour_kwargs=ckwa) #color="red"
 	#,quantiles=[0.025,0.16,0.84,0.975]

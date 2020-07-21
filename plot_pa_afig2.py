@@ -418,7 +418,7 @@ for ish in range(1,2):#len(shapes)):
 				plotAp.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
 				plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
 				##plotAp.set_ylabel(r'$|\frac{F_{\mathrm{vp}}-F_{\mathrm{acm}}}{F_{\mathrm{vp}}}|$',fontsize=fontsize)
-				plotAp.set_ylabel(r'$\delta F_{\mathrm{x}} / F_{\mathrm{x}}$',fontsize=fontsize)
+				plotAp.set_ylabel(r'$\delta F_{\mathrm{Q,U}} / F_{\mathrm{Q,U}}$',fontsize=fontsize)
 				##plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
 				plotAF.set_xlim(0,1)
 				## plotAF.locator_params(axis='y', nbins=10)
@@ -426,7 +426,7 @@ for ish in range(1,2):#len(shapes)):
 				if(plot5):
 					plotAFF.set_xlim(0,1)
 					plotAFF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
-					plotAF.set_ylabel(r"$F_{\mathrm{x}}/F_{\mathrm{I}}$",fontsize=fontsize)
+					plotAF.set_ylabel(r"$F_{\mathrm{Q,U}}/F_{\mathrm{I}}$",fontsize=fontsize)
 					plotAFF.set_ylabel(r"$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$",fontsize=fontsize)
 				else:
 					plotAF.set_ylabel(r"$F_{\mathrm{x}}$",fontsize=fontsize)

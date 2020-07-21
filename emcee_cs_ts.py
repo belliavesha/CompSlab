@@ -24,7 +24,7 @@ import emcee
 import math, os
 #import pymultinest
 import time
-from cs_ts2_func import compf
+from cs_ts2_func_tube import compf
 #from multiprocessing import Pool
 
 
@@ -57,9 +57,9 @@ stlow_limit = [1.3, 11.0, 30.0, 50.0, 5.0]
 sthigh_limit = [1.5, 13.0, 50.0, 70.0, 15.0]
 #stlow_limit = np.copy(low_limit)
 #sthigh_limit = np.copy(high_limit)
-restart = False
+restart = True #False
 #restart_file = "res/B/oblsph_emcee.dat"
-restart_file = "res/B/oblobl_emcee.dat"
+restart_file = "res/B/oblobl_sp2_pb10_rphf_emcee.dat" #"res/B/oblobl_emcee.dat"
 
 
 def shift_phase(phi,shift):
@@ -68,7 +68,7 @@ def shift_phase(phi,shift):
 
 def readdata():
 	#PulsName='res/B/B0Prho10' #used in the old results
-	PulsName='res/B/lbb_rho10_sp2_f600_obl_burst'
+	PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt'#'res/B/lbb_rho10_sp2_f600_obl_burst'
 	#PulsName='res/B/B0P2'
 	#PulsName='res/B/B0P1'
 	inFlux = open(PulsName+'FF.bin')
@@ -84,7 +84,7 @@ def readdata():
 
 def compute_logl(phi,PA,PA_obs,phaseshift):
 
-	sigma_tot2 = 4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
+	sigma_tot2 = 225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
 	norm = 0.0#0.5*log(sigma_tot2)
 	phi_new = shift_phase(phi,phaseshift)
 	PA_interp = interp1d(phi_new,PA,fill_value = 'extrapolate')
@@ -175,7 +175,7 @@ def lnprob(modelpar, low_limit, high_limit):
 	if(mass/rad > 0.96*1.0/(2.95*1.52)): #checking causality                
 		return -np.inf
 
-	Flux = compf(mass,rad,incl,theta,rho,spherical=True)#False)
+	Flux = compf(mass,rad,incl,theta,rho,spherical=False)
 	#print(Flux)
 	phi,Flux_obs = readdata()
 
