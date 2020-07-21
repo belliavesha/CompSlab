@@ -30,7 +30,7 @@ oblateness='AlGendy'
 AtmName='res/B/B0_new' # the prefix for all result files related to the set of parameters
 #PulsName=AtmName+'P2'
 #PulsName='res/B/B0P1'
-PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt'#B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
+PulsName='res/B/lbb_rho10x_sp2_f600_obl_burst2_dt2_test'#B0Prho10sphsp2_test'#lbb_rho10_sp2_f600_sph_test_dmr2' #B0Ptest'
 #PulsName='res/B/B0Prho10'
 computePulse= True
 plotAtm=False#True
@@ -449,7 +449,34 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		logIntensity=zeros((NEnergy,NZenithBig,3))
 
 
+		#Setting the phase delay 0 for photons emitted at phi=0 for 1 small spot):
+		cos_psi_ph0=cos_i*cos(theta_center) + sin_i*sin(theta_center)
+		psi_ph0 = arccos(cos_psi_ph0)
 
+		R=R_e*(1 - flattening*(cos(theta_center)**2)) 
+		r1=bisect(r[1:-1],R) 
+		r2=r1 + 1
+		dr1=(R - r[r1])/dr
+		dr2=(r[r2] - R)/dr
+
+		a1=bisect(psi[r1], psi_ph0)
+		a2=bisect(psi[r2], psi_ph0)
+		if(a1 >= len(psi[r1])):
+			a1=len(psi[r1])-1
+		if(a2 >= len(psi[r2])):
+			a2=len(psi[r2])-1
+		psi1=psi[r1,a1]					
+		psi2=psi[r2, a2]
+		dpsi1=psi1 - psi[r1, a1 - 1]
+		dpsi2=psi2 - psi[r2, a2 - 1]
+		dpsi=dpsi1*dr2 + dpsi2*dr1
+		dalpha1 = dalpha*(psi1 - psi_ph0)/dpsi1
+		dalpha2 = dalpha*(psi2 - psi_ph0)/dpsi2
+		alpha1=alpha[a1] - dalpha1
+		alpha2=alpha[a2] - dalpha2
+		dt1=dt[r1,a1 - 1]*dalpha1/dalpha + dt[r1,a1]*(1. - dalpha1/dalpha)
+		dt2=dt[r2,a2 - 1]*dalpha2/dalpha + dt[r2,a2]*(1. - dalpha2/dalpha)
+		dphase_ph0=(dt1*dr2 + dt2*dr1)*nu
 
 
 		for e in range(NEnergy):
@@ -544,11 +571,12 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 					dt1=dt[r1,a1 - 1]*dalpha1/dalpha + dt[r1,a1]*(1. - dalpha1/dalpha)
 					dt2=dt[r2,a2 - 1]*dalpha2/dalpha + dt[r2,a2]*(1. - dalpha2/dalpha)
 
-					dphase=(dt1*dr2 + dt2*dr1)*nu # \delta\phi = \phi_{obs} - \phi 
-					#dphase = 0
+					dphase=(dt1*dr2 + dt2*dr1)*nu # \delta\phi = \phi_{obs} - \phi
+					#print(dphase_ph0,dphase,t,theta[p]*180.0/pi)#dphase = 0
 					#exit()
-					phase_obs[t]=( phi[t]/2/pi+dphase)%1.
-
+					phase_obs[t]=( phi[t]/2/pi+dphase-dphase_ph0)%1  #( phi[t]/2/pi+dphase)%1.
+					#print(dphase-dphase_ph0,t,theta[p]*180.0/pi)
+                                        
 					cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
 					delta = 1./Gamma/(1.-beta*cos_xi)
 					#delta=1.0#print(delta)
