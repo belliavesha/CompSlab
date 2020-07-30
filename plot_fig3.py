@@ -442,5 +442,5 @@ plotAc.set_ylabel(r"$\chi\,\mathrm{[deg]}$",fontsize=fontsize)
 
 figA.subplots_adjust(left=0.15)
 
-figA.savefig('fig3c.pdf',bbox_inches='tight')#.format(e))
+figA.savefig('fig3.pdf',bbox_inches='tight')#.format(e))
 figA.clf()
