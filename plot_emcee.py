@@ -21,7 +21,8 @@ spath = ""
 ndfiles = len(sys.argv)
 spaths = []
 if(ndfiles == 1):
-	print ("Error: Should give data files as input!")
+	print ("Error: Should give data files as input in command line:!")
+	print ("E.g.: 'python3 plot_emcee.py emcee_res/oblobl_le_burst2_'")
 	quit()
 #if(ndfiles == 2): #only one input file given
 #	print ("Outputs read from and saved in:")
@@ -169,9 +170,14 @@ if not(only_wmoves):
 
 	print_quantiles=True
 	if print_quantiles:
+		digits=[3,3,2,2,2]
 		for ipar in range(0,len(samples[0,:])):
+			idg = digits[ipar]
 			qtls = corner.quantile(samples[:,ipar],(0.025,0.16,0.5,0.84,0.975))
-			qt1,qt2,qt3,qt4,qt5 = "{:.3g}".format(qtls[0]),"{:.3g}".format(qtls[1]),"{:.3g}".format(qtls[2]),"{:.3g}".format(qtls[3]),"{:.3g}".format(qtls[4])
+			if(idg ==3):
+				qt1,qt2,qt3,qt4,qt5 = "{:.3g}".format(qtls[0]),"{:.3g}".format(qtls[1]),"{:.3g}".format(qtls[2]),"{:.3g}".format(qtls[3]),"{:.3g}".format(qtls[4])
+			else:
+                                qt1,qt2,qt3,qt4,qt5 = "{:.2g}".format(qtls[0]),"{:.2g}".format(qtls[1]),"{:.2g}".format(qtls[2]),"{:.2g}".format(qtls[3]),"{:.2g}".format(qtls[4])
 			if(ipar==0):
 				print("$\\req$ (km) & $"+qt1+"$ & $"+qt2+"$ & $"+qt3+"$ & $"+qt4+"$ & $"+qt5+"$ \\\\")
 			if(ipar==1):
