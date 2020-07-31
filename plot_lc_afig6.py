@@ -3,7 +3,7 @@ import matplotlib
 matplotlib.use('Agg')
 from numpy import linspace, logspace, empty, zeros, ones, array, fromfile
 from numpy import pi, exp, log, sqrt, sin, cos, arccos, arctan2
-from numpy import absolute, sign, floor, ceil
+from numpy import absolute, sign, floor, ceil, ma
 from numpy.polynomial.laguerre import laggauss
 from numpy.polynomial.legendre import leggauss
 from scipy.interpolate import interp1d
@@ -63,13 +63,14 @@ shapes = np.copy(colors)
 
 
 #rc("text", usetex=True)
-figA = figure(figsize=(15,16), dpi=300) #8,6
+figA = figure(figsize=(14,18), dpi=300) #8,6                                                                                                  
+#figA = figure(figsize=(15,16), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
-lbfontsz = 35#30#25 
-lwidth= 3.0#2.5#2.0#1.5 
-lpad = 12 
+lbfontsz = 30#35#30#25 
+lwidth= 2.5#3.0#2.5#2.0#1.5 
+lpad = 10 #15 #12 #10 #12 
 
 rc("xtick", labelsize=lbfontsz)
 rc("ytick", labelsize=lbfontsz)
@@ -87,6 +88,15 @@ matplotlib.pyplot.rcParams.update({'font.family': 'serif'})
 
 plot_only_I = False#True
 plot_QU = False#True
+
+def maskchi(c):
+	cn=np.zeros((len(c)))
+	for i in range(len(c)):
+		if abs(c[i]-c[i-1])>90:
+			cn[i] = ma.masked
+		else:
+			cn[i] = c[i]
+	return cn
 
 
 
@@ -130,7 +140,7 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/B0Ptest'
 		#PulsName='res/B/B0Prho10'
 		#PulsName='res/B/B0Prho10oblsp2' #in the old version
-		PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt2'
+		PulsName='pOS_pulses/lbb_rho10_sp2_f600_obl_burst2_dt2'
 	if(ish == 2):
 		#AtmName='res/C2/C1obl'  
 		#PulsName='res/C2/obl2test'
@@ -143,7 +153,7 @@ for ish in range(1,3):#len(shapes)):
 		#PulsName='res/B/lbb_rho10_sp1_f600_sph'
 		#PulsName='res/B/B0Prho10sphsp2'
 		#PulsName='res/B/B0Prho10sphsp2_dmr' #this used in the old version
-		PulsName='res/B/lbb_rho10_sp2_f600_sph_burst2_dt2'#dmr2_burst'
+		PulsName='pOS_pulses/lbb_rho10_sp2_f600_sph_burst2_dt2'#dmr2_burst'
 		#PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt2_m2'
                 
 	#PulsName=AtmName+'P1'
@@ -219,21 +229,21 @@ for ish in range(1,3):#len(shapes)):
 
 	# plotAF.locator_params(axis='y', nbins=10)
 	plotAF.set_ylabel(r"$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$",fontsize=fontsize)
-	plotAF.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
+	plotAF.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad,top=True,right = True)
 	# plotAF.plot(x,xIinx,'k-.')
 
 	# plotAF.set_xlim([x[0],x[-1]])
 	if not(plot_only_I):
 		if(plot_QU):
 			plotAp.set_xlim(0,1)
-			plotAp.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
+			plotAp.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad,top=True,right = True)
 			plotAp.set_ylabel(r'$Q/Q_{max}$',fontsize=fontsize)
-			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
+			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad,top=True,right = True)
 			plotAc.set_ylabel(r'$U/U_{max}$',fontsize=fontsize)
 			plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)		
 		else:
 			plotAp.set_xlim(0,1)
-			plotAp.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
+			plotAp.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad,top=True,right = True)
 			plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
 			#plotAp.set_ylim(99.8,100.1)
 			plotAc.set_xlim(0,1)
@@ -242,7 +252,7 @@ for ish in range(1,3):#len(shapes)):
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
 			#plotAc.set_ylim(-180,180)
 			#plotAc.set_yticks([0,30,60,90,120,150,180])
-			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad)
+			plotAc.tick_params(axis='both', which='major', labelsize=labelsize,direction='in',pad=lpad,top=True,right = True)
 			plotAc.set_ylabel(r'$\chi\,[\mathrm{deg}]$',fontsize=fontsize)
 			plotAc.set_xlabel(r'$\varphi/(2\pi)$',fontsize=fontsize)
 
@@ -266,7 +276,7 @@ for ish in range(1,3):#len(shapes)):
 			#plotAp.plot(phase,p,color=col,marker="o",markersize=1.0)
 			#plotAc.plot(phase,PA,color=col,marker="o",markersize=1.0)
 			plotAp.plot(phase,p,color=col,linewidth=lwidth)
-			plotAc.plot(phase,PA,color=col,linewidth=lwidth)
+			plotAc.plot(phase,maskchi(PA),color=col,linewidth=lwidth)
 
 compare_to_tslc = False#True
 if(compare_to_tslc):
@@ -522,8 +532,8 @@ if(plot_PA_residuals):
 	plotAd.set_ylim(0.0,0.5)
 	#plotAd.set_yticks([0,30,60,90,120,150,180])
 	#plotAd.tick_params(axis='both', which='major', labelsize=labelsize)
-	plotAd.tick_params(axis='y', which='major', labelsize=labelsize,direction='in')
-	plotAd.tick_params(axis='x', which='major', labelsize=labelsize,direction='in')
+	plotAd.tick_params(axis='y', which='major', labelsize=labelsize,direction='in',top=True,right = True)
+	plotAd.tick_params(axis='x', which='major', labelsize=labelsize,direction='in',top=True,right = True)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}/\chi_{\mathrm{vp}}$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}} [\degree]$',fontsize=fontsize)
 	#plotAd.set_ylabel(r'$\frac{\chi_{\mathrm{acm}}-\chi_{\mathrm{vp}}}{\chi_{\mathrm{max}}-\chi_{\mathrm{min}}}$',fontsize=fontsize)
@@ -586,11 +596,24 @@ plotAp.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 #plotAd.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 
 
-figA.tight_layout()
+#align manually ylabels:
+labelx = -0.1 #-0.16
+plotAF.yaxis.set_label_coords(labelx, 0.5)
+plotAc.yaxis.set_label_coords(labelx, 0.5)
+plotAp.yaxis.set_label_coords(labelx, 0.5)
+
+plotAF.margins(x =0,y=0)
+plotAc.margins(x =0)
+plotAp.margins(x =0,y=0)
+
+plotAc.set_ylim(10.0,180.0)
+
+#figA.tight_layout()
 figA.subplots_adjust(wspace=0, hspace=0)
+figA.subplots_adjust(left=0.15)
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
-figA.savefig('res/B/plot.pdf')#.format(e))
+figA.savefig('res/B/plot.pdf',bbox_inches='tight')#.format(e))
 figA.clf()
 
 

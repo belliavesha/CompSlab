@@ -61,13 +61,14 @@ x,x_weight=IntEnergy
 
 
 #rc("text", usetex=True)
-figA = figure(figsize=(14,18), dpi=300) #8,6
+figA = figure(figsize=(14,30), dpi=300)
+#figA = figure(figsize=(14,18), dpi=300) #8,6
 #rc("font", family="serif")
 #rc("font",serif="Times")
 matplotlib.pyplot.figure(1)
-lbfontsz = 35 #25 #30#25 
-lwidth= 3.0 #2.5 #3.0#2.5#2.0#1.5 
-lpad = 12 
+lbfontsz = 35 #25 #35 #25 #30#25 
+lwidth= 3.0 #2.5 #3.5 #3.0 #2.5 #3.0#2.5#2.0#1.5 
+lpad = 10 #12 
 
 labelsize=lbfontsz#40#30#20
 fontsize=lbfontsz#35#25
@@ -115,6 +116,225 @@ if(plot_all):
 else:	
 	plotAc=figA.add_subplot(2,1,1)      #
 	plotAd=figA.add_subplot(2,1,2)      #
+
+
+
+#shapes = ["Sphere","AlGendy"]
+
+#colors = ["yellow","black","red"]
+colors = ["yellow","blue","green"]
+#colors = ["blue"]
+shapes = np.copy(colors)
+
+
+for ish in range(1,3):#len(shapes)):
+
+	#oblateness='AlGendy'#'Sphere'#'AlGendy'
+	oblateness=shapes[ish]
+	print(ish)
+	#AtmName='res/B/C1obl' # the prefix for all result files related to the set of parameters
+	#AtmName='res/B/B0P2' # the prefix for all result files related to the set of parameters
+	if(ish == 0):
+		PulsName='res/B/lbb_rhoinf_chi-1'
+	if(ish == 1):
+		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires'#THIS one was the first shown to work with arcmancer
+		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
+		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
+		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
+		#PulsName='res/B/lbb_rho10_sp1_f600_obl'#obl_accspot used in old results
+		PulsName='pOS_pulses/lbb_rho10_sp1_f600_obl_burst2_dt'#test'
+		#PulsName='res/B/B0Ptest'
+		#PulsName='res/B/lbb_rhoinf_chi0'
+	if(ish == 2):
+		#PulsName='res/B/B0Ptest'
+		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
+		#PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2'#_accspot' #used in the previous results
+		PulsName='pOS_pulses/lbb_rho10_sp1_f600_sph_burst2_dt'#_dmr2_test'
+		#PulsName='res/B/B0Ptest'
+	#PulsName=AtmName+'P1'
+	computePulse= True
+	plotAtm=not True
+	plotPulse=True
+	mod=True
+
+	#outF = open(PulsName + 'F.bin','w')
+	#outf = open(PulsName + 'f.bin','w')
+	#Flux.tofile(outF,format="%e")
+	#phi.tofile(outf,format="%e")
+	print(PulsName)
+
+	inFlux = open(PulsName+'FF.bin')
+	inphi = open(PulsName+'ff.bin')
+	Flux1 = fromfile(inFlux)
+	phi = fromfile(inphi)
+	#print(phi, Flux1)	
+	fluxlcurve0 = Flux1[0:len(Flux1):3*NEnergy] #light curve with lowest E
+	fluxspec0 = Flux1[0:3*NEnergy:3] #spectrum at phase=0
+	#print(fluxlcurve0)
+	#print(" ")
+	#print(fluxspec0)
+
+	ene = 118#166#140#166#140 #The chosen energy index
+	#print(x)
+	#print(evere)
+	print("The chosen energy (keV): ", x[ene]*evere/1e3)
+	fluxlcurve_Iene = Flux1[0+ene*3:len(Flux1):3*NEnergy]
+	fluxlcurve_Qene = Flux1[1+ene*3:len(Flux1):3*NEnergy]
+	fluxlcurve_Uene = Flux1[2+ene*3:len(Flux1):3*NEnergy]
+            	            
+	#Flux=zeros((NPhase,NEnergy,3))
+	#print(fluxlcurve_Iene)
+	#print(fluxlcurve_Qene)
+	#print(fluxlcurve_Uene)
+
+
+	#phase=list(phi/2/pi)+[1.]
+	#phase=list(phi)#+[1.]
+	phil = list(phi)
+	phase=zeros(NPhase)
+	I=zeros(NPhase)#+1)
+	Q=zeros(NPhase)#+1)
+	U=zeros(NPhase)#+1)
+	for t in range(NPhase):#+1):
+		#I[t],Q[t],U[t]=Flux[t-1,e]*x[e] 
+		I[t],Q[t],U[t]=fluxlcurve_Iene[t-1]*x[ene] ,fluxlcurve_Qene[t-1]*x[ene] ,fluxlcurve_Uene[t-1]*x[ene]
+		phase[t] = phil[t]
+		#I[t],Q[t],U[t]=fluxlcurve_Iene[t]*x[ene] ,fluxlcurve_Qene[t]*x[ene] ,fluxlcurve_Uene[t]*x[ene]
+
+	p=sqrt(Q**2+U**2)/I*100
+	#PA=arctan2(-U,-Q)*90/pi+90
+	PA=arctan2(U,Q)*90/pi+90
+       	
+	#print("ish=",ish)
+	#for t in range(NPhase):
+	#	print(phase[t], I[t])
+        
+	#figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
+	#              r'$,\,R_e={:5.1f}km$'.format(R_e)+
+	#              #r'$,\,R_e=11,12,14km$'.format(R_e)+
+	#              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
+	#              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
+	#              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
+	#              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
+	#              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
+	#              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)  
+
+
+	if not(plot_only_I):
+		if(plot_QU):
+			print("plot_QU option not valid in this version!")
+			quit()	
+		else:
+
+			plotAc.set_xlim(0,1)
+			plotAc.set_ylim(0,180)
+			#plotAc.set_ylim(40,140)
+			#plotAc.set_yticks([0,30,60,90,120,150,180])
+			#plotAc.set_ylim(-180,180)
+			#plotAc.set_yticks([0,30,60,90,120,150,180])
+			plotAc.tick_params(axis='both', which='major', labelsize=fontsize,direction='in',pad=lpad,top=True,right = True)
+			plotAc.set_ylabel(r'$\chi\,[\mathrm{deg}]$',fontsize=fontsize)
+			#plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
+
+			if(plot_all):
+				plotAp.set_xlim(0,1)
+				plotAp.tick_params(axis='both', which='major', labelsize=fontsize,direction='in',pad=lpad,top=True,right = True)
+				#plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
+				#plotAp.set_ylabel(r'$|\frac{F_{\mathrm{vp}}-F_{\mathrm{acm}}}{F_{\mathrm{vp}}}|$',fontsize=fontsize)
+				#plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
+				plotAF.set_xlim(0,1)
+				# plotAF.locator_params(axis='y', nbins=10)
+				#plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
+				plotAF.set_ylabel(r'$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
+				#plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
+				plotAp.set_ylabel(r'$F_{\mathrm{Q}}/F_{\mathrm{I}}$',fontsize=fontsize)
+				plotAd.set_ylabel(r'$F_{\mathrm{U}}/F_{\mathrm{I}}$',fontsize=fontsize) 
+				plotAd.tick_params(axis='both', which='major', labelsize=fontsize,direction='in',pad=lpad,top=True,right = True)
+				plotAd.set_xlim(0,1)
+				plotAF.tick_params(axis='both', which='major', labelsize=fontsize,direction='in',pad=lpad,top=True,right = True)
+
+				#plotAp.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+				#plotAp.set_yticks([-0.9,0.0,0.9])
+				#plotAp.set_yticklabels(["-0.9","0.0","0.9"],fontstyle="normal")
+
+				plotAF.set_ylim(0.1,1.1)
+				plotAF.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
+				plotAF.set_yticks([0.25,0.5,0.75,1.0])
+				plotAF.set_yticklabels(["0.25","0.50","0.75","1.00"],fontstyle="normal")
+
+
+                                
+	#col=colors[(e*NColors)//NEnergy]
+	col = colors[ish]
+
+	PA_VP04 = PA
+	phase_VP04 = phase
+	if(ish == 1): 
+		#find best-phasehift:
+		#phshift1, gf1 = find_best_phshift.find_best_phshift(np.array(phase),PA,phase_acm0,PA_acm0)
+		#phshift1 = phshift1 -1.0
+		#print("Phaseshift for oblate star: ",phshift1)
+		#quit()
+		#in the end, setting the shift by hand seems still to produce better results		
+		#phshift1 = 0.0 #0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		phshift1 = -0.018#695#  -0.016830883531243623#-0.025#-0.048315
+		phase_new = shift_phase(np.array(phase),phshift1)
+		for ipha in range(0,len(phase_new)-1):
+			if(phase_new[ipha+1] > phase_new[ipha]):
+				if(PA[ipha] > 50.0*PA[ipha+1]):
+					plotAc.plot(phase_new[ipha:ipha+2],[PA[ipha],180.0],"-",color="blue",linewidth=lwidth)
+				else:
+					plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",linewidth=lwidth)
+				if(plot_all):
+					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
+					##plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkblue")
+					##plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightblue")
+					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)
+
+					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
+					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
+		PA0_VP04 = PA
+		F0_VP04 = I/I.max()
+		Q0_VP04 = Q/Q.max()
+		U0_VP04 = U/U.max()
+		phase0_VP04 = phase
+
+	if(ish == 2): 
+		#phshift2 = 0.0
+		#phase_new = shift_phase(np.array(phase),phshift)
+		##find best-phasehift:
+		#phshift2, gf2 = find_best_phshift.find_best_phshift(np.array(phase),PA,phase_acm0,PA_acm0)
+		phshift2 = -0.022371326512027778 #phshift2 -1.0
+		print("phaseshift for spherical star: ",phshift2)
+		#phshift2 = 0.0 #0.1 #-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
+		phase_new = shift_phase(np.array(phase),phshift2)
+		print(len(phase_new))
+		for ipha in range(0,len(phase_new)-1):
+			if(phase_new[ipha+1] > phase_new[ipha]):
+				if(PA[ipha] > 30.0*PA[ipha+1]):
+					plotAc.plot(phase_new[ipha:ipha+2],[PA[ipha],180.0],"-",color="blue",linewidth=lwidth)
+				else:                                
+					plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
+				if(plot_all):
+					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),"--",color=col,linewidth=lwidth)
+					###plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
+					###plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
+					##plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
+					##plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
+
+					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],"-",color=col,linewidth=lwidth)
+					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],"-",color=col,linewidth=lwidth)
+                                        
+                                        
+		PA0_VP04_2 = PA
+		F0_VP04_2 = I/I.max()
+		Q0_VP04_2 = Q/Q.max()
+		U0_VP04_2 = U/U.max()
+		phase0_VP04_2 = phase
+	#else:
+	#	#plotAc.plot(phase,PA,color=col,marker="o",markersize=1.0)
+	#	print("...")
 
 
 
@@ -246,7 +466,11 @@ if(compare_to_arcmancer):
 					if(phase_new[ipha+1] > phase_new[ipha]):
 						#plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-o",color=col,markersize="1.0")
 						#plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,markersize="1.0")
-						plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
+						if(PA[ipha] > 50.0*PA[ipha+1]):
+							plotAc.plot(phase_new[ipha:ipha+2],[PA[ipha],180.0],"--",color=col,linewidth=lwidth,dashes=[2,2])
+						else:
+							plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"--",color=col,linewidth=lwidth,dashes=[2,2])
+						#linePA.set_dashes([2, 2, 2, 2])
 						
 				if(ic == 0):
 					PA_acm0 = PA#norm_obsF[:,ene]#PA
@@ -297,291 +521,14 @@ if(compare_to_arcmancer):
 					if(phase_new[ipha+1] > phase_new[ipha]):
 						#plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],marker="o",markersize="1.0")
 						if(i == 0):
-							plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],linewidth=lwidth)
+							plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],"--",color=colors[i],linewidth=lwidth,dashes=[2,2])
 						if(i == 1):
-							plotAp.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],linewidth=lwidth)
+							plotAp.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],"--",color=colors[i],linewidth=lwidth,dashes=[2,2])
 						if(i == 2):
-							plotAd.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],color=colors[i],linewidth=lwidth)
-#shapes = ["Sphere","AlGendy"]
-
-#colors = ["yellow","black","red"]
-colors = ["yellow","blue","green"]
-#colors = ["blue"]
-shapes = np.copy(colors)
+							plotAd.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],"--",color=colors[i],linewidth=lwidth,dashes=[2,2])
 
 
-for ish in range(1,3):#len(shapes)):
-
-	#oblateness='AlGendy'#'Sphere'#'AlGendy'
-	oblateness=shapes[ish]
-	print(ish)
-	#AtmName='res/B/C1obl' # the prefix for all result files related to the set of parameters
-	#AtmName='res/B/B0P2' # the prefix for all result files related to the set of parameters
-	if(ish == 0):
-		PulsName='res/B/lbb_rhoinf_chi-1'
-	if(ish == 1):
-		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires'#THIS one was the first shown to work with arcmancer
-		#PulsName='res/B/lbb_rho10_sp1_f600_obl'
-		#PulsName='res/B/lbb_rho10_sp1_f600_obl_eqnew'
-		#PulsName='res/B/lbb_rho10_sp1_f001_obl_accspot'
-		#PulsName='res/B/lbb_rho10_sp1_f600_obl'#obl_accspot used in old results
-		PulsName='res/B/lbb_rho10_sp1_f600_obl_burst2_dt'#test'
-		#PulsName='res/B/B0Ptest'
-		#PulsName='res/B/lbb_rhoinf_chi0'
-	if(ish == 2):
-		#PulsName='res/B/B0Ptest'
-		#PulsName='res/B/lbb_rhoinf_sp1_f001_p100_ires_swit'
-		#PulsName='res/B/lbb_rho10_sp1_f600_sph_dmr2'#_accspot' #used in the previous results
-		PulsName='res/B/lbb_rho10_sp1_f600_sph_burst2_dt'#_dmr2_test'
-		#PulsName='res/B/B0Ptest'
-	#PulsName=AtmName+'P1'
-	computePulse= True
-	plotAtm=not True
-	plotPulse=True
-	mod=True
-
-	#outF = open(PulsName + 'F.bin','w')
-	#outf = open(PulsName + 'f.bin','w')
-	#Flux.tofile(outF,format="%e")
-	#phi.tofile(outf,format="%e")
-	print(PulsName)
-
-	inFlux = open(PulsName+'FF.bin')
-	inphi = open(PulsName+'ff.bin')
-	Flux1 = fromfile(inFlux)
-	phi = fromfile(inphi)
-	#print(phi, Flux1)	
-	fluxlcurve0 = Flux1[0:len(Flux1):3*NEnergy] #light curve with lowest E
-	fluxspec0 = Flux1[0:3*NEnergy:3] #spectrum at phase=0
-	#print(fluxlcurve0)
-	#print(" ")
-	#print(fluxspec0)
-
-	ene = 118#166#140#166#140 #The chosen energy index
-	#print(x)
-	#print(evere)
-	print("The chosen energy (keV): ", x[ene]*evere/1e3)
-	fluxlcurve_Iene = Flux1[0+ene*3:len(Flux1):3*NEnergy]
-	fluxlcurve_Qene = Flux1[1+ene*3:len(Flux1):3*NEnergy]
-	fluxlcurve_Uene = Flux1[2+ene*3:len(Flux1):3*NEnergy]
-            	            
-	#Flux=zeros((NPhase,NEnergy,3))
-	#print(fluxlcurve_Iene)
-	#print(fluxlcurve_Qene)
-	#print(fluxlcurve_Uene)
-
-
-	#phase=list(phi/2/pi)+[1.]
-	#phase=list(phi)#+[1.]
-	phil = list(phi)
-	phase=zeros(NPhase)
-	I=zeros(NPhase)#+1)
-	Q=zeros(NPhase)#+1)
-	U=zeros(NPhase)#+1)
-	for t in range(NPhase):#+1):
-		#I[t],Q[t],U[t]=Flux[t-1,e]*x[e] 
-		I[t],Q[t],U[t]=fluxlcurve_Iene[t-1]*x[ene] ,fluxlcurve_Qene[t-1]*x[ene] ,fluxlcurve_Uene[t-1]*x[ene]
-		phase[t] = phil[t]
-		#I[t],Q[t],U[t]=fluxlcurve_Iene[t]*x[ene] ,fluxlcurve_Qene[t]*x[ene] ,fluxlcurve_Uene[t]*x[ene]
-
-	p=sqrt(Q**2+U**2)/I*100
-	#PA=arctan2(-U,-Q)*90/pi+90
-	PA=arctan2(U,Q)*90/pi+90
-       	
-	#print("ish=",ish)
-	#for t in range(NPhase):
-	#	print(phase[t], I[t])
         
-	#figA.suptitle(r'$\nu={:5.0f}Hz$'.format(nu)+
-	#              r'$,\,R_e={:5.1f}km$'.format(R_e)+
-	#              #r'$,\,R_e=11,12,14km$'.format(R_e)+
-	#              #r'$,\,M=1.0, 1.5, 2.0$'+r'$M_{\odot}$'+',\n'+
-	#              r'$,\,M=$'+str(M)+r'$M_{\odot}$'+',\n'+
-	#              r'$\,\theta={:5.1f}\degree$'.format(theta[0]*180/pi)+#r'$,{:5.1f}\degree$'.format(40.0)+
-	#              r'$,\,i={:5.1f}\degree$'.format(incl*180/pi)+',\n'#r'$,{:5.1f}\degree$'.format(60.0)+',\n'
-	#              r'$\rho={:5.1f}\degree$'.format(rho)+', '+
-	#              r'$\,E={:6.2f}keV$'.format(x[ene]*evere/1e3),fontsize=fontsize)  
-
-
-	if not(plot_only_I):
-		if(plot_QU):
-			print("plot_QU option not valid in this version!")
-			quit()	
-		else:
-
-			plotAc.set_xlim(0,1)
-			plotAc.set_ylim(0,180)
-			#plotAc.set_ylim(40,140)
-			#plotAc.set_yticks([0,30,60,90,120,150,180])
-			#plotAc.set_ylim(-180,180)
-			#plotAc.set_yticks([0,30,60,90,120,150,180])
-			plotAc.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
-			plotAc.set_ylabel(r'$\chi\,[\mathrm{deg}]$',fontsize=fontsize)
-			#plotAc.set_xlabel(r'$\varphi\,[360\degree]$',fontsize=fontsize)
-
-			if(plot_all):
-				plotAp.set_xlim(0,1)
-				plotAp.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
-				#plotAp.set_ylabel(r'$p\,[ \% ]$',fontsize=fontsize)
-				#plotAp.set_ylabel(r'$|\frac{F_{\mathrm{vp}}-F_{\mathrm{acm}}}{F_{\mathrm{vp}}}|$',fontsize=fontsize)
-				#plotAp.set_ylabel(r'$F_{\mathrm{Q}}(\varphi)/F_{\mathrm{Q}}^{\mathrm{max}}$',fontsize=fontsize)
-				plotAF.set_xlim(0,1)
-				# plotAF.locator_params(axis='y', nbins=10)
-				#plotAF.set_ylabel(r"$F_{x}(\varphi)/F_{x}^{\mathrm{max}}$",fontsize=fontsize)
-				plotAF.set_ylabel(r'$F_{\mathrm{I}}/F_{\mathrm{I}}^{\mathrm{max}}$',fontsize=fontsize)
-				#plotAd.set_ylabel(r'$F_{\mathrm{U}}(\varphi)/F_{\mathrm{U}}^{\mathrm{max}}$',fontsize=fontsize)
-				plotAp.set_ylabel(r'$F_{\mathrm{Q}}/F_{\mathrm{I}}$',fontsize=fontsize)
-				plotAd.set_ylabel(r'$F_{\mathrm{U}}/F_{\mathrm{I}}$',fontsize=fontsize) 
-				plotAd.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
-				plotAd.set_xlim(0,1)
-				plotAF.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
-
-				#plotAp.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
-				#plotAp.set_yticks([-0.9,0.0,0.9])
-				#plotAp.set_yticklabels(["-0.9","0.0","0.9"],fontstyle="normal")
-
-				plotAF.set_ylim(0.1,1.1)
-				plotAF.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
-				plotAF.set_yticks([0.25,0.5,0.75,1.0])
-				plotAF.set_yticklabels(["0.25","0.50","0.75","1.00"],fontstyle="normal")
-
-
-                                
-	#col=colors[(e*NColors)//NEnergy]
-	col = colors[ish]
-
-	PA_VP04 = PA
-	phase_VP04 = phase
-	if(ish == 1): 
-		#find best-phasehift:
-		phshift1, gf1 = find_best_phshift.find_best_phshift(np.array(phase),PA,phase_acm0,PA_acm0)
-		phshift1 = phshift1 -1.0
-		print("Phaseshift for oblate star: ",phshift1)
-		#quit()
-		#in the end, setting the shift by hand seems still to produce better results		
-		#phshift1 = 0.0 #0.019#0.0#0.019#0.195#-0.07#-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
-		phshift1 = -0.018#695#  -0.016830883531243623#-0.025#-0.048315
-		phase_new = shift_phase(np.array(phase),phshift1)
-		for ipha in range(0,len(phase_new)-1):
-			if(phase_new[ipha+1] > phase_new[ipha]):
-				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color="blue",linewidth=lwidth)
-				if(plot_all):
-					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col)
-					##plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkblue")
-					##plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightblue")
-					#plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
-					#plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)
-
-					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
-					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
-		PA0_VP04 = PA
-		F0_VP04 = I/I.max()
-		Q0_VP04 = Q/Q.max()
-		U0_VP04 = U/U.max()
-		phase0_VP04 = phase
-
-	if(ish == 2): 
-		phshift2 = 0.0
-		phase_new = shift_phase(np.array(phase),phshift)
-		#find best-phasehift:
-		phshift2, gf2 = find_best_phshift.find_best_phshift(np.array(phase),PA,phase_acm0,PA_acm0)
-		phshift2 = phshift2 -1.0
-		print("phaseshift for spherical star: ",phshift2)
-		#phshift2 = 0.0 #0.1 #-0.2517#0.0#0.001#0.008#0.2421#0.2517#0.2535#0.069#0.0#-0.195#-0.18#-0.172#0.0
-		phase_new = shift_phase(np.array(phase),phshift2)
-		print(len(phase_new))
-		for ipha in range(0,len(phase_new)-1):
-			if(phase_new[ipha+1] > phase_new[ipha]):
-				plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],"-",color=col,linewidth=lwidth)
-				if(plot_all):
-					plotAF.plot(phase_new[ipha:ipha+2],I[ipha:ipha+2]/I.max(),color=col,linewidth=lwidth)
-					###plotAF.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color="darkgreen")
-					###plotAF.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color="lightgreen")
-					##plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/Q.max(),color=col,linewidth=lwidth)
-					##plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/U.max(),color=col,linewidth=lwidth)#,linestyle="dashed")
-
-					plotAp.plot(phase_new[ipha:ipha+2],Q[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
-					plotAd.plot(phase_new[ipha:ipha+2],U[ipha:ipha+2]/I[ipha:ipha+2],color=col,linewidth=lwidth)
-                                        
-                                        
-		PA0_VP04_2 = PA
-		F0_VP04_2 = I/I.max()
-		Q0_VP04_2 = Q/Q.max()
-		U0_VP04_2 = U/U.max()
-		phase0_VP04_2 = phase
-	#else:
-	#	#plotAc.plot(phase,PA,color=col,marker="o",markersize=1.0)
-	#	print("...")
-
-
-
-
-compare_to_fortran_vlad = False#True
-if(compare_to_fortran_vlad): 
-	#colors = ["green","blue","black"]
-	colors = ["green"]
-	for ic in range(0,1):
-		#datafile = "../../MCMC/results_obl_vlad_rhotest.txt"
-		#datafile = "../../MCMC/results_obl_vlad_rho10f600_sp2.txt"
-		datafile = "../../MCMC/results_sph_vlad_rho10f001.txt"
-		input = open(datafile, 'r')
-		lines = input.readlines()
-		input.close()
-
-		Nchain_size = sum(1 for line in open(datafile))
-		c_lines = 29
-		egrid = 5#3
-		full_chain= [[] for x in range(egrid+1)]
-
-		for j in range(0,len(full_chain)):
-			for i in range(c_lines,Nchain_size): #not reading comment lines
-				parts = lines[i].split()
-				full_chain[j].append(float(parts[j]))
-			parts = lines[c_lines].split()
-
-		full_chain = np.array(full_chain)
-
-		energy_keV = [4.94]
-		phase = full_chain[0,:]
-		phase = np.append(phase,1.0)
-		norm_obsF = np.zeros((len(phase), egrid))
-		for i in range(1,egrid+1):
-			#norm_obsF[:,i-1] = full_chain[i,:]*energy_keV[i-1]/np.max(full_chain[i,:]*energy_keV[i-1])
-			norm_obsF[0:len(phase)-1,i-1] = full_chain[i,:]/np.max(full_chain[i,:])
-			norm_obsF[len(phase)-1,i-1] = full_chain[i,0]/np.max(full_chain[i,:])
-
-
-		ene = 0
-		print("energy_keV = ", energy_keV[ene])
-
-		#phshift = -0.07#-0.24486510062979483#-0.2519665385268506#-0.01#-0.02#0.0#-0.195#-0.18#-0.172#0.0
-		phshift = 0.0#0.195#-0.6184895833333334
-		phase_new = shift_phase(np.array(phase),phshift)
-		#print phase_new
-
-		if(plot_all):
-			for i in range(ene,ene+1):
-			#for i in range(0,egrid):
-				for ipha in range(0,len(phase_new)-1):
-					if(phase_new[ipha+1] > phase_new[ipha]):
-						plotAF.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i],"-",markersize=1.0,color=colors[i])
-						#testing these:
-						plotAp.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i+1],"-",markersize=1.0,color=colors[i])
-						plotAd.plot(phase_new[ipha:ipha+2],norm_obsF[ipha:ipha+2,i+2],"-",markersize=1.0,color=colors[i])
-
-		#phase_new = shift_phase(phase,-phshift)
-		col = colors[ic]
-		if not(plot_only_I):
-			#p = full_chain[3,:]*100.0
-			#PA = full_chain[2,:]*180.0/pi+90.0
-			p = full_chain[5,:]
-			PA = arctan2(full_chain[3,:],full_chain[2,:])*90/pi+90#full_chain[4,:]*180.0/pi+90.0#arctan2(full_chain[3,:],full_chain[2,:])*90/pi+90#full_chain[4,:]*180.0/pi+90.0
-			PA = np.append(PA,PA[0])
-			for ipha in range(0,len(phase_new)-1):
-				if(phase_new[ipha+1] > phase_new[ipha]):
-					plotAc.plot(phase_new[ipha:ipha+2],PA[ipha:ipha+2],color=col)
-
-
 
 
 #plot_PA_residuals = True
@@ -593,11 +540,11 @@ if(plot_resid):
 	plotAr.set_xlim(0,1)
 	plotAr.set_ylim(-10.0,10.0)
 
-	plotAr.tick_params(axis='both', which='major', labelsize=ticksize,direction='in',pad=lpad)
+	plotAr.tick_params(axis='both', which='major', labelsize=fontsize,direction='in',pad=lpad,top=True,right = True)
 
 
 	#plotAd.set_yticks([0,30,60,90,120,150,180])
-	plotAr.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
+	#plotAr.tick_params(axis='both', which='major', labelsize=ticksize,direction='in')
 	#plotAd.tick_params(axis='y', which='major', labelsize=8)
 	#plotAd.tick_params(axis='x', which='major', labelsize=labelsize)
 	#plotAd.set_ylabel(r'$\chi_{\mathrm{acm}}/\chi_{\mathrm{vp}}$',fontsize=fontsize)
@@ -657,11 +604,30 @@ else:
 plotAc.set_yticks([0,50,100,150])
 plotAc.set_yticklabels(["0","50","100","150"],fontstyle="normal")
 
-figA.tight_layout()
+
+#align manuallyl ylabels:
+labelx = -0.16
+plotAF.yaxis.set_label_coords(labelx, 0.5)
+plotAd.yaxis.set_label_coords(labelx, 0.5)
+plotAp.yaxis.set_label_coords(labelx, 0.5)
+plotAc.yaxis.set_label_coords(labelx, 0.5)
+
+plotAF.margins(x =0, y=0)
+plotAd.margins(x =0, y=0)
+plotAp.margins(x =0, y=0)
+plotAc.margins(x =0, y=0)
+
+if(plot_resid):
+	plotAr.margins(x =0)
+	plotAr.yaxis.set_label_coords(labelx, 0.5)
+
+
+#figA.tight_layout()
 figA.subplots_adjust(wspace=0, hspace=0)
+figA.subplots_adjust(left=0.15)
 
 #figA.savefig('res/C2/obl_sph_comp.pdf')#.format(e))
-figA.savefig('res/B/plot.pdf')#.format(e))
+figA.savefig('res/B/plot.pdf',bbox_inches='tight')#.format(e))
 figA.clf()
 
 
