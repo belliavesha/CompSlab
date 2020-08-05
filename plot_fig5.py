@@ -631,7 +631,7 @@ if(plot_PA_residuals):
 	#		#plotAd.plot(phase_acm0[ipha:ipha+2],(PA_acm0[ipha:ipha+2]-PA_VP04_interp(phase_acm0[ipha:ipha+2]))/norm,color="green")
 	print("sum_PA_err=",sum(res_PA[abs(res_PA)<5.0]))
 
-	plotAp.set_ylim(-0.025,0.025)
+	plotAp.set_ylim(-0.03,0.03)
 
 	#plotAp.set_ylim(0.0,0.5)
 
@@ -705,10 +705,24 @@ plotAc.yaxis.set_label_coords(labelx, 0.5)
 plotAd.yaxis.set_label_coords(labelx, 0.5)
 
 
+plotAF.set_yticks([-0.04,-0.02,0.0,0.02])
+plotAF.set_yticklabels(["-0.04","-0.02","0","0.02"],fontstyle="normal")
+plotAF.set_ylim(-0.05,0.03)
+
+plotAp.set_yticks([-0.02,0.0,0.02])
+plotAp.set_yticklabels(["-0.02","0","0.02"],fontstyle="normal")
+
+plotAd.set_yticks([-0.2,0.0,0.2])
+plotAd.set_yticklabels(["-0.2","0","0.2"],fontstyle="normal")
+
 
 if(plot5):
 	plotAFF.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
 	plotAFF.tick_params(axis='both', which='major', labelsize=fontsize, pad=wpad)
+	plotAFF.set_ylim(0.0,1.1)
+	plotAFF.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+	plotAFF.set_yticklabels(["0","0.2","0.4","0.6","0.8","1.0"],fontstyle="normal")
+
 	plotAc.set_yticks([0,50,100,150])
 	plotAc.set_yticklabels(["0","50","100","150"],fontstyle="normal")
 	figA.subplots_adjust(0.15)#(left=0.175)

@@ -606,6 +606,16 @@ plotAF.margins(x =0,y=0)
 plotAc.margins(x =0)
 plotAp.margins(x =0,y=0)
 
+#adjust limits and ticks:
+plotAF.set_ylim(0.2,1.1)
+#plotAF.set_yticks([0.2,0.4,0.6,0.8,1.0])
+#plotAF.set_yticklabels(["0.2","0.4","0.6","0.8","1.0"],fontstyle="normal")
+
+plotAp.set_ylim(0.0,4.0)
+plotAp.set_yticks([0,1,2,3])
+plotAp.set_yticklabels(["0","1","2","3"],fontstyle="normal")
+
+
 plotAc.set_ylim(10.0,180.0)
 
 #figA.tight_layout()

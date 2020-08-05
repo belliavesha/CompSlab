@@ -257,10 +257,12 @@ for ish in range(1,3):#len(shapes)):
 				#plotAp.set_yticks([-0.9,0.0,0.9])
 				#plotAp.set_yticklabels(["-0.9","0.0","0.9"],fontstyle="normal")
 
-				plotAF.set_ylim(0.1,1.1)
+				plotAF.set_ylim(0.0,1.1)#(0.1,1.1)
 				plotAF.yaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
-				plotAF.set_yticks([0.25,0.5,0.75,1.0])
-				plotAF.set_yticklabels(["0.25","0.50","0.75","1.00"],fontstyle="normal")
+				#plotAF.set_yticks([0.25,0.5,0.75,1.0])
+				#plotAF.set_yticklabels(["0.25","0.50","0.75","1.00"],fontstyle="normal")
+				plotAF.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+				plotAF.set_yticklabels(["0","0.2","0.4","0.6","0.8","1.0"],fontstyle="normal")
 
 
                                 
@@ -616,6 +618,15 @@ plotAF.margins(x =0, y=0)
 plotAd.margins(x =0, y=0)
 plotAp.margins(x =0, y=0)
 plotAc.margins(x =0, y=0)
+
+#Adjusting the ticks and their labels ....
+plotAp.set_ylim(-0.05,0.03)
+plotAp.set_yticks([-0.04,-0.02,0.0,0.02])
+plotAp.set_yticklabels(["-0.04","-0.02","0","0.02"],fontstyle="normal")
+
+plotAd.set_ylim(-0.04,0.04)
+plotAd.set_yticks([-0.02,0.0,0.02])
+plotAd.set_yticklabels(["-0.02","0","0.02"],fontstyle="normal")
 
 if(plot_resid):
 	plotAr.margins(x =0)

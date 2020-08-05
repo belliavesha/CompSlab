@@ -58,7 +58,7 @@ param_names = [
          #"$i$ \n (deg)",
          #"$\\theta$ \n (deg)",
          #"$\\rho$ \n (deg)"
-         "$R_{\\mathrm{eq}}$ (km)",
+         "$R_{\\mathrm{e}}$ (km)",
          "$M$ ($M_{\\odot}$)",
          "$i$ (deg)",
          "$\\theta$ (deg)",
