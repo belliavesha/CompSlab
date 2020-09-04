@@ -59,7 +59,9 @@ param_names = [
          #"$\\theta$ \n (deg)",
          #"$\\rho$ \n (deg)"
          "$R_{\\mathrm{e}}$ (km)",
+         #"$R_{0}$ (km)", #for non-rot R
          "$M$ ($M_{\\odot}$)",
+         #"$M_{0}$ ($M_{\\odot}$)", #non-rot M
          "$i$ (deg)",
          "$\\theta$ (deg)",
          "$\\rho$ (deg)"

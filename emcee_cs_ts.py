@@ -59,7 +59,7 @@ sthigh_limit = [1.5, 13.0, 50.0, 70.0, 15.0]
 #sthigh_limit = np.copy(high_limit)
 restart = True #False
 #restart_file = "res/B/oblsph_emcee.dat"
-restart_file = "res/B/oblobl_sp2_pb10_rphf_emcee.dat" #"res/B/oblobl_emcee.dat"
+restart_file = "emcee_res/oblobl_le_burst2_emcee.dat"#"res/B/oblobl_sp2_pb10_rphf_emcee.dat" #"res/B/oblobl_emcee.dat"
 
 
 def shift_phase(phi,shift):
@@ -68,7 +68,7 @@ def shift_phase(phi,shift):
 
 def readdata():
 	#PulsName='res/B/B0Prho10' #used in the old results
-	PulsName='res/B/lbb_rho10_sp2_f600_obl_burst2_dt'#'res/B/lbb_rho10_sp2_f600_obl_burst'
+	PulsName='pOS_pulses/lbb_rho10_sp2_f600_obl_burst2_dt'#'res/B/lbb_rho10_sp2_f600_obl_burst2_dt2_nrmr'
 	#PulsName='res/B/B0P2'
 	#PulsName='res/B/B0P1'
 	inFlux = open(PulsName+'FF.bin')
@@ -84,7 +84,7 @@ def readdata():
 
 def compute_logl(phi,PA,PA_obs,phaseshift):
 
-	sigma_tot2 = 225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
+	sigma_tot2 = 4.0#225.0#abs(PA[t])#1.0#PA+insigma**2+(0.005*PA)**2 #(error expected/guessed in PA)**2 = 15**2 = 225, or 2**2 = 4
 	norm = 0.0#0.5*log(sigma_tot2)
 	phi_new = shift_phase(phi,phaseshift)
 	PA_interp = interp1d(phi_new,PA,fill_value = 'extrapolate')
@@ -172,10 +172,21 @@ def lnprob(modelpar, low_limit, high_limit):
 	theta = modelpar[3]
 	rho = modelpar[4]
 
+	sph = False
+
+	#Uncomment the following if want to use the non-rotating M&R as fitting parameters for oblate star
+	#if not sph:
+	#	#values for rotating star:
+	#	from mr_rot_nonrot import R_eq, M_obl #these assuming now that freq=600!
+	#	mass0, rad0 = mass, rad
+	#	rad = R_eq(mass0,rad0)
+	#	mass = M_obl(mass0,rad0)
+
 	if(mass/rad > 0.96*1.0/(2.95*1.52)): #checking causality                
 		return -np.inf
 
-	Flux = compf(mass,rad,incl,theta,rho,spherical=False)
+
+	Flux = compf(mass,rad,incl,theta,rho,spherical=sph)
 	#print(Flux)
 	phi,Flux_obs = readdata()
 
@@ -227,7 +238,7 @@ p0 = np.zeros((nwalkers,ndim))
 #test call to lnprob:
 #start = time.time()
 ##Originally a crash with these parameters:
-##params_true = [1.19815732, 16.3795289, 50.49372377, 63.26109383]
+#params_true = [ 1.43880055, 17.33520256, 38.19160194, 64.39232485, 12.23075588]
 #cloglik = lnprob(params_true,low_limit,high_limit)
 #print(cloglik)
 ##print("chi^2/d.o.f.=",-1.0*cloglik/(NPhase-nparams))
