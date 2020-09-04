@@ -1,0 +1,346 @@
+%\documentclass[referee]{aa}
+\documentclass{aa}
+
+\usepackage[utf8]{inputenc} 
+\usepackage[varg]{txfonts}
+\usepackage{amssymb}
+\usepackage{epsfig}
+\usepackage{graphics}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{natbib}
+\usepackage{hyperref}
+\usepackage{gensymb}
+
+\usepackage{bm}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{lipsum}
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\def\bc{\begin{center}}
+\def\ec{\end{center}}
+\def\beq{\begin{eqnarray}}
+\def\eeq{\end{eqnarray}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+
+%\slugcomment{ }
+%\shorttitle{Polarization from neutron stars}
+%\shortauthors{Me}
+
+%\voffset=-1cm
+
+\bibpunct{(}{)}{;}{a}{}{,} % to follow the A&A style
+
+%Debug addition for collaborators
+%\usepackage[switch, modulo]{lineno}
+%\linenumbers
+%\renewcommand\linenumberfont{\color{red}\normalfont\tiny\sffamily}
+%\renewcommand\linenumberfont{\normalfont\tiny\sffamily}
+
+\DeclareUnicodeCharacter{00A0}{ }
+
+%\slugcomment{ }
+%\shorttitle{Polarization from neutron stars}
+%\shortauthors{Me}
+
+%\voffset=-1cm
+
+\makeatletter
+\def\fvec#1{\underline{\sbox\tw@{$#1$}\dp\tw@\z@\box\tw@}}
+\makeatother
+
+\begin{document}
+\title{Polarized radiation from rapidly rotating oblate neutron stars}
+
+%\titlerunning{Meme BB}
+
+\author{V.~Loktev\inst{1}
+\and T.~Salmi\inst{1}
+\and J.~N\"attil\"a\inst{2}
+\and  J.~Poutanen\inst{1,2,3}}
+
+\institute{Tuorla Observatory, Department of Physics and Astronomy, FI-20014 University of Turku, Finland %\email{joonas.a.nattila@utu.fi}
+    \and Nordita, KTH Royal Institute of Technology and Stockholm University, Roslagstullsbacken 23, SE-10691 Stockholm, Sweden
+   \and Space Research Institute of the Russian Academy of Sciences, Profsoyuznaya str. 84/32, 117997 Moscow, Russia 
+}
+
+\date{Received XXX / Accepted XXX}
+
+
+
+
+\abstract{
+In this report the radiation escaping a plane-parallel electron consisting neutron star atmosphere is described.
+The polarization plane rotation due to relativistic effects along the path from the star surface to the observer are described in terms of Tuomo's manuscript. 
+Also the numeric methods for computing flux and polarization degree of outgoing from the star surface radiation are described. 
+}
+
+
+\keywords{polarization --- numerical methods}
+
+\maketitle
+
+\section{Introduction}\label{sec:intro}
+Blaablaa
+
+\section{Polarization angle and polarization degree}
+\subsection{Polarization angle }
+
+The instrument observes the polarized radiation in the picture plane.
+There are several steps one should make to fetch the the Stokes vector from the star corotating frame.
+Let us look on the main basis, the basis of the picture frame, which is formed by $\bm z$ and $\bm k$ 
+\be 
+\label{mbasis}
+\bm{e}_1^m = \frac{\bm{z}-\cos{i} \bm{k}}{\sin{i}},\qquad 
+\bm{e}_2^m = \frac{\bm{k} \times \bm{z}}{\sin{i}}.
+\ee
+The vector  $\bm{e_1^m}$ is collinear to the projection of the star rotation axis ot the picture frame, and the second  vector  $\bm{e_2^m}$ is perpendicular to the first one.
+This basis is fixed in the lab frame, since the pulsar rotation  axis (along the $\bm \omega$) is still and very stable and the line of sight (along the  $\bm{k}$) does not also change within the observation time.
+The polarization vector is observed in this basis.
+
+Next let us consider the basis formed by $\bm r$ and $\bm k$
+\be\label{rbasis}
+\bm{e}^r_1 = \frac{\bm{r}-\cos{\psi} \bm{k}}{\sin{\psi}},\qquad 
+\bm{e}^r_2 = \frac{\bm{k} \times \bm{r}}{\sin{\psi}}.
+\ee
+This basis describes the same plane as the previous one but it rotates relatively to the main one.
+The difference between the polarization angles in these two bases we denote by $ \chi_0 $.
+This angle is measured from the vector of the main basis $\bm{e}_1^m$ in the counter-clockwise direction.
+Using the formula for $\cos\psi$ (\ref{cospsi}) we can obtain the trigonometric functions of this angle 
+\be
+\cos{\chi_0}=\bm{e}_1^m \cdot \bm{e}^r_1 = \frac{\sin{i}\cos{\theta}-\sin{\theta}\cos{i}\cos{\varphi}}{\sin{\psi}} , 
+\ee \be 
+\sin{\chi_0}= - \bm{e}_1^m \cdot \bm{e}^r_2 = \bm{e}_2^m \cdot \bm{e}^r_1 = - \frac{\sin{\theta}\sin{\varphi}}{\sin{\psi}} ,
+\ee
+From these trigonometric functions we get the angle unambiguously. 
+For the spherical and slow rotation that is sufficient, but we have to take into account the relativistic morion and the oblateness of the star shape.
+
+To take into cosideration the star curviture we look at a yet another basis, which is formed by the radius vector $\bm{r}$ and the direction of the light propagation $\bm{k_0}$ near the star surface
+\be\label{basis}
+\bm{e}_1 = \frac{\bm{r}-\cos{\alpha} \bm{k_0}}{\sin{\alpha}},\qquad 
+\bm{e}_2 = \frac{\bm{k_0} \times \bm{r}}{\sin{\alpha}}=\bm{e}^r_2.
+\ee
+The light trajectories are planar, so the $\bm{e}_2$ and $\bm{e}^r_2$ are equal vectors. The polarization degree and positional angle in this basis are also the same as in the basis denoted by upper index $r$ in Eq. \eqref{rbasis}. \textbf{(this seems to be true)}.
+After that we consider the basis associated with the local normal vector  $\bm n $
+\be\label{nbasis}
+\bm{e}_1^n = \frac{\bm{n}-\cos{\sigma} \bm{k_0}}{\sin{\sigma}},\qquad 
+\bm{e}_2^n = \frac{\bm{k_0} \times \bm{n}}{\sin{\sigma}} .
+\ee
+The last two bases are also lying in the same plane. The angle between them we denote by $\chi_1$.
+This angle similarly to the previous one is given by  \be
+\cos{\chi_1}=\bm{e}_1^n \cdot \bm{e}_1 = \frac{\cos\gamma-\cos\alpha\cos\sigma}{\sin{\alpha}\sin\sigma} , 
+\ee
+\beq
+\sin{\chi_1} &=& \bm{e}_2 \cdot \bm{e}^n_1 = \frac{\bm{n} \cdot (\bm{k_0}\times\bm{r} )}{\sin\alpha\sin\sigma}
+= \frac{\bm{k_0} \cdot (\bm{r}\times\bm{n} )}{\sin\alpha\sin\sigma} \nonumber \\
+&=& \frac{\sin\alpha}{\sin\psi} \frac{ \bm{k} \cdot (\bm{r}\times\bm{n} )}{\sin\alpha\sin\sigma}
+= \frac{ \sin\gamma\sin i \sin\varphi}{\sin\psi\sin\sigma}.
+\eeq
+If the star is spherical, one can see that this angle would be exactly $0$.
+
+The last base is still connected to the fixed lab frame. 
+The last step is to take into account the positional vector rotation due to the relativistic motion of the star surface.
+Let us consider the basis in the spot comoving frame
+\be\label{primebasis}
+\bm{e}_1' = \frac{\bm{n}-\cos{\sigma'} \bm{k_0'}}{\sin{\sigma'}},\qquad 
+\bm{e}_2' = \frac{\bm{k_0'} \times \bm{n}}{\sin{\sigma'}} .
+\ee
+Since \be
+\mu\equiv\cos\sigma'=\delta\cos{\sigma},
+\ee
+the first vector can be written as 
+\be
+\bm{e}_1' = \frac{\bm{n}+\delta\Gamma\cos{\sigma} (\bm{\beta-k_0})}{\sqrt{1-\mu^2 } }.
+\ee
+
+The relativistic correction of the polarization vector we denote by $\chi'$.
+The sine of this angle is
+\be\label{sinchi}
+\sin{\chi'}=\bm{e}_1'\cdot \bm{e}_2^n =
+\frac{\mu\Gamma\beta }{\sin{\sigma}\sqrt{1-\mu^2} } \bm{\hat\beta} \cdot(\bm{k_0} \times \bm{n}),
+\ee
+where $\bm{\hat\beta}$ is the unity velocity vector.
+			
+The scalar triple product $\bm{\hat\beta} \cdot(\bm{k_0} \times \bm{n}) $, in Eq. \eqref{sinchi} is
+\beq\label{tripleproductoblate}
+\bm{k_0} \cdot (\bm{n}\times\bm{\hat\beta} )&=&\pm
+\bm{k_0} \cdot \left(\bm{n} \times \frac{\bm{n} \times \bm{r}}{\sin{\gamma}}\right)=\pm
+\bm{k_0} \cdot \frac{\cos{\gamma}\bm{n} - \bm{r}}{\sin{\gamma}} \nonumber \\
+&=& \pm \frac{\cos{\sigma}\cos{\gamma}-\cos{\alpha}}{\sin{\gamma}},
+\eeq
+Where $+$ sign is for the northern hemisphere and the $-$ is for south.
+Finally, we get
+\be\label{chiprime}
+\sin{\chi'}=\bm{e}_1'\cdot \bm{e}_2^n =\pm
+\frac{\mu\Gamma\beta (\cos{\sigma}\cos{\gamma}-\cos{\alpha})}{\sin{\gamma}\sin{\sigma}\sqrt{1-\mu^2} }.
+\ee
+
+That is the simplest expression, but we only may use it when the $\bm n$ differs from the $\bm r$. 
+Let us then  consider the meridional vector headed towards the north pole
+\be
+\bm m = (- \cos \lambda \cos \phi, -\cos \lambda \sin \phi, \sin \lambda ),
+\ee
+where $\lambda \equiv \theta-\gamma$ is the angle between the normal vector and the spin axis \red{(TS: only when radial vector, normal vector and spin axis are in the same plane ?)}.
+Then we can rewrite Eq. (\eqref{tripleproductoblate}) as
+\beq\label{tripleproductpherical}
+&& \bm{k_0} \cdot (\bm{n}\times\bm{\hat\beta} )=
+\bm{k_0} \cdot \bm{m} \nonumber \\
+&=& \frac1{\sin\psi}(\sin \alpha A - \sin(\psi-\alpha)\sin\gamma ) \nonumber	\\
+&=& (A+\cos\psi \sin\gamma)\frac{\sin\alpha}{\sin\psi} - \cos \alpha\sin\gamma, 
+\eeq
+where we have defined $A \equiv \cos i \sin \lambda - \sin i \cos \lambda \cos \phi$ (\red{TS: Or maybe use some different notation if you like}), and we can put small and even zero $\gamma$ angle. \red{TS: Should this and the following equations have also $\pm$ depending on the hemisphere? }
+And for the small 
+$\psi$
+angles we make use of Beloborodov's approximation.
+
+The universal formula for the $\sin\chi'$ is then 
+\be\label{sinchiprime}
+\sin\chi'={\mu\Gamma\beta }\frac{(A+\cos\psi \sin\gamma)\frac{\sin\alpha}{\sin\psi} - \cos \alpha\sin\gamma}{\sin{\sigma}\sqrt{1-\mu^2} }.
+\ee
+      
+In particular, for the spherical star we have the result 
+\be\label{chiprimespherical}
+\sin{\chi'}=\bm{e}_1'\cdot \bm{e}_2^n =
+\frac{\mu\Gamma\beta (\cos i \sin \theta - \sin i \cos \theta \cos \phi)}{\sin{\psi}\sqrt{1-\mu^2} }.
+\ee
+
+The cosine of this angle is obviously always positive, but in case of $\sigma\approx0$ or $ \sigma'\approx0$ it also will be useful  
+\beq\label{coschiprime}
+&&\cos\chi'=\bm{e}_1'\cdot \bm{e}_1^n =\frac{\bm n + \delta  \Gamma \cos\sigma (\bm \beta - \bm{k_0} ) }{\sqrt{1-\mu^2} }\cdot 
+\frac{\bm n - \cos \sigma  \bm{k_0} }{\sin{\sigma}} \nonumber \\
+&=& \frac{1-\cos^2\sigma-\delta \Gamma \cos^2 \sigma \bm \beta \cdot \bm{k_0} }{\sin{\sigma}\sqrt{1-\mu^2} } 
+=\frac{\sin^2\sigma-  \cos^2 \sigma \bm \beta \cdot \bm{k_0} /(1-\bm \beta \cdot \bm{k_0}) }{\sin{\sigma}\sqrt{1-\mu^2} } \nonumber \\ 
+&=&\frac{\sin^2\sigma -\bm \beta \cdot \bm{k_0} \sin^2\sigma - \cos^2 \sigma \bm \beta \cdot \bm{k_0} }{\sin{\sigma}\sqrt{1-\mu^2} (1-\bm \beta \cdot \bm{k_0}) } 
+=\frac{\sin^2\sigma -\bm \beta \cdot \bm{k_0}  }{\sin{\sigma}\sqrt{1-\mu^2} (1-\bm \beta \cdot \bm{k_0}) } \nonumber \\
+&=&\frac{\sin^2\sigma + \beta \frac{\sin \alpha }{\sin\psi} \sin i \sin \phi }{\sin{\sigma}\sqrt{1-\mu^2} (1+ \beta \frac{\sin \alpha }{\sin\psi} \sin i \sin \phi) } 
+\eeq		
+
+\blue{
+Combing the results of Eq. \eqref{sinchiprime} and Eq. \eqref{coschiprime}, we eventually get 
+\be
+\tan\chi' = \beta \cos \sigma \frac{A + \sin \gamma (\cos \psi - \frac{\sin \psi}{\sin \alpha}\cos \alpha)}{\frac{\sin \psi}{\sin \alpha}\sin^{2}\sigma + \beta \sin i \sin \phi}.
+\ee
+In case of a spherical star, this is the same result as given by \citet{VP04}, which is
+\be
+\tan\chi' = \beta \cos \alpha \frac{\cos i \sin \theta - \sin i \cos \theta \cos \phi}{\sin \psi\sin\alpha + \beta \sin i \sin \phi}.
+\ee
+}
+
+
+The circular polarization is always zero (\red{TS: I believe it, but I don't know why it is so. Maybe you could explain?}), so we consider only three components Stokes vector $(F_I,F_Q,F_U)$.
+In the spot comoving basis the third component is also zero due to the symmetry along the normal.
+The polarization degree then is just $P=F_Q/F_I$.
+The polarization degree is invariant so in the main basis we will have the Stokes vector
+\be
+(F_I, F_Q \cos{2\chi},F_Q \sin{2\chi}),
+\ee
+where the angle
+\be
+\chi=\chi_0+\chi_1+ \chi'\ee
+is just a sum of the angles between the intermediate bases.
+
+
+\subsection{Polarization degree}
+Since we do not consider circular polarization, the Stokes vector contains three components $(F_I,F_Q,F_U)$.
+In the last polarization basis, the polarization angle will always equal to 0, because of axial symmetry of the neutron star, and then $F_U$ will be also always zero. Polarization degree $P$ in this case is determined by  $F_Q=P F_I$, and will not change if the polarization basis rotates. When we rotate the Stokes vector to the main basis, we get the result vector $$(F_I, F_Q \cos{2\chi},F_Q \sin{2\chi}),$$   
+
+The total Stokes vector is obtained from summing the vectors for primary and secondary spots (denoted by indexes $tot$, $p$ and $s$ respectively) if there are two spots on the neutron star, and if the spots are big enough that we not neglect their sizes anymore, we should sum Stokes vector for several points in the area of the spot
+$$
+F_I^{tot}=F_I^p+F_I^s = \sum_i F_I^{p,i}+F_I^{s,i}$$
+\be
+F_Q^{tot}=F_Q^p+F_Q^s = \sum_i F_Q^{p,i}+F_Q^{s,i}\ee
+$$
+F_U^{tot}=F_U^p+F_U^s= \sum_i F_U^{p,i}+F_U^{s,i} $$
+\be
+P^{tot}=\frac{\sqrt{(F_Q^{tot})^2+(F_U^{tot})^2}}{F_I^{tot}}\ee
+And for multiple points on the surface we can obtain the total polarization angle from the total Stokes vector\be
+\tan{2\chi^{tot}}=\frac{F_U^{tot}}{F_Q^{tot}}\ee
+
+\subsubsection{X-ray bursts}
+Further some results (figures \ref{figure:angswap}, \ref{figure:sizedif} and \ref{figure:freqdif})are obtained using approximate formula of dependence of the polarization degree on $\mu=\cos{\sigma}$  during the X-ray burst
+\be
+P=-\frac{1-\mu}{1+3.582\mu}11.71\%
+\ee
+The direction of the electric vector oscillations is perpendicular to the meridional plane.
+The formula was obtained approximating the solution for the plane parallel semi-infinite atmosphere with opacity dominated by Thomson scattering.
+
+
+
+ 
+
+
+\subsubsection{Thomson scattering}
+The intensity of unscattered photons is
+\be
+I_{l,r}^0=I_{in}e^{-\tau/\mu}
+\ee
+The boundary conditions for $n$ times scattered photons are
+\be
+I_{l,r}^n(\tau=0,\mu)=I_{l,r}^n(\tau=\tau_T,-\mu)=0\qquad 0\leq\mu\leq1
+\ee
+The intensity of $n$ times scattered photons are computedfrom
+$$
+I_l^n(\tau,\mu)=\int_{\tau_b(\mu)}^\tau \frac{d\tau'}\mu e^{\frac{\tau'-\tau}\mu}$$
+\be
+\times( A^n(\tau')(1-\mu^2) + (B^n(\tau')+C^n(\tau')\mu^2 ),
+\ee
+$$
+I_l^n(\tau,\mu)=\int_{\tau_b(\mu)}^\tau \frac{d\tau'}\mu e^{\frac{\tau'-\tau}\mu}
+(B^n(\tau')+C^n(\tau'))
+$$
+where $$
+A^n(\tau)=\frac34\int_0^1 d\mu' (I^{n-1}_l (\tau,\mu')+I^{n-1}_l (\tau,-\mu')) (1-\mu'^2)
+$$
+\be
+B^n(\tau)=\frac38\int_0^1 d\mu' (I^{n-1}_l (\tau,\mu')+I^{n-1}_r (\tau,-\mu'))\mu'^2
+\ee
+$$
+C^n(\tau)=\frac38\int_0^1 d\mu' (I^{n-1}_r (\tau,\mu')+I^{n-1}_r (\tau,-\mu')) 
+$$
+
+Then one can compute the intensity of escaping photons\be
+I(\mu)=I_l(\tau_T,\mu)+I_r(\tau_T,\mu)
+\ee
+and the polarization degree of the outgoing radiation (see Figure \ref{figure:ThomsonIp})
+\be
+p(x,\mu)
+=\frac{I_l(\tau_T,\mu)+I_r(\tau_T,\mu)}{I_l(\tau_T,\mu)-I_r(\tau_T,\mu)}
+=100\%\frac{I(\mu)}{Q(\mu)}.\ee
+
+
+
+But these functions have no dependence on frequencies, while in neutron stars the electron momenta are big enough to change energies of the photons. It means that Compton scattering must be taken into account.
+
+\red{TS:
+Or can you alternatively use the Eq. (17) in \citet{VP04}, where you had this factor 4 between energies of subsequent scattering orders?
+}
+
+\subsubsection{Compton scattering}
+The computing of Compton scattering in a plane-parallel infinite slab is discussed  not here yet.
+
+
+\section{Discussion}
+
+\section{Summary}
+
+
+
+%Should use allbib.bib when adding new references (add a reference there unless it is already there)
+%Run first with the two lines uncommented  and pdflatex,bibtex,pdflatex,pdflatex ...
+%In the end, you can copy the text in file OblatePolarization.bbl here to make the final bibliography and changes to that if needed
+\bibliographystyle{aa}
+\bibliography{allbib}
+
+
+%\begin{thebibliography}{1}
+%\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+%\bibitem[{{Viironen} \& {Poutanen}(2004)}]{VP04}
+%{Viironen}, K. \& {Poutanen}, J. 2004, \aap, 426, 985
+%\end{thebibliography}
+
+\end{document}
+
