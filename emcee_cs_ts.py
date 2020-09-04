@@ -24,7 +24,7 @@ import emcee
 import math, os
 #import pymultinest
 import time
-from cs_ts2_func_tube import compf
+from cs_ts2_func import compf
 #from multiprocessing import Pool
 
 
