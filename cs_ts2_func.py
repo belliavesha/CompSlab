@@ -616,9 +616,17 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 						sin_chi_prime=cos_eps*mu0*Gamma*beta#*the_thing#*delta**3#*delta
 						cos_chi_prime=(1. - cos_sigma**2 /(1. - beta*cos_xi))#*the_thing
 
-						chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
+						chi_prime=arctan2(sin_chi_prime,cos_chi_prime)
+                                                
+						#cos_eps_sph = sin_alpha_over_sin_psi*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
+						#sin_chi_prime_sph=cos_eps_sph*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+						#cos_chi_prime_sph=sin_alpha**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+						#chi_prime_sph= arctan2(sin_chi_prime_sph,cos_chi_prime_sph)
 
-						chi=chi_0 + chi_1 + chi_prime
+
+						chi=chi_0+chi_1+chi_prime #oblate formula
+						#chi=chi_0+chi_prime_sph #spherical formula
+
 						#  print(chi,'\t',chi_0/chi,'\t',chi_1/chi ,'\t',  chi_prime/chi )
 
 						sin_2chi=sin(2*chi)
@@ -687,7 +695,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		#s,gn=pr(s,gn,'curves done ')
 	    
 	# In[31]:
-	savePulse = True
+	savePulse = False#True
 	if savePulse:
 		outF = open(PulsName + 'FF.bin','w')
 		outf = open(PulsName + 'ff.bin','w')
