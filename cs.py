@@ -1069,10 +1069,12 @@ if computePulse:
                         if dphase10<0.0<dphase20 :
                               break
 
-                  dphase1=phase0-phase1
-                  dphase2=phase2-phase0
-                  dphase=phase2-phase1
-                  Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase
+#                   dphase1=phase0-phase1
+#                   dphase2=phase2-phase0
+#                   dphase=phase2-phase1
+#                   Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase
+                  
+                  Flux[t]+=(Flux_obs[t1]*dphase20-Flux_obs[t2]*dphase10)/(dphase20-dphase10)
                               
 
       s,gn=pr(s,gn,'curves done ')
