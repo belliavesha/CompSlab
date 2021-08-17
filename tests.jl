@@ -15,7 +15,7 @@ init_atmosphere()
 println(IsothermalComptonAtmosphere.mu)
 I = compute_slab()
 
-open("$(nEnergy)E.txt", "a") do io
+open("I_150_9_50.txt", "a") do io
             writedlm(io, I[:,:,1])
         end
 
