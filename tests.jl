@@ -1,5 +1,4 @@
-
-# print(a)
+using DelimitedFiles
 
 include("./cs.jl")
 using .IsothermalComptonAtmosphere: init_atmosphere, compute_slab
@@ -8,14 +7,16 @@ using .IsothermalComptonAtmosphere: init_atmosphere, compute_slab
 # println("Angular symmetry: ",CheckAngularSymmetry(Compton_redistribution_aa,0.02,0.02,-0.4,0.5))
 
 
-IsothermalComptonAtmosphere.init_τ(20)
-IsothermalComptonAtmosphere.init_x(50)
-# IsothermalComptonAtmosphere.init_τ(20,0.6 )
-IsothermalComptonAtmosphere.init_μ(6)
-IsothermalComptonAtmosphere.set_ScatterNum(18)
+IsothermalComptonAtmosphere.init_τ(50, 0.6)
+IsothermalComptonAtmosphere.init_x(150)
+IsothermalComptonAtmosphere.init_μ(9)
+IsothermalComptonAtmosphere.set_ScatterNum(12)
 init_atmosphere()
 println(IsothermalComptonAtmosphere.mu)
 I = compute_slab()
 
-println(I[:,10,1])
+open("$(nEnergy)E.txt", "a") do io
+            writedlm(io, I[:,:,1])
+        end
+
 
