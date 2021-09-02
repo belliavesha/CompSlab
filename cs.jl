@@ -1,50 +1,57 @@
+__precompile__()
+
 module IsothermalComptonAtmosphere
 
     using SpecialFunctions: besselk
     using FastGaussQuadrature
     using LinearAlgebra
+    using TimerOutputs
+    using StaticArrays
+
+    const to = TimerOutput()
 
     function init_Θ(θ = 0.08, t = 0.002) # dimensionless photon black body temperature T = k T_bb / m_e c^2
         global Θ = θ
         global Theta = θ
         global T = t
         global K2Y = besselk(2,1/Theta) # second modified Bessel function of reversed dimensionless temperature       
+        global Tempertures = θ,t,K2Y
     end; init_Θ()
-
+    
     function init_τ(n=10, t = 0.6 )
-        global NDepth = n # 101  # number of optical depth levels (\tau)
-        global tau_T= t # Thomson optical depth of thermalization 
-        global τ_T = t
-        global tau = range(0, stop=tau_T, length=NDepth)
-        global tau_weight = tau[2]-tau[1]
+        NDepth = n # 101  # number of optical depth levels (\tau)
+        tau_T= t # Thomson optical depth of thermalization 
+        τ_T = t
+        tau = range(0, stop=tau_T, length=NDepth)
+        tau_weight = tau[2]-tau[1]
+        global τ_grid = n, t, tau, tau_weight
     end; init_τ();
 
-    function init_μ(n = 5)
-        global NMu = n # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
-        global NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
-        global mu = Array{Float64}(undef,NZenith)
-        global mu_weight = Array{Float64}(undef,NZenith)
+    function init_μ(n = 3)
+        NMu = n # number of propagation zenith angle cosines (\mu) [0,1]
+        NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
+        mu = Array{Float64}(undef,NZenith)
+        mu_weight = Array{Float64}(undef,NZenith)
         m2,mw = gausslegendre(NMu)
         mu[1:NMu] = (m2 .- 1)./2
         mu[NMu+1:2NMu] = (m2 .+ 1)./2
         mu_weight[1:NMu] = (mw)./2
         mu_weight[NMu+1:2NMu] = (mw)./2
-    end; init_μ();
+        global μ_grid = n, 2n, mu, mu_weight
+    end; 
 
-    function init_x(n = 20, x_l = -3.7 , x_u = .3 )# lower and upper bounds of the log_10 energy span
-        global NEnergy = n# 200 # 50# 101 # number of energy points (x)
-        global x = 10 .^ ( range(x_l,stop=x_u,length=NEnergy))
-        global x_weight = log(x[2]/x[1])
+    function init_x(n = 2, x_l = -3.7 , x_u = .3 )# lower and upper bounds of the log_10 energy span
+        NEnergy = n # number of energy points (x)
+        x = 10 .^ ( range(x_l,stop=x_u,length=NEnergy))
+        x_weight = log(x[2]/x[1])
+        global x_grid = n, x, x_weight
     end; init_x();
 
-    function set_ScatterNum(n = 10)
+    function set_ScatterNum(n = 2)
         global ScatterNum = n # total number of scatterings
     end; set_ScatterNum()
 
     function init_g(ng = 30, nγ = 10, na = 10 )
-        # global NGauss = ng
-        # global NGamma= nγ # number of Lorenz factor points (\gamma)
-        # global NAzimuth= na # 12 # numbers of azimuth angles (\phi) [0,pi]
         global glγ = gausslaguerre(nγ) 
         global glϕ = gausslegendre(na*2)
         global glξ = gausslaguerre(ng) 
@@ -110,7 +117,7 @@ module IsothermalComptonAtmosphere
         return (s_0,s_1,s_2,S_1,S_2,S_3,S_4,S_5,S_6,S_7)    
     end
 
-    function σ_Maxwell(x) # Averaging over Maxwellian distribution
+    function σ_Maxwell(x,glξ=glξ) # Averaging over Maxwellian distribution
         Y = 1/Θ # ΘY = 1 
         D = Θ*exp(-Y)/(2*K2Y) # basically, the factor befor the integrals
         σ = 0 # cross section, in units of Thomson cross-section;  
@@ -247,7 +254,8 @@ module IsothermalComptonAtmosphere
         return r
     end
 
-    function Compton_redistribution(x1,x2,mu) # if distribution is not Maxwellian the function must be modified.
+
+    function Compton_redistribution(x1,x2,mu;glγ=glγ,PRF=false) # if distribution is not Maxwellian the function must be modified.
     #   """    Thermal Compton redistribution matrix (integrated with electron distribution function)
     #   And the distribution is maxwellian (if it's not the function must be modified)
     #   The arguments are:
@@ -259,23 +267,35 @@ module IsothermalComptonAtmosphere
     #   and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectively 
     #   R44 or RV is also not equal to zero but we never need it  
     #   """
-        q = x1*x2*(1 - mu)
-        Q = √( x1*x1 + x2*x2 - 2*x1*x2*mu )
-        γStar = (x1-x2+Q*√( 1 + 2/q ) )/2 # lower bound of integration 
-        C=3/8*Theta*Maxwell_r(γStar)
-        γ, weight = glγ
-        
-        R=zeros(4)
-        for i in 1:length(γ)
-            T=Compton_redistribution_m(x1,x2,mu,Theta*γ[i]+γStar)
-            for j in 1:4
-                R[j] += C*weight[i]*T[j]
+        if PRF==false
+            q = x1*x2*(1 - mu)
+            Q = √( x1*x1 + x2*x2 - 2*x1*x2*mu )
+            γStar = (x1-x2+Q*√( 1 + 2/q ) )/2 # lower bound of integration 
+            C=3/8*Theta*Maxwell_r(γStar)
+            γ, weight = glγ
+            
+            R=zeros(4)
+            for i in 1:length(γ)
+                @timeit to "crm" T=Compton_redistribution_m(x1,x2,mu,Theta*γ[i]+γStar)
+                for j in 1:4
+                    R[j] += C*weight[i]*T[j]
+                end
             end
+            return R
+        else
+            # n = size(PRF)[1]
+            # return qsplint(xa,ya,y2a,n,x)
+            return nothing
         end
-        R
     end
+
+
+
+
+    
         
-    function Compton_redistribution_aa(x1,x2,μ1,μ2)
+    
+    function Compton_redistribution_aa(x1,x2,μ1,μ2,glϕ=glϕ,PRF = false)
         # """   Azimuth-avereged Compton redistribution matrix 
         # for computing of electron scattering source function 
         # The arguements are:
@@ -304,7 +324,7 @@ module IsothermalComptonAtmosphere
 
         R=zeros( (2,2) )
         for i in 1:length(ϕ)
-            (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i])
+            @timeit to "cr" (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i],PRF=PRF)
             R[1,1] += C*pi*weight[i]
             R[1,2] += I*pi*cos2χ2[i]*weight[i]
             R[2,1] += I*pi*cos2χ1[i]*weight[i]
@@ -367,13 +387,18 @@ module IsothermalComptonAtmosphere
     end
 
 
-    function CRM()
+    function CRM(x_grid=x_grid,μ_grid=μ_grid)
+        NEnergy, x, x_weight = x_grid
+        NMu, NZenith, mu, mu_weight = μ_grid 
+
+        r = zeros(Float64,(2,2)) # define arrays 
+        rm = zeros(Float64,(2,2)) # define arrays 
         # sigma=zeros(NEnergy)
         RedistributionMatrix = ones( (NEnergy,NEnergy,NZenith,NZenith,2,2) )
-        percent=0.0
+        # percent=0.0
         for e in 1:NEnergy # x [-\infty,\infty]
-            percent+=100/NEnergy
-            println((percent))
+            # percent+=100/NEnergy
+            # println((percent))
             
             for e1 in e:NEnergy # x1 [x,\infty]
                 # percent+=200/NEnergy/(NEnergy+1)
@@ -386,8 +411,8 @@ module IsothermalComptonAtmosphere
                         t=d1>d
                         f=e1>e
 
-                        r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
-                        rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
+                        @timeit to "craa" r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
+                        @timeit to "craa" rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
                         # sigma[e1]+=(r[1,1]+rm[1,1])*w
                         RedistributionMatrix[e,e1,d,d1,:,:]=r
                         RedistributionMatrix[e,e1,md,md1,:,:]=r
@@ -428,24 +453,45 @@ module IsothermalComptonAtmosphere
         RedistributionMatrix
     end
 
-    function init_atmosphere()
-        global RedistributionMatrix = CRM()
-        global σ = Array{Float64}(undef,NEnergy)
+    function init_atmosphere(x_grid=x_grid)
+        NEnergy, x, x_weight = x_grid
+        @timeit to "CRM"  RedistributionMatrix = CRM()
+        σ = Array{Float64}(undef,NEnergy)
         for e in 1:NEnergy
             σ[e] = σ_Maxwell(x[e])[1]
         end
+        global R_grid = RedistributionMatrix, σ
+    end; 
+
+    function collect_args()
+        R_grid, x_grid, μ_grid, τ_grid, ScatterNum
     end
 
+    function compute_slab(R_grid = R_grid,
+        x_grid = x_grid,
+        μ_grid = μ_grid,
+        τ_grid = τ_grid,
+        ScatterNum = ScatterNum) 
 
-    function compute_slab() 
+        NEnergy, x, x_weight = x_grid
+        NMu, NZenith, mu, mu_weight = μ_grid 
+        NDepth, tau_T, tau, tau_weight = τ_grid
+        RedistributionMatrix, σ = R_grid
+
+        println("this one has better be less than one, by the way: ",(tau[1]-tau[2])/mu[NMu])
+        # println((tau[1]-tau[2])/mu[1]) 
     
         # Initializing Stokes vectors arrays, computiong scatterings 
         # Iin=Planck # Delta # initial photon distribution 
-        Source = zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
-        Stokes = zeros((ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
-        Stokes_out = zeros((ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
-        Stokes_in = zeros((NDepth,NEnergy,NZenith,2)) # Stokes vector of the initial raiation (0th scattering) 
+        Source = zeros(Float64,(ScatterNum,NDepth,NEnergy,NZenith,2)) # source function                 
+        Stokes = zeros(Float64,(ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
+        Stokes_out = zeros(Float64,(ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
+        Stokes_in = zeros(Float64,(NDepth,NEnergy,NZenith,2)) # Stokes vector of the initial raiation (0th scattering) 
+        S = @SVector zeros(Float64,2) # 
+        I = @SVector zeros(Float64,2) #
+        r = @SMatrix zeros(Float64,(2,2)) # define arrays 
         Intensity = zeros((NEnergy,NZenith,2)) # total intensity of all scattering orders from the slab suface 
+
         for e in 1:NEnergy
             for d in NMu+1:NZenith
                 for t in 1:NDepth
@@ -456,19 +502,20 @@ module IsothermalComptonAtmosphere
         end
         # println(Stokes_out[1,:,:,1])
         Intensity += Stokes_out[1,:,:,:]
+        w=0.0
         for k in 1:ScatterNum # do ScatterNum scattering iterations
-            for t in 1:NDepth # S_k= R I_{k-1}
-                for e in 1:NEnergy
-                    for d in 1:NZenith
-                        S=zeros(2)  
-                        for e1 in 1:NEnergy
-                            for d1 in 1:NZenith
+            @timeit to "scatter $k source" for t in 1:NDepth # S_k= R I_{k-1}  
+                for d in 1:NZenith
+                    for e in 1:NEnergy
+                        S .= 0.0
+                        for d1 in 1:NZenith
+                            for e1 in 1:NEnergy
                                 w = mu_weight[d1]*x_weight # total weight
-                                r = RedistributionMatrix[e,e1,d,d1,:,:]  # 
+                                r .= @view RedistributionMatrix[e,e1,d,d1,:,:]  # 
                                 if k>1 
-                                    I = Stokes[k-1,t,e1,d1,:] 
+                                    I .= @view Stokes[k-1,t,e1,d1,:] 
                                 else
-                                    I = Stokes_in[t,e1,d1,:]
+                                    I .= @view Stokes_in[t,e1,d1,:]
                                 end
                                 S[1] += w*( I[1]*r[1,1] + I[2]*r[1,2] ) # 
                                 S[2] += w*( I[1]*r[2,1] + I[2]*r[2,2] ) #
@@ -479,25 +526,25 @@ module IsothermalComptonAtmosphere
                     end
                 end
             end
-            for t in 1:NDepth# I_k= integral S_k
+            @timeit to "scatter $k intensity" for t in 1:NDepth# I_k= integral S_k
                 for e in 1:NEnergy 
                     for d in 1:NZenith
-                        I = Source[k,t,e,d,:] .* (tau_weight/2)
+                        I .= Source[k,t,e,d,:] .* (tau_weight/2)
 
                         if mu[d]>0
                             for t1 in 1:(t-1) #
-                                S = Source[k,t1,e,d,:] #
+                                S .= @view Source[k,t1,e,d,:] #
                                 I += tau_weight .* S .* exp(σ[e]*(tau[t1]-tau[t])/mu[d])
 
                             end
-                            S = Source[k,1,e,d,:] #
-                            I -= (tau_weight)/2 .*S .* exp(σ[e]*(-tau[t])/mu[d])
+                            S .= @view Source[k,1,e,d,:] #
+                            I -= (tau_weight)/2 .* S .* exp(σ[e]*(-tau[t])/mu[d])
                         else
                             for t1 in (t+1):NDepth
-                                S = Source[k,t1,e,d,:] #
+                                S .= @view Source[k,t1,e,d,:] #
                                 I += tau_weight .* S .* exp(σ[e]*(tau[t1]-tau[t])/mu[d])
                             end
-                            S = Source[k,NDepth,e,d,:] #
+                            S .= @view Source[k,NDepth,e,d,:] #
                             I -= (tau_weight/2) .* S .* exp(σ[e]*(tau_T-tau[t])/mu[d])
                         end
                         Stokes[k,t,e,d,:] += I ./ abs(mu[d]) #abs
@@ -508,11 +555,12 @@ module IsothermalComptonAtmosphere
             Stokes_out[k+1,:,:,:] += Stokes[k,end,:,:,:]
             Intensity += Stokes[k,end,:,:,:]
             contribution, e = findmax(Stokes[k,end,:,end,1])
-            println("order ",k, " contribution : ", contribution/Intensity[e,end,1])
-
+            # println("order ",k, " contribution : ", contribution/Intensity[e,end,1])
+            
         end
                     
         Intensity
     end
-
+    
+    
 end
