@@ -267,21 +267,28 @@ module IsothermalComptonAtmosphere
     #   and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectively 
     #   R44 or RV is also not equal to zero but we never need it  
     #   """
+        γ, weight = glγ
         if PRF==false
             q = x1*x2*(1 - mu)
             Q = √( x1*x1 + x2*x2 - 2*x1*x2*mu )
             γStar = (x1-x2+Q*√( 1 + 2/q ) )/2 # lower bound of integration 
             C=3/8*Theta*Maxwell_r(γStar)
-            γ, weight = glγ
             
-            R=zeros(4)
+            CR, CI, CQ, CU = 0,0,0,0
+            # @timeit to "crm" 
             for i in 1:length(γ)
-                @timeit to "crm" T=Compton_redistribution_m(x1,x2,mu,Theta*γ[i]+γStar)
-                for j in 1:4
-                    R[j] += C*weight[i]*T[j]
-                end
+                RC, RI, RQ, RU = Compton_redistribution_m(x1,x2,mu,Theta*γ[i]+γStar)
+                w = C*weight[i]
+                CR += w*RC
+                CI += w*RI 
+                CQ += w*RQ 
+                CU += w*RU 
+
+                # for j in 1:4
+                #     R[j] += C*weight[i]*T[j]
+                # end
             end
-            return R
+            return CR, CI, CQ, CU
         else
             # n = size(PRF)[1]
             # return qsplint(xa,ya,y2a,n,x)
@@ -324,7 +331,8 @@ module IsothermalComptonAtmosphere
 
         R=zeros( (2,2) )
         for i in 1:length(ϕ)
-            @timeit to "cr" (C,I,Q,U)=Compton_redistribution(x1,x2,sc_c[i],PRF=PRF)
+            # @timeit to "cr" 
+            (C,I,Q,U) = Compton_redistribution(x1,x2,sc_c[i],PRF=PRF)
             R[1,1] += C*pi*weight[i]
             R[1,2] += I*pi*cos2χ2[i]*weight[i]
             R[2,1] += I*pi*cos2χ1[i]*weight[i]
@@ -411,8 +419,10 @@ module IsothermalComptonAtmosphere
                         t=d1>d
                         f=e1>e
 
-                        @timeit to "craa" r=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
-                        @timeit to "craa" rm=Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
+                        #@timeit to "craa" 
+                        r .= Compton_redistribution_aa(x[e],x[e1],mu[d],mu[d1])
+                        #@timeit to "craa" 
+                        rm .= Compton_redistribution_aa(x[e],x[e1],mu[d],mu[md1])
                         # sigma[e1]+=(r[1,1]+rm[1,1])*w
                         RedistributionMatrix[e,e1,d,d1,:,:]=r
                         RedistributionMatrix[e,e1,md,md1,:,:]=r
@@ -455,7 +465,8 @@ module IsothermalComptonAtmosphere
 
     function init_atmosphere(x_grid=x_grid)
         NEnergy, x, x_weight = x_grid
-        @timeit to "CRM"  RedistributionMatrix = CRM()
+        # @timeit to "CRM"  
+        RedistributionMatrix = CRM()
         σ = Array{Float64}(undef,NEnergy)
         for e in 1:NEnergy
             σ[e] = σ_Maxwell(x[e])[1]
@@ -487,9 +498,9 @@ module IsothermalComptonAtmosphere
         Stokes = zeros(Float64,(ScatterNum,NDepth,NEnergy,NZenith,2)) # intensity Stokes vector
         Stokes_out = zeros(Float64,(ScatterNum+1,NEnergy,NZenith,2)) # outgoing Stokes vector of each scattering
         Stokes_in = zeros(Float64,(NDepth,NEnergy,NZenith,2)) # Stokes vector of the initial raiation (0th scattering) 
-        S = @SVector zeros(Float64,2) # 
-        I = @SVector zeros(Float64,2) #
-        r = @SMatrix zeros(Float64,(2,2)) # define arrays 
+        S = zeros(Float64,2) # 
+        I = zeros(Float64,2) #
+        r = zeros(Float64,(2,2)) # define arrays 
         Intensity = zeros((NEnergy,NZenith,2)) # total intensity of all scattering orders from the slab suface 
 
         for e in 1:NEnergy
@@ -504,7 +515,8 @@ module IsothermalComptonAtmosphere
         Intensity += Stokes_out[1,:,:,:]
         w=0.0
         for k in 1:ScatterNum # do ScatterNum scattering iterations
-            @timeit to "scatter $k source" for t in 1:NDepth # S_k= R I_{k-1}  
+            # @timeit to "scatter $k source" 
+            for t in 1:NDepth # S_k= R I_{k-1}  
                 for d in 1:NZenith
                     for e in 1:NEnergy
                         S .= 0.0
@@ -526,7 +538,8 @@ module IsothermalComptonAtmosphere
                     end
                 end
             end
-            @timeit to "scatter $k intensity" for t in 1:NDepth# I_k= integral S_k
+            # @timeit to "scatter $k intensity" 
+            for t in 1:NDepth# I_k= integral S_k
                 for e in 1:NEnergy 
                     for d in 1:NZenith
                         I .= Source[k,t,e,d,:] .* (tau_weight/2)
@@ -551,7 +564,6 @@ module IsothermalComptonAtmosphere
                     end
                 end
             end
-
             Stokes_out[k+1,:,:,:] += Stokes[k,end,:,:,:]
             Intensity += Stokes[k,end,:,:,:]
             contribution, e = findmax(Stokes[k,end,:,end,1])
