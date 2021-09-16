@@ -2,6 +2,7 @@ __precompile__()
 
 module IsothermalComptonAtmosphere
 
+    using Base: Float64
     using SpecialFunctions: besselk
     using FastGaussQuadrature
     using LinearAlgebra
@@ -15,7 +16,7 @@ module IsothermalComptonAtmosphere
         global Theta = θ
         global T = t
         global K2Y = besselk(2,1/Theta) # second modified Bessel function of reversed dimensionless temperature       
-        global Tempertures = θ,t,K2Y
+        global Temp_param = θ,1/Theta,K2Y
     end; init_Θ()
     
     function init_τ(n=10, t = 0.6 )
@@ -61,14 +62,14 @@ module IsothermalComptonAtmosphere
     # C  S- functions. if K=0, then only  SS -- mean cross-section; 
     function s_functions(x)
         if x<0.25 # Asymptotic expansion
-            s_0 = 0
-            s_1 = 0
-            s_2 = 0
-            S_1 = 0
-            S_2 = 0
-            S_3 = 0
-            S_4 = 0
-            a = 1
+            s_0 = 0.0
+            s_1 = 0.0
+            s_2 = 0.0
+            S_1 = 0.0
+            S_2 = 0.0
+            S_3 = 0.0
+            S_4 = 0.0
+            a = 1.0
             b = -2x
             n = 0
             while abs(4a)*(n+3)^3>eps(1.0)
@@ -117,13 +118,14 @@ module IsothermalComptonAtmosphere
         return (s_0,s_1,s_2,S_1,S_2,S_3,S_4,S_5,S_6,S_7)    
     end
 
-    function σ_Maxwell(x,glξ=glξ) # Averaging over Maxwellian distribution
-        Y = 1/Θ # ΘY = 1 
+    function σ_Maxwell(x,Temp_param=Temp_param, glξ=glξ) # Averaging over Maxwellian distribution
+        # Y = 1/Θ # ΘY = 1 
+        Θ, Y, K2Y = Temp_param
         D = Θ*exp(-Y)/(2*K2Y) # basically, the factor befor the integrals
-        σ = 0 # cross section, in units of Thomson cross-section;  
-        X = 0 # mean energy of scattered photon;
-        Q = 0 # dispersion energy of scattered photon;
-        P = 0 # radiative pressure, 
+        σ = 0.0 # cross section, in units of Thomson cross-section;  
+        X = 0.0 # mean energy of scattered photon;
+        Q = 0.0 # dispersion energy of scattered photon;
+        P = 0.0 # radiative pressure, 
         ξ, weight = glξ
         for l = 1:length(ξ)
             for j in [1,2] # substitutions for γ < 1 + Θ and γ > 1 + Θ
@@ -158,11 +160,14 @@ module IsothermalComptonAtmosphere
     # The photon temperature is given by T also in units of electron rest mass
     # Planck returns the intensity of  BB radiation
     # """
-    function Planck(x)
+    function Planck(x, T=T)
         e = x/T
-        C = 2*6.6261e-27/2.9979245e-10^2/4.135666e-18^3#/1.6021773e-9
-        #C = 2h/c^2/[kev]^3
-        C*e^3/expm1(e) 
+        C = 2*6.6261e-27/2.9979245e10^2 * 1.235593147556e+20^3 
+        # keV = 1.6021773e-9 erg -> 2.417990504024e+17 herz 
+        # mc^2 = 511 keV = 8.187126156298e-7 erg -> 1.235593147556e+20 Hz
+        #C = 2h/c^2
+        #C = 2h/c^2*[mc^2/hz]^3
+        C*x^3/expm1(e) 
     end
 
     # function Delta(x)
@@ -243,19 +248,20 @@ module IsothermalComptonAtmosphere
     end
 
 
-    function Maxwell_r(γ)
+    function Maxwell_r(γ, Temp_param=Temp_param)
         # """The normalized relativistic Maxwellian distribution
         # the density of particles in the dimensionless momentum volume (4 \pi z^2 dz) is nomalized to unity
         # Theta is the dimensionless electron gas temperature (Theta = k * T_e / m_e c^2)
         # γ is electron energy in units of the electron rest mass
         # The fuction returns the momentum dencity value ( f(\γ) )
         # """
-        r = 0.25/pi/Theta*exp(-γ/Theta)/K2Y
+        Θ, Y, K2Y = Temp_param
+        r = 0.25/pi*Y*exp(-γ*Y)/K2Y
         return r
     end
 
 
-    function Compton_redistribution(x1,x2,mu;glγ=glγ,PRF=false) # if distribution is not Maxwellian the function must be modified.
+    function Compton_redistribution(x1,x2,mu;Temp_param=Temp_param,glγ=glγ,PRF=false) # if distribution is not Maxwellian the function must be modified.
     #   """    Thermal Compton redistribution matrix (integrated with electron distribution function)
     #   And the distribution is maxwellian (if it's not the function must be modified)
     #   The arguments are:
@@ -267,26 +273,23 @@ module IsothermalComptonAtmosphere
     #   and also the are non-zero elements of the matrix: R11,R12=R21,R22,R33 respectively 
     #   R44 or RV is also not equal to zero but we never need it  
     #   """
+        Θ, Y, K2Y = Temp_param
         γ, weight = glγ
         if PRF==false
             q = x1*x2*(1 - mu)
             Q = √( x1*x1 + x2*x2 - 2*x1*x2*mu )
             γStar = (x1-x2+Q*√( 1 + 2/q ) )/2 # lower bound of integration 
-            C=3/8*Theta*Maxwell_r(γStar)
+            C=3/8*Θ*Maxwell_r(γStar)
             
             CR, CI, CQ, CU = 0,0,0,0
-            # @timeit to "crm" 
-            for i in 1:length(γ)
-                RC, RI, RQ, RU = Compton_redistribution_m(x1,x2,mu,Theta*γ[i]+γStar)
+            @timeit to "crm" for i in 1:length(γ)
+                RC, RI, RQ, RU = Compton_redistribution_m(x1,x2,mu,Θ*γ[i]+γStar)
                 w = C*weight[i]
                 CR += w*RC
                 CI += w*RI 
                 CQ += w*RQ 
                 CU += w*RU 
 
-                # for j in 1:4
-                #     R[j] += C*weight[i]*T[j]
-                # end
             end
             return CR, CI, CQ, CU
         else
@@ -330,8 +333,7 @@ module IsothermalComptonAtmosphere
         sin2χP = 4 .* (μ1 .- μ2 .* sc_c) .* (μ1 .* sc_c .- μ2) .* az_s ./ sc_s .^ 2  # array[ sin( 2 χ_1 )*sin( 2 χ_2 ) ]
 
         R=zeros( (2,2) )
-        for i in 1:length(ϕ)
-            # @timeit to "cr" 
+        @timeit to "cr" for i in 1:length(ϕ) 
             (C,I,Q,U) = Compton_redistribution(x1,x2,sc_c[i],PRF=PRF)
             R[1,1] += C*pi*weight[i]
             R[1,2] += I*pi*cos2χ2[i]*weight[i]
@@ -373,12 +375,13 @@ module IsothermalComptonAtmosphere
 
     end 
     # # frequency symmetry: CHECK [v]
-    function CheckFrequencySymmetry(r,x1,x2,mu1,mu2,Theta)
+    function CheckFrequencySymmetry(r,x1,x2,mu1,mu2,Temp_param=Temp_param)
+        Θ, Y, K2Y = Temp_param
         eps =1e-10
         one = r(x1,x2,mu1,mu2)
         two = r(x2,x1,mu1,mu2)
         v=true
-        ratio  = x1^3 / x2^3 * exp((x2-x1)/Theta)
+        ratio  = x1^3 / x2^3 * exp((x2-x1)/Θ)
         a = abs( ratio*two[1,1]/one[1,1]-1)# 1e-15
         println(a)
         v=v && a < eps
@@ -395,9 +398,10 @@ module IsothermalComptonAtmosphere
     end
 
 
-    function CRM(x_grid=x_grid,μ_grid=μ_grid)
+    function CRM(x_grid=x_grid,μ_grid=μ_grid,Temp_param=Temp_param)
         NEnergy, x, x_weight = x_grid
         NMu, NZenith, mu, mu_weight = μ_grid 
+        Θ, Y, K2Y = Temp_param
 
         r = zeros(Float64,(2,2)) # define arrays 
         rm = zeros(Float64,(2,2)) # define arrays 
@@ -429,7 +433,7 @@ module IsothermalComptonAtmosphere
                         RedistributionMatrix[e,e1,d,md1,:,:]=rm
                         RedistributionMatrix[e,e1,md,d1,:,:]=rm
                         if f # frequency symmetry
-                            m=exp((x[e]-x[e1])/Theta)*x[e1]^3/x[e]^3
+                            m=exp((x[e]-x[e1])/Θ)*x[e1]^3/x[e]^3
                             rf=r .* m  # when Maxwellian or Wein distributions
                             rmf=rm .* m  
                             # sigma[e]+=(rf[1,1]+rmf[1,1])*w
@@ -460,6 +464,15 @@ module IsothermalComptonAtmosphere
                 end
             end
         end
+        RedistributionMatrix
+    end
+
+    function CRM_alloc(x_grid=x_grid,μ_grid=μ_grid)
+        NEnergy, x, x_weight = x_grid
+        NMu, NZenith, mu, mu_weight = μ_grid 
+
+        RedistributionMatrix = ones( (NEnergy,NEnergy,NZenith,NZenith,2,2) )
+
         RedistributionMatrix
     end
 
@@ -511,6 +524,8 @@ module IsothermalComptonAtmosphere
                 Stokes_out[1,e,d,1]=Planck(x[e])*exp(-tau_T*σ[e]/mu[d]) 
             end
         end
+        # println(size(Stokes_in))
+        # println(Stokes_in)
         # println(Stokes_out[1,:,:,1])
         Intensity += Stokes_out[1,:,:,:]
         w=0.0
@@ -529,15 +544,23 @@ module IsothermalComptonAtmosphere
                                 else
                                     I .= @view Stokes_in[t,e1,d1,:]
                                 end
+                                # if k==1
+                                #     println(t," ",e1," ",d1," ",I)
+                                # end
+                                
                                 S[1] += w*( I[1]*r[1,1] + I[2]*r[1,2] ) # 
                                 S[2] += w*( I[1]*r[2,1] + I[2]*r[2,2] ) #
-
+                               
+                                # if (t==e==d==2)
+                                #     println(w," ",I," ",r," ",S) 
+                                # end
                             end
                         end
                         Source[k,t,e,d,:] += S #     
                     end
                 end
             end
+            println(k," surs ",Source[k,2,2,2,:])
             # @timeit to "scatter $k intensity" 
             for t in 1:NDepth# I_k= integral S_k
                 for e in 1:NEnergy 
@@ -564,6 +587,8 @@ module IsothermalComptonAtmosphere
                     end
                 end
             end
+            println(k," stoks ",Stokes[k,2,2,2,:])
+            
             Stokes_out[k+1,:,:,:] += Stokes[k,end,:,:,:]
             Intensity += Stokes[k,end,:,:,:]
             contribution, e = findmax(Stokes[k,end,:,end,1])
@@ -573,6 +598,5 @@ module IsothermalComptonAtmosphere
                     
         Intensity
     end
-    
-    
+
 end
