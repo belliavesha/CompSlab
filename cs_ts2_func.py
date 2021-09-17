@@ -226,7 +226,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		phi=linspace(0,2*pi,num=NPhi,endpoint=False,retstep=False)
 		phase =linspace(0,1,num=NPhase,endpoint=True,retstep=False)
 		phase_obs=zeros(NPhi)
-		nu=600.0#1.0#100 #600 # star rotation frequency in Hz
+		nu=350.0 #600.0#1.0#100 #600 # star rotation frequency in Hz
 		#M=1.4 # star mass in solar masses
 		M=mass #input param
 		R_g=M*2.95325 # gravitational Schwarzschild radius #TS: Made this more accurate
@@ -249,7 +249,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 			flattening=0.0
 		else:
 			flattening=oblateness
-		# exit()
+		#exit()
 		#print(flattening)
 		if(spherical):#TS: from input param, 0.0 not working in this code
 			#print("spherical star")
@@ -320,6 +320,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
 		#print(NRadius)
 		NRadius=4+ int(flattening*R_e/1e-1)#4#
 		r, dr = linspace(R_e*(1 - flattening),R_e,num=NRadius,retstep=True)
+		print(r)
 		alpha, dalpha = linspace(0,arccos(-1/sqrt(2*r[0]/R_g/3)),NAlpha,retstep=True)
 		psi=zeros((NRadius,NAlpha))
 		dt=zeros((NRadius,NAlpha))
@@ -579,7 +580,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,spherical=False):
                                         
 					cos_xi = - sin_alpha_over_sin_psi*sin_i*sin_phi
 					delta = 1./Gamma/(1.-beta*cos_xi)
-					#delta=1.0#print(delta)
+					#print("delta=",delta)
 					#exit()
 					cos_sigma = cos_gamma*cos_alpha + sin_alpha_over_sin_psi*sin_gamma*(cos_i*sin_theta - sin_i*cos_theta*cos_phi)
 
