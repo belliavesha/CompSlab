@@ -22,11 +22,11 @@ Spectrum={
 
 oblateness='AlGendy'
 
-AtmName='res/B/B0' # the prefix for all result files related to the set of parameters
+AtmName='res/B/CR12' # the prefix for all result files related to the set of parameters
 PulsName=AtmName+'P2'
-computePulse= True
+computePulse= False
 plotAtm=True
-plotPulse=True
+plotPulse=False
 
 
 # In[18]:exit()
@@ -75,18 +75,18 @@ G=13275412528e1 # G*M_sol in km^3/s^2
 c=299792458e-3 # speed of light in km/s
 
 # Atmosphere parameters: 
-tau_T= .6 # Thomson optical depth of thermalization 
+tau_T= 1.5 # Thomson optical depth of thermalization 
 x_l, x_u = -3.7 , .3 # lower and upper bounds of the log_10 energy span
-Theta = 0.1  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
+Theta = 0.3  # dimensionless electron gas temperature (Theta = k T_e / m_e c^2) # it's about 0.1 
 T = 0.002 # 10/evere #  dimensionless photon black body temperature T = k T_bb / m_e c^2
 
 #precomputations :
-ScatterNum = 23 # total number of scatterings
+ScatterNum = 15 # total number of scatterings
 NGamma= 7# number of Lorenz factor points (\gamma)
 NAzimuth= 10 # 12 # numbers of azimuth angles (\phi) [0,pi]
-NEnergy = 281 # 50# 101 # number of energy points (x)
+NEnergy = 50 # 50# 101 # number of energy points (x)
 NDepth = 100# 101  # number of optical depth levels (\tau)
-NMu = 22 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
+NMu = 10 # 20# 15 # number of propagation zenith angle cosines (\mu) [0,1]
 NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
 
 IntGamma = laggauss(NGamma) # sample points and weights for computing thermal matrix
@@ -498,8 +498,10 @@ if Spectrum=='Thomson':
       A=zeros(NDepth)
       B=zeros(NDepth)
       C=zeros(NDepth)
-      x_factor=ones(NEnergy)
+      # x_factor=ones(NEnergy)
+      x_nought=x.copy()
       print('Thart')
+
 
 
       for d in range(NZenith):
@@ -510,7 +512,9 @@ if Spectrum=='Thomson':
                         Stokes_out[0,e,d,0]=Iin(x[e])*(I_l[t,d] + I_r[t,d])
                         Stokes_out[0,e,d,1]=0
       for k in range(ScatterNum): # do ScatterNum scattering iterations
-            x_factor *= 1 + 4*Theta - x 
+            # x_factor *= 1 + 4*Theta #- x 
+            x_nought = (1 + 4*Theta - sqrt(( (1 + 4*Theta)**2-4*x_nought) ))/2
+
             A[:]=0.
             B[:]=0.
             C[:]=0.
@@ -541,10 +545,13 @@ if Spectrum=='Thomson':
 
                         
                         for e in range(NEnergy):
-                              Stokes[k,t,e,d,0]=Iin(x[e]/x_factor[e])*(I_l[t,d] + I_r[t,d])*x_factor[e]
-                              Stokes[k,t,e,d,1]=Iin(x[e]/x_factor[e])*(I_l[t,d] - I_r[t,d])*x_factor[e]
+                              Stokes[k,t,e,d,0]=Iin(x_nought[e])*(I_l[t,d] + I_r[t,d])*x[e]/x_nought[e]
+                              Stokes[k,t,e,d,1]=Iin(x_nought[e])*(I_l[t,d] - I_r[t,d])*x[e]/x_nought[e]
+                              # Stokes[k,t,e,d,0]=Iin(x[e]/x_factor[e])*(I_l[t,d] + I_r[t,d])*x_factor[e]
+                              # Stokes[k,t,e,d,1]=Iin(x[e]/x_factor[e])*(I_l[t,d] - I_r[t,d])*x_factor[e]
             s,gn=pr(s,gn,'I'+str(k+1))
 
+      
 
       Intensity += Stokes_out[0]
       for k in range(ScatterNum):
@@ -1007,11 +1014,12 @@ if computePulse:
                         cos_eps = sin_alpha_over_sin_psi*(cos_i*sin_lambda - sin_i*cos_lambda*cos_phi + cos_psi*sin_gamma) - cos_alpha*sin_gamma
                         # this line is the longest one
                         # alt_cos_eps=(cos_sigma*cos_gamma - cos_alpha)/sin_gamma # legit! thanks God I checked it!
-                        # sin_chi_prime=cos_eps*mu0*Gamma*beta # times something
-                        sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
+                        sin_chi_prime=cos_eps*cos_sigma*beta # times something
+                        # sin_chi_prime=cos_eps*mu0*delta*Gamma*beta*(1-Gamma1*cos_xi)# times something
                         # cos_chi_prime=1. - cos_sigma**2 /(1. - beta*cos_xi) # times the samething
 
-                        cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                        # cos_chi_prime=sin_sigma**2 - Gamma*mu0**2*beta*cos_xi*(1 - Gamma1*cos_xi)  # times the samething
+                        cos_chi_prime=sin_sigma**2 - beta*cos_xi  # times the samething
                         chi_prime=arctan2(sin_chi_prime,cos_chi_prime)   
 
                         chi=chi_0 + chi_1 + chi_prime
@@ -1049,27 +1057,25 @@ if computePulse:
                         if I<0: ############
                               print('never')
                         Flux_obs[t,e]=[I, Q*cos_2chi, Q*sin_2chi]
-            
+                        
             for t in range(NPhase):
                   phase0=phase[t]
                   for t2 in range(NPhi):
                         t1=t2-1
                         phase2=phase_obs[t2]
                         phase1=phase_obs[t1]
-                        if phase0>phase1 and phase0<phase2:
+                        dphase10 = (phase1-phase0+0.5)%1-0.5
+                        dphase20 = (phase2-phase0+0.5)%1-0.5
+                        if dphase10<0.0<dphase20 :
                               break
-                  else :
-                        phase0=0
-                        t2=argmin(phase_obs)
-                        t1=t2-1
-                        phase2=phase_obs[t2]
-                        phase1=phase_obs[t1]-1
-                              
-                  dphase1=phase0-phase1
-                  dphase2=phase2-phase0
-                  dphase=phase2-phase1
-                  Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase
+
+#                   dphase1=phase0-phase1
+#                   dphase2=phase2-phase0
+#                   dphase=phase2-phase1
+#                   Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase
                   
+                  Flux[t]+=(Flux_obs[t1]*dphase20-Flux_obs[t2]*dphase10)/(dphase20-dphase10)
+                              
 
       s,gn=pr(s,gn,'curves done ')
     
