@@ -4,12 +4,12 @@
 import time
 from polpulse import compf
 
-mass = 1.4 # 1.4
-rad = 12.0 # 12.0
-incl = 60.0 #60.0 #40.0 # 40.0
-theta = 20.0 #20.0 #60.0 #-120.0#60.0 # 60.0
-rho = 1.0 #1.0 # 10.0
-pol = 0.0 #0.1171 #0.0 #0.1171 #0.0 #0.1171 #0.0 #0.1171 # 0.1171 #USE NOW ONLY 0.0 or 0.1171
+mass = 1.4 #NS mass
+rad = 12.0 #NS radius
+incl = 60.0 #observer inclination
+theta = 20.0 #spot co-latitude
+rho = 1.0 #spot angular size
+pol = 0.0 #0.1171 #0.0  #USE NOW ONLY 0.0, this parameter is outdated
 
 
 from numpy import logspace, zeros, fromfile, linspace
@@ -23,41 +23,19 @@ x,x_weight=IntEnergy #energies
 phase =linspace(0,1,num=NPhase,endpoint=True,retstep=False) #input phase points
 energy_keV = x*evere/1e3 # input energies in keV
 
-loop = True
-#if len(sys.argv) > 1:
-if(loop):
-	#print("Choosing param values for i,theta,rho from CL arguments:")
-	#incl = float(sys.argv[1])
-	#theta = float(sys.argv[2])
-	#rho = float(sys.argv[3])
-	#antpd = bool(sys.argv[4])
-	#spath = str(sys.argv[5])
+Flux = compf(mass,rad,incl,theta,rho,pol,energy_keV,phase,spherical=False,antipodal=False,spath="pulses/pulse_testX",savePulse=False,atmos_path="atmos_thom/") 
 
-	print("Running in loop mode! Make sure not overwriting old results.")        
-	incls = [60.0]#[50.0,60.0,70.0]
-	thetas = [20.0]# [120.0]#[80.0, 100.0, 120.0,140.0,160.0]#[20.0]#[10.0,20.0,30.0]
-	rhos = [1.0]#[30.0]#[1.0]
-	antipds = [False]#[True,False]
-	for ir in range(len(rhos)):
-		for i in range(len(incls)):
-			for it in range(len(thetas)):
-				for ai in range(len(antipds)):
-					rho = rhos[ir]
-					incl = incls[i]
-					theta = thetas[it]
-					antpd = antipds[ai]
-					spath = "pulses/pulse_thom"+str(int(antpd)+1)+"_r"+str(int(rho))+"t"+str(int(theta))+"i"+str(int(incl))+'_test_E0_new'
-					#spath = "pulses/test/pulse_test_thom"+str(int(antpd)+1)+"_r"+str(int(rho))+"t"+str(int(theta))+"i"+str(int(incl))+"p"+str(int(10000*pol))
-					#if(incl!=60.0 and theta!=20.0):
-					#	continue
-					start = time.time()
-					Flux = compf(mass,rad,incl,theta,rho,pol,energy_keV,phase,spherical=False,antipodal=antpd,spath=spath,savePulse=True,atmos_path="atmos_thom/")
-					end = time.time()
-					print("Time pulse computation:",end - start)
-					
-					
-else:
-	Flux = compf(mass,rad,incl,theta,rho,pol,spherical=False,antipodal=False,spath="pulses/pulse_testX",savePulse=True,atmos_path="atmos_thom/") 
+import numpy as np
+print("Pulse profile computation for one set of paramters finished with the following result:")
+print(np.shape(Flux))
+#print(Flux[0,:,0]) #Spectrum at phase 0 for Stokes I
+#print(Flux[0,:,1]) #Specrtrum at phase 0 for Stokes Q
+#print(Flux[0,:,2]) #Specrtrum at phase 0 for Stokes U  
 
-#import subprocess
-#subprocess.call("./pulse_rename.sh",shell=True)
+print("Pulse profiles at lowest energy for I, Q, and U")
+print(Flux[:,0,0]) #Pulse profile at lowest energy bin for Stokes I #sum over 0th axis to get bolometric profile
+print(Flux[:,0,1]) #Pulse profile at lowest energy bin for Stokes Q 
+print(Flux[:,0,2]) #Pulse profile at lowest energy bin for Stokes U 
+print("phases:",phase)
+print("Observed energies:",energy_keV)
+

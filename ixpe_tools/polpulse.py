@@ -289,7 +289,6 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,pol,ekev,ph,spherical=False,anti
 		mui=fromfile(inm)
 		NEnergyi=len(xi)
 		NZenithi=len(mui) #assumed to be same as NZenith
-		NMui=NZenith//2
 		Intensityf=fromfile(inI).reshape((NEnergyi,NZenithi,2))
 		Intensity=zeros((NEnergy,NZenith,2))
                 
@@ -313,8 +312,8 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,pol,ekev,ph,spherical=False,anti
 	IntBend = leggauss(NBend)
 	NZenithBig=100
 	#NZenithBig = NZenith
-	bending_exact = False #True #False #True
-	tdelay_exact = False #True #False #True #False #True
+	bending_exact = True #False #True
+	tdelay_exact = True #False #True #False #True
 
 	phi=linspace(0,2*pi,num=NPhi,endpoint=False,retstep=False)
 	
@@ -363,34 +362,14 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,pol,ekev,ph,spherical=False,anti
 	def Poutanen(u,y):
 		return ( 1 - u )*y*( 1 + u*u*y*y/112 - np.e/1e2*u*y*( np.log( 1 - y/2 ) + y/2 ) )
 
-	def Poutanen_der(u,y): #Derivative calculated analytically
+	def Poutanen_der(u,y):
 		der_end = (3/2) - (0.5/(1-(y/2)))
-		return ( 1 - u )*( 1 + 3*u*u*y*y/112 - np.e/1e2*u*y*(2*np.log( 1 - y/2 ) + y*der_end))
-
-				
-	#Function used to confirm that the function above is exact	
-	#def Poutanen_der_numerical(u_val,y_val): #Derivative using sympy
-	#	import sympy as sym
-	#	#y, u = sym.symbols('y u')
-	#	y = sym.symbols('y')
-	#	u = u_val
-	#	Pfunc = ( 1 - u )*y*( 1 + u*u*y*y/112 - np.e/1e2*u*y*( sym.log( 1 - y/2 ) + y/2 ) )
-	#	Pder = sym.diff(Pfunc,y)
-	#	#print(Pder)
-	#	Pderx = sym.lambdify(y, Pder)
-	#	return Pderx(y_val)
-	
-	#print(Pder):	
-	#y*(1 - u)*(u**2*y/56 - 0.0271828182845904*u*y*(1/2 - 1/(2*(1 - y/2))) - 0.0271828182845904*u*(y/2 + log(1 - y/2))) 
-	#+ (1 - u)*(u**2*y**2/112 - 0.0271828182845904*u*y*(y/2 + log(1 - y/2)) + 1)			    
-
+		return ( 1 - u )*( 1 + 3*u*u*y*y/112 - np.e/1e2*u*y*(2*np.log( 1 - y/2 ) + y*der_end))		    
 
 	def tlag_PB06(u,y):
-		#From Juri's IDL code:
-		#radinv=1d0/radrg
-		#y=(1d0-cosalpha)/(1d0-radinv)
-		#delay=y*(1d0+radinv/8d0*y*(1d0+y*(1d0/3d0-radinv/14d0)))
-		return y*(1.0+u/8.0*y*(1.0+y*(1.0/3.0-u/14.0)))
+		#return y*(1.0+u/8.0*y*(1.0+y*(1.0/3.0-u/14.0)))
+		#keeping just the leading term, since accuracy not improved by including more
+		return y
 		
 		 
 
@@ -575,7 +554,6 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,pol,ekev,ph,spherical=False,anti
 					sin_alpha = sqrt(1. - cos_alpha**2)	
 					sin_alpha_over_sin_psi= sin_alpha/sin_psi if sin_psi > 1e-4 else 1./redshift
 					dcos_alpha = Poutanen_der(u, 1.0 - cos_psi)
-					#dcos_alpha_new_num = Poutanen_der_numerical(u, 1.0 - cos_psi)
 				
 
 				if(tdelay_exact):
@@ -583,9 +561,7 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,pol,ekev,ph,spherical=False,anti
 					dt2=dt[r2,a2 - 1]*dalpha2/dalpha + dt[r2,a2]*(1. - dalpha2/dalpha)
 					dphase=(dt1*dr2 + dt2*dr1)*nu # \delta\phi = \phi_{obs} - \phi 
 				else:						
-					#y2lag = (1.0-cos_alpha)/(1.0-u) #(1d0-cosalpha)/(1d0-radinv)
-					y2lag = 1.0 - cos_psi
-					dphase = tlag_PB06(u, y2lag)*nu*R/c
+					dphase = tlag_PB06(u, 1.0 - cos_psi)*nu*R/c
 				
 				#dphase = 0
 				phase_obs[t]=( phi[t]/2/pi+dphase)%1.
@@ -695,8 +671,6 @@ def compf(mass,eqrad,incl_deg,theta_deg,rho_deg,pol,ekev,ph,spherical=False,anti
 			dphase=phase2-phase1
 			Flux[t]+=(Flux_obs[t2]*dphase1+Flux_obs[t1]*dphase2)/dphase 
 
-	#print(Flux[0,:,0])
-	#print(Flux[:,0,0])
 	if savePulse:
 		outF = open(PulsName + 'FF.bin','w')
 		outf = open(PulsName + 'ff.bin','w')
