@@ -1,0 +1,50 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module cbf__user__routines 
+    interface cbf_user_interface 
+        function cr(arg) result (res) ! in :FRM:FRMfillsource.f90:cbf:unknown_interface
+            intent(out) cr
+            real(kind=4) intent(in) :: arg
+            real(kind=4) intent(out) :: res
+        end function cr
+    end interface cbf_user_interface
+end python module cbf__user__routines
+python module fill__user__routines 
+    interface fill_user_interface 
+        subroutine compton_redistribution_aa(cr,x1,x2,m1,m2) ! in :FRM:FRMfillsource.f90:fill:unknown_interface
+            real(kind=4) dimension(2,2),intent(out) :: cr
+            real(kind=4) intent(in) :: x1
+            real(kind=4) intent(in) :: x2
+            real(kind=4) intent(in) :: m1
+            real(kind=4) intent(in) :: m2
+        end subroutine compton_redistribution_aa
+    end interface fill_user_interface
+end python module fill__user__routines
+python module FRM ! in 
+    interface  ! in :FRM
+        subroutine cbf(res,arg,cr) ! in :FRM:FRMfillsource.f90
+            use cbf__user__routines
+            real(kind=4) intent(out) :: res
+            real(kind=4) intent(in) :: arg
+            external cr
+        end subroutine cbf
+        subroutine fill(rx,sigma,ne,nz,mw,xw,x,m,theta) ! in :FRM:FRMfillsource.f90
+            use fill__user__routines
+            real(kind=4) dimension(ne,ne,nz,nz,2,2),intent(out),depend(ne,ne,nz,nz) :: rx
+            real(kind=4) dimension(ne),intent(out),depend(ne) :: sigma
+            integer, optional,intent(in),check(len(x)>=ne),depend(x) :: ne=len(x)
+            integer, optional,intent(in),check(len(mw)>=nz),depend(mw) :: nz=len(mw)
+            real(kind=4) dimension(nz),intent(in) :: mw
+            real(kind=4) intent(in) :: xw
+            real(kind=4) dimension(ne),intent(in) :: x
+            real(kind=4) dimension(nz),intent(in),depend(nz) :: m
+            real(kind=4) intent(in) :: theta
+            intent(callback) compton_redistribution_aa
+            external compton_redistribution_aa
+        end subroutine fill
+    end interface 
+end python module FRM
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

@@ -1,0 +1,25 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module FIF ! in 
+    interface  ! in :FIF
+        subroutine fill(stokes,sn,ne,nz,nd,stokes_in,rx,xw,sigma,m,mw,tau,tw) ! in :FIF:IntFillSource.f90
+            real(kind=8) dimension(sn,nd,ne,nz,2),intent(out),depend(sn,nd,ne,nz) :: stokes
+            integer intent(in) :: sn
+            integer, optional,intent(in),check(shape(stokes_in,1)==ne),depend(stokes_in) :: ne=shape(stokes_in,1)
+            integer, optional,intent(in),check(shape(stokes_in,2)==nz),depend(stokes_in) :: nz=shape(stokes_in,2)
+            integer, optional,intent(in),check(shape(stokes_in,0)==nd),depend(stokes_in) :: nd=shape(stokes_in,0)
+            real(kind=8) dimension(nd,ne,nz,2),intent(in) :: stokes_in
+            real(kind=8) dimension(ne,ne,nz,nz,2,2),intent(in),depend(ne,ne,nz,nz) :: rx
+            real(kind=8) intent(in) :: xw
+            real(kind=8) dimension(ne),intent(in),depend(ne) :: sigma
+            real(kind=8) dimension(nz),intent(in),depend(nz) :: m
+            real(kind=8) dimension(nz),intent(in),depend(nz) :: mw
+            real(kind=8) dimension(nd),intent(in),depend(nd) :: tau
+            real(kind=8) intent(in) :: tw
+        end subroutine fill
+    end interface 
+end python module FIF
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
