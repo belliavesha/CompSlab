@@ -11,6 +11,11 @@ module IsothermalComptonAtmosphere
 
     const to = TimerOutput()
 
+    function set_absorption(a = 0.0)
+        global absorption = a    
+    end; 
+    set_absorption()
+
     function init_Θ(θ = 0.08, t = 0.002) # dimensionless photon black body temperature T = k T_bb / m_e c^2
         global Θ = θ
         global Theta = θ
@@ -495,7 +500,8 @@ module IsothermalComptonAtmosphere
         x_grid = x_grid,
         μ_grid = μ_grid,
         τ_grid = τ_grid,
-        ScatterNum = ScatterNum) 
+        ScatterNum = ScatterNum,
+        α = absorption) 
 
         NEnergy, x, x_weight = x_grid
         NMu, NZenith, mu, mu_weight = μ_grid 
@@ -519,9 +525,9 @@ module IsothermalComptonAtmosphere
         for e in 1:NEnergy
             for d in NMu+1:NZenith
                 for t in 1:NDepth
-                    Stokes_in[t,e,d,1]=Planck(x[e])*exp(-tau[t]*σ[e]/mu[d]) 
+                    Stokes_in[t,e,d,1]=Planck(x[e])# *exp(-tau[t]*σ[e]/mu[d]) 
                 end
-                Stokes_out[1,e,d,1]=Planck(x[e])*exp(-tau_T*σ[e]/mu[d]) 
+                Stokes_out[1,e,d,1]=Planck(x[e])#*exp(-tau_T*σ[e]/mu[d]) 
             end
         end
         # println(size(Stokes_in))
@@ -556,7 +562,8 @@ module IsothermalComptonAtmosphere
                                 # end
                             end
                         end
-                        Source[k,t,e,d,:] += S #     
+                        Source[k,t,e,d,:] += S*(1 - α)
+                         #     
                     end
                 end
             end
